@@ -5,6 +5,7 @@ import { isSlotAvailable, loadServices, loadShop, type ShopForBooking } from './
 import { responseDeadline } from './deadlines.js';
 import { loadSettings } from './settings.js';
 import { addMinutes, minutesBetween } from './time.js';
+import type { Queryable } from './db.js';
 import { isOverlapViolation, withTransaction } from './tx.js';
 
 type Tx = pg.PoolClient;
@@ -129,7 +130,7 @@ export interface CreateBookingInput {
 }
 
 /** الجهاز موثوق إذا كان أول جهاز سُجّل به الرقم، أو أكد صاحب محل الزبون بالاتصال. */
-async function isTrustedDevice(tx: Tx, customerId: number, deviceId: number): Promise<boolean> {
+export async function isTrustedDevice(tx: Queryable, customerId: number, deviceId: number): Promise<boolean> {
   const { rows } = await tx.query<{ trusted: boolean }>(
     `SELECT (d.verified_by_call_at IS NOT NULL
              OR d.id = (SELECT min(id) FROM devices WHERE user_id = $1)) AS trusted

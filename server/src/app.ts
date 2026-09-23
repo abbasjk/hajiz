@@ -4,6 +4,9 @@ import { AppError } from './lib/errors.js';
 import { configRoutes } from './routes/config.js';
 import { healthRoutes } from './routes/health.js';
 import { slotRoutes } from './routes/slots.js';
+import { authRoutes } from './routes/auth.js';
+import { bookingRoutes } from './routes/bookings.js';
+import { shopRoutes } from './routes/shops.js';
 import { versionCheck } from './lib/version-check.js';
 
 export interface AppOptions {
@@ -44,6 +47,9 @@ export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise
       v1.addHook('onRequest', versionCheck(pool));
       await v1.register(configRoutes);
       await v1.register(slotRoutes);
+      await v1.register(shopRoutes);
+      await v1.register(authRoutes);
+      await v1.register(bookingRoutes);
     },
     { prefix: '/v1' },
   );

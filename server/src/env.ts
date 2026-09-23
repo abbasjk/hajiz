@@ -4,6 +4,8 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
+  // true: يُنشئ محلاً تجريبياً مرة واحدة لتجربة تطبيق الزبون
+  SEED_DEMO: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
