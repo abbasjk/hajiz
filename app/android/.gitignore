@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# مفتاح النسخ التجريبية فقط (انظر app/build.gradle.kts)
+!app/testing.jks

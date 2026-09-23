@@ -29,11 +29,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // مفتاح ثابت للنسخ التجريبية فقط، حتى تُثبَّت كل نسخة جديدة فوق القديمة دون حذفها.
+        // قبل النشر في المتجر يُستبدل بمفتاح خاص لا يُحفظ في المستودع.
+        create("testing") {
+            storeFile = file("testing.jks")
+            storePassword = "hajiz-testing"
+            keyAlias = "hajiz-testing"
+            keyPassword = "hajiz-testing"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("testing")
         }
     }
 }
