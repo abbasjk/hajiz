@@ -1,4 +1,5 @@
 import { buildApp } from './app.js';
+import { startScheduler } from './booking/jobs.js';
 import { migrate } from './db/migrate.js';
 import { createPool } from './db/pool.js';
 import { loadEnv } from './env.js';
@@ -8,9 +9,11 @@ const pool = createPool(env.DATABASE_URL);
 // الترحيلات تُطبَّق عند كل تشغيل؛ القفل داخل migrate يمنع تشغيلها من نسختين معاً
 const applied = await migrate(pool);
 const app = await buildApp({ pool, logLevel: env.LOG_LEVEL });
+const stopJobs = startScheduler(pool, app.log);
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, async () => {
+    stopJobs();
     await app.close();
     await pool.end();
     process.exit(0);

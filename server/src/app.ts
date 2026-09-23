@@ -3,6 +3,7 @@ import type { Pool } from './db/pool.js';
 import { AppError } from './lib/errors.js';
 import { configRoutes } from './routes/config.js';
 import { healthRoutes } from './routes/health.js';
+import { slotRoutes } from './routes/slots.js';
 import { versionCheck } from './lib/version-check.js';
 
 export interface AppOptions {
@@ -42,6 +43,7 @@ export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise
     async (v1) => {
       v1.addHook('onRequest', versionCheck(pool));
       await v1.register(configRoutes);
+      await v1.register(slotRoutes);
     },
     { prefix: '/v1' },
   );
