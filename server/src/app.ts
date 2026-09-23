@@ -9,21 +9,39 @@ import { bookingRoutes } from './routes/bookings.js';
 import { shopRoutes } from './routes/shops.js';
 import { ownerRoutes, photoRoutes } from './routes/owner.js';
 import { versionCheck } from './lib/version-check.js';
+import { Notifier } from './notify/notifier.js';
+import { LogSender, type PushSender } from './notify/sender.js';
+import { bookingEvent, type BookingEvent } from './notify/events.js';
+import { meRoutes } from './routes/me.js';
 
 export interface AppOptions {
   pool: Pool;
   logLevel?: string;
+  /** مرسل الإشعارات؛ الافتراضي يسجّلها فقط (قبل إعداد Firebase وفي الاختبارات) */
+  sender?: PushSender;
 }
 
 declare module 'fastify' {
   interface FastifyInstance {
     pool: Pool;
+    notifier: Notifier;
+    /** يبلّغ الطرف الآخر بما حدث للحجز؛ لا يُفشل العملية إذا تعذر الإرسال */
+    bookingEvent(bookingId: number, event: BookingEvent): Promise<unknown>;
   }
 }
 
-export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise<FastifyInstance> {
+export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions): Promise<FastifyInstance> {
   const app = Fastify({ logger: { level: logLevel } });
   app.decorate('pool', pool);
+  const notifier = new Notifier(pool, sender ?? new LogSender(app.log), app.log);
+  app.decorate('notifier', notifier);
+  app.decorate('bookingEvent', async (bookingId: number, event: BookingEvent) => {
+    try {
+      await bookingEvent(notifier, pool, bookingId, event);
+    } catch (err) {
+      app.log.error(err, 'booking event failed');
+    }
+  });
 
   app.setErrorHandler((err, request, reply) => {
     if (err instanceof AppError) {
@@ -53,6 +71,7 @@ export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise
       await v1.register(authRoutes);
       await v1.register(bookingRoutes);
       await v1.register(ownerRoutes);
+      await v1.register(meRoutes);
     },
     { prefix: '/v1' },
   );

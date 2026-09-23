@@ -5,6 +5,7 @@ import { cancelByCustomer, chooseProposedTime, createBooking, declineProposal } 
 import { getCustomerBooking, listCustomerBookings } from '../booking/customer-view.js';
 import { AppError } from '../lib/errors.js';
 import { idempotent } from '../lib/idempotency.js';
+import type { BookingEvent } from '../notify/events.js';
 
 const createBody = z.object({
   shopId: z.number().int().positive(),
@@ -42,6 +43,7 @@ export async function bookingRoutes(app: FastifyInstance) {
         note: body.note,
         now: new Date(),
       });
+      await app.bookingEvent(created.id, 'created');
       return view(request, created.id);
     });
   });
@@ -57,6 +59,7 @@ export async function bookingRoutes(app: FastifyInstance) {
   // كل إجراء يتحقق أولاً أن الحجز ظاهر لهذا الجهاز
   const action = (
     path: string,
+    event: BookingEvent,
     run: (request: FastifyRequest, bookingId: number, customerId: number) => Promise<unknown>,
   ) => {
     app.post(`/bookings/:bookingId/${path}`, async (request) => {
@@ -65,14 +68,15 @@ export async function bookingRoutes(app: FastifyInstance) {
       await view(request, bookingId);
       return idempotent(app.pool, request, auth.userId, async () => {
         await run(request, bookingId, auth.userId);
+        await app.bookingEvent(bookingId, event);
         return view(request, bookingId);
       });
     });
   };
 
-  action('cancel', (_r, bookingId, customerId) => cancelByCustomer(app.pool, { bookingId, customerId, now: new Date() }));
-  action('decline', (_r, bookingId, customerId) => declineProposal(app.pool, { bookingId, customerId, now: new Date() }));
-  action('choose', (request, bookingId, customerId) => {
+  action('cancel', 'customer_cancelled', (_r, bookingId, customerId) => cancelByCustomer(app.pool, { bookingId, customerId, now: new Date() }));
+  action('decline', 'customer_declined', (_r, bookingId, customerId) => declineProposal(app.pool, { bookingId, customerId, now: new Date() }));
+  action('choose', 'customer_chose', (request, bookingId, customerId) => {
     const { proposedTimeId } = parse(z.object({ proposedTimeId: z.number().int().positive() }), request.body);
     return chooseProposedTime(app.pool, { bookingId, customerId, proposedTimeId, now: new Date() });
   });

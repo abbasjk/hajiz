@@ -14,6 +14,7 @@ import { loadSettings } from '../booking/settings.js';
 import { isLocalDate, minutesBetween } from '../booking/time.js';
 import { AppError } from '../lib/errors.js';
 import { idempotent } from '../lib/idempotency.js';
+import type { BookingEvent } from '../notify/events.js';
 import { ownerBooking, ownerDashboard, ownerDay, verifyCustomerDevice } from '../owner/bookings.js';
 import { createClosure, deleteClosure } from '../owner/closures.js';
 import {
@@ -159,9 +160,12 @@ export async function ownerRoutes(app: FastifyInstance) {
 
   app.post('/owner/closures', async (request) => {
     const body = parse(z.object({ startsAt: datetime, endsAt: datetime, reason: z.string().max(100).optional() }), request.body);
-    return idempotent(app.pool, request, owner(request), () =>
-      createClosure(app.pool, owner(request), { ...body, now: new Date() }),
-    );
+    return idempotent(app.pool, request, owner(request), async () => {
+      const result = await createClosure(app.pool, owner(request), { ...body, now: new Date() });
+      for (const bookingId of result.moved) await app.bookingEvent(bookingId, 'closure_moved');
+      for (const bookingId of result.cancelled) await app.bookingEvent(bookingId, 'shop_cancelled');
+      return result;
+    });
   });
 
   app.delete('/owner/closures/:id', async (request) => {
@@ -211,30 +215,35 @@ export async function ownerRoutes(app: FastifyInstance) {
     return { date, slots: slots.map((s) => s.toISOString()) };
   });
 
-  const action = (path: string, run: (request: FastifyRequest, bookingId: number, ownerId: number, now: Date) => Promise<unknown>) => {
+  const action = (
+    path: string,
+    event: BookingEvent | null,
+    run: (request: FastifyRequest, bookingId: number, ownerId: number, now: Date) => Promise<unknown>,
+  ) => {
     app.post(`/owner/bookings/:id/${path}`, async (request) => {
       const bookingId = parse(idParams, request.params).id;
       const ownerId = owner(request);
       await view(request, bookingId);
       return idempotent(app.pool, request, ownerId, async () => {
         await run(request, bookingId, ownerId, new Date());
+        if (event) await app.bookingEvent(bookingId, event);
         return view(request, bookingId);
       });
     });
   };
 
-  action('accept', (_r, bookingId, ownerId, now) => acceptBooking(app.pool, { bookingId, ownerId, now }));
-  action('reject', (r, bookingId, ownerId, now) =>
+  action('accept', 'accepted', (_r, bookingId, ownerId, now) => acceptBooking(app.pool, { bookingId, ownerId, now }));
+  action('reject', 'rejected', (r, bookingId, ownerId, now) =>
     rejectBooking(app.pool, { bookingId, ownerId, now, reason: parse(reasonBody, r.body).reason }));
-  action('propose', (r, bookingId, ownerId, now) => {
+  action('propose', 'proposed', (r, bookingId, ownerId, now) => {
     const body = parse(z.object({ times: z.array(datetime).min(1).max(3), message: z.string().max(200).optional() }), r.body);
     return proposeTimes(app.pool, { bookingId, ownerId, now, ...body });
   });
-  action('cancel', (r, bookingId, ownerId, now) =>
+  action('cancel', 'shop_cancelled', (r, bookingId, ownerId, now) =>
     cancelByShop(app.pool, { bookingId, ownerId, now, reason: parse(reasonBody, r.body).reason }));
-  action('no-show', (_r, bookingId, ownerId, now) => markNoShow(app.pool, { bookingId, ownerId, now }));
-  action('complete', (_r, bookingId, ownerId, now) => markCompleted(app.pool, { bookingId, ownerId, now }));
-  action('verify-device', async (_r, bookingId, ownerId) =>
+  action('no-show', null, (_r, bookingId, ownerId, now) => markNoShow(app.pool, { bookingId, ownerId, now }));
+  action('complete', null, (_r, bookingId, ownerId, now) => markCompleted(app.pool, { bookingId, ownerId, now }));
+  action('verify-device', null, async (_r, bookingId, ownerId) =>
     verifyCustomerDevice(app.pool, await requireShop(app.pool, ownerId), bookingId));
 }
 

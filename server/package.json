@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "fastify": "^5.12.5",
+    "firebase-admin": "^13.10.0",
     "pg": "^8.23.0",
     "zod": "^4.6.5"
   },

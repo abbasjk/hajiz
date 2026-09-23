@@ -6,6 +6,8 @@ const schema = z.object({
   HOST: z.string().default('0.0.0.0'),
   // true: يُنشئ محلاً تجريبياً مرة واحدة لتجربة تطبيق الزبون
   SEED_DEMO: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  // مفتاح حساب الخدمة من Firebase (JSON أو base64)؛ يُوضع في Railway فقط
+  FIREBASE_SERVICE_ACCOUNT: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
