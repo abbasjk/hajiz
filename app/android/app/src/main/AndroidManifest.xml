@@ -1,7 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- لترتيب المحلات حسب القرب فقط؛ موقع تقريبي يكفي -->
+    <!-- التقريبي لترتيب المحلات حسب القرب؛ الدقيق لزر "أنا في المحل الآن" عند فتح المحل -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
         android:label="حجز"
         android:name="${applicationName}"

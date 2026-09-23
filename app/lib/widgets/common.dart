@@ -167,7 +167,13 @@ class _CountdownState extends State<Countdown> {
   }
 }
 
-String statusLabel(AppLocalizations l, BookingStatus s) => switch (s) {
+/// owner: الصياغة من جهة صاحب المحل ("لم يحضر" بدل "لم تحضر")
+String statusLabel(AppLocalizations l, BookingStatus s, {bool owner = false}) => switch (s) {
+      BookingStatus.pendingShop when owner => l.ownerStatusPendingShop,
+      BookingStatus.pendingCustomer when owner => l.ownerStatusPendingCustomer,
+      BookingStatus.cancelledByCustomer when owner => l.ownerStatusCancelledByCustomer,
+      BookingStatus.cancelledByShop when owner => l.ownerStatusCancelledByShop,
+      BookingStatus.noShow when owner => l.ownerStatusNoShow,
       BookingStatus.pendingShop => l.statusPendingShop,
       BookingStatus.pendingCustomer => l.statusPendingCustomer,
       BookingStatus.confirmed => l.statusConfirmed,
@@ -180,8 +186,9 @@ String statusLabel(AppLocalizations l, BookingStatus s) => switch (s) {
     };
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({super.key, required this.status});
+  const StatusChip({super.key, required this.status, this.owner = false});
   final BookingStatus status;
+  final bool owner;
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +200,7 @@ class StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(statusLabel(AppLocalizations.of(context), status),
+      child: Text(statusLabel(AppLocalizations.of(context), status, owner: owner),
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
     );
   }

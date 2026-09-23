@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../api/api_client.dart';
 import '../api/hajiz_api.dart';
+import '../api/owner_api.dart';
 import '../api/models.dart';
 import 'session.dart';
 
@@ -12,6 +13,7 @@ typedef Locator = Future<({double lat, double lng})?> Function();
 class AppServices {
   AppServices({required this.client, required this.session, Locator? locate})
       : api = HajizApi(client),
+        owner = OwnerApi(client),
         locate = locate ?? locateDevice {
     client.token = session.token;
   }
@@ -21,6 +23,7 @@ class AppServices {
 
   final ApiClient client;
   final HajizApi api;
+  final OwnerApi owner;
   final Session session;
 
   ServerConfig? _config;

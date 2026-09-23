@@ -14,7 +14,11 @@
 		<string>ar</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>نستخدم موقعك لترتيب المحلات حسب القرب منك فقط.</string>
+	<string>نستخدم موقعك لترتيب المحلات حسب القرب منك، ولتحديد موقع محلك على الخريطة.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>لالتقاط صور محلك وإضافتها إلى صفحته.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>لاختيار صور محلك من المعرض وإضافتها إلى صفحته.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>

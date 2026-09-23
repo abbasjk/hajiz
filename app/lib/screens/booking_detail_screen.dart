@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
+import '../util/reasons.dart';
 import '../widgets/common.dart';
 import 'shop_screen.dart';
 
@@ -174,7 +175,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ],
                 if (b.cancelReason != null) ...[
                   const SizedBox(height: 8),
-                  Text(l.reasonLabel(b.cancelReason!), style: const TextStyle(fontSize: 13, color: AppColors.danger)),
+                  Text(l.reasonLabel(reasonText(l, b.cancelReason!)), style: const TextStyle(fontSize: 13, color: AppColors.danger)),
                 ],
                 if (b.status == BookingStatus.expired) ...[
                   const SizedBox(height: 8),

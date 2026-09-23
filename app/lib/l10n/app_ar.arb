@@ -1,10 +1,8 @@
 {
   "@@locale": "ar",
-
   "appName": "حجز",
   "tabHome": "الرئيسية",
   "tabMyBookings": "حجوزاتي",
-
   "offlineBanner": "لا يوجد اتصال",
   "retry": "إعادة المحاولة",
   "loading": "جارٍ التحميل…",
@@ -12,10 +10,8 @@
   "next": "التالي",
   "cancel": "إلغاء",
   "close": "إغلاق",
-
   "updateRequiredTitle": "يلزم تحديث التطبيق",
   "updateRequiredBody": "هذه النسخة لم تعد مدعومة. حدّث التطبيق من المتجر للمتابعة.",
-
   "searchHint": "ابحث باسم المحل",
   "allTypes": "الكل",
   "allDistricts": "كل الأقضية",
@@ -27,12 +23,23 @@
   "locationDenied": "لم نتمكن من معرفة موقعك، فرتبنا المحلات حسب الاسم.",
   "noShops": "لا توجد محلات مطابقة.",
   "distanceKm": "{km} كم",
-  "@distanceKm": { "placeholders": { "km": { "type": "String" } } },
+  "@distanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "nextAvailable": "أقرب موعد: {when}",
-  "@nextAvailable": { "placeholders": { "when": { "type": "String" } } },
+  "@nextAvailable": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "committedBadge": "ملتزم بمواعيده",
   "instantBadge": "حجز فوري",
-
   "shopServices": "الخدمات والأسعار",
   "shopHours": "أوقات العمل",
   "shopLocation": "الموقع",
@@ -41,36 +48,84 @@
   "whatsapp": "واتساب",
   "dayOff": "عطلة",
   "temporarySchedule": "{name}: من {from} إلى {to} بأوقات خاصة",
-  "@temporarySchedule": { "placeholders": { "name": { "type": "String" }, "from": { "type": "String" }, "to": { "type": "String" } } },
+  "@temporarySchedule": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
   "bookAppointment": "احجز موعداً",
   "noServices": "لا توجد خدمات متاحة حالياً.",
-
   "bookingTitle": "حجز موعد",
   "stepServices": "1. الخدمات",
   "stepTime": "2. اليوم والوقت",
   "stepReview": "3. المراجعة",
   "chooseServices": "اختر خدمة أو أكثر",
   "minutes": "{n} دقيقة",
-  "@minutes": { "placeholders": { "n": { "type": "int" } } },
+  "@minutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "priceIqd": "{amount} د.ع",
-  "@priceIqd": { "placeholders": { "amount": { "type": "String" } } },
+  "@priceIqd": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "priceStartsFrom": "يبدأ من {amount} د.ع",
-  "@priceStartsFrom": { "placeholders": { "amount": { "type": "String" } } },
+  "@priceStartsFrom": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "priceAfterInspection": "يُحدد بعد المعاينة",
   "servicesCount": "{count, plural, =1{خدمة واحدة} =2{خدمتان} few{{count} خدمات} many{{count} خدمة} other{{count} خدمة}} · {minutes} دقيقة",
-  "@servicesCount": { "placeholders": { "count": { "type": "int" }, "minutes": { "type": "int" } } },
+  "@servicesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "total": "المجموع: {amount}",
-  "@total": { "placeholders": { "amount": { "type": "String" } } },
+  "@total": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "totalPlus": "{amount} +",
-  "@totalPlus": { "placeholders": { "amount": { "type": "String" } } },
-
+  "@totalPlus": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "closed": "مغلق",
   "noSlots": "لا توجد أوقات متاحة في هذا اليوم.",
   "morning": "صباحاً",
   "evening": "مساءً",
   "selectedTime": "الوقت المختار",
   "chooseTime": "اختر وقتاً",
-
   "reviewAppointment": "الموعد",
   "reviewServices": "الخدمات",
   "reviewDuration": "المدة",
@@ -85,27 +140,57 @@
   "nameRequired": "اكتب اسمك",
   "phoneInvalid": "اكتب رقم هاتف عراقي صحيح يبدأ بـ 07",
   "holdInfo": "يُحجز هذا الوقت لك مؤقتاً، والمحل يرد خلال {deadline}. الإلغاء مجاني حتى {freeCancel} قبل الموعد.",
-  "@holdInfo": { "placeholders": { "deadline": { "type": "String" }, "freeCancel": { "type": "String" } } },
+  "@holdInfo": {
+    "placeholders": {
+      "deadline": {
+        "type": "String"
+      },
+      "freeCancel": {
+        "type": "String"
+      }
+    }
+  },
   "instantInfo": "هذا المحل يقبل الحجز الفوري، فيتأكد موعدك مباشرة. الإلغاء مجاني حتى {freeCancel} قبل الموعد.",
-  "@instantInfo": { "placeholders": { "freeCancel": { "type": "String" } } },
+  "@instantInfo": {
+    "placeholders": {
+      "freeCancel": {
+        "type": "String"
+      }
+    }
+  },
   "sendRequest": "إرسال طلب الحجز",
   "bookingSent": "تم إرسال طلبك",
   "bookingConfirmedNow": "تم تأكيد حجزك",
-
   "durationMinutes": "{n, plural, =1{دقيقة} =2{دقيقتين} few{{n} دقائق} other{{n} دقيقة}}",
-  "@durationMinutes": { "placeholders": { "n": { "type": "int" } } },
+  "@durationMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "durationHours": "{n, plural, =1{ساعة واحدة} =2{ساعتين} few{{n} ساعات} other{{n} ساعة}}",
-  "@durationHours": { "placeholders": { "n": { "type": "int" } } },
+  "@durationHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "durationDay": "يوم",
-
   "pendingTab": "قيد الانتظار",
   "confirmedTab": "مؤكدة",
   "pastTab": "سابقة",
   "noBookings": "لا توجد حجوزات هنا.",
   "lastUpdated": "آخر تحديث: {time}",
-  "@lastUpdated": { "placeholders": { "time": { "type": "String" } } },
+  "@lastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "notRegisteredYet": "ستظهر حجوزاتك هنا بعد أول حجز.",
-
   "statusPendingShop": "بانتظار رد المحل",
   "statusPendingCustomer": "المحل اقترح وقتاً آخر",
   "statusConfirmed": "مؤكد",
@@ -115,14 +200,25 @@
   "statusExpired": "انتهت المهلة",
   "statusCompleted": "مكتمل",
   "statusNoShow": "لم تحضر",
-
   "deadlineIn": "تنتهي مهلة الرد خلال",
   "shopRespondsIn": "المحل يرد خلال",
   "reasonLabel": "السبب: {reason}",
-  "@reasonLabel": { "placeholders": { "reason": { "type": "String" } } },
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "expiredHint": "لم يرد المحل في الوقت المحدد، فأُلغي الطلب. جرّب وقتاً آخر.",
   "shopMessage": "رسالة المحل: {message}",
-  "@shopMessage": { "placeholders": { "message": { "type": "String" } } },
+  "@shopMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "originalRequest": "طلبك الأصلي:",
   "chooseProposed": "اختر أحد الأوقات المقترحة",
   "noLongerAvailable": "لم يعد متاحاً",
@@ -133,14 +229,25 @@
   "cancelConfirmTitle": "إلغاء الحجز؟",
   "cancelFree": "الإلغاء الآن مجاني.",
   "cancelLateWarning": "بقي أقل من {freeCancel} على الموعد، فسيُسجَّل هذا الإلغاء في سجل التزامك.",
-  "@cancelLateWarning": { "placeholders": { "freeCancel": { "type": "String" } } },
+  "@cancelLateWarning": {
+    "placeholders": {
+      "freeCancel": {
+        "type": "String"
+      }
+    }
+  },
   "confirmCancel": "نعم، ألغِ الحجز",
   "keepBooking": "لا، أبقِه",
   "declineConfirmTitle": "رفض الأوقات المقترحة؟",
   "declineConfirmBody": "سيُلغى الحجز، ولن يُسجَّل عليك شيء.",
   "yourNote": "ملاحظتك: {note}",
-  "@yourNote": { "placeholders": { "note": { "type": "String" } } },
-
+  "@yourNote": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
   "errGeneric": "حدث خطأ، حاول مرة أخرى.",
   "errNetwork": "تعذّر الاتصال. تأكد من الإنترنت وحاول مرة أخرى.",
   "errSlotUnavailable": "هذا الوقت لم يعد متاحاً، اختر وقتاً آخر.",
@@ -152,7 +259,6 @@
   "errOwnShop": "لا يمكنك الحجز في محلك.",
   "errNotAllowed": "لا يمكن إتمام الحجز من هذا الحساب.",
   "errInvalidPhone": "رقم الهاتف غير صحيح.",
-
   "month1": "كانون الثاني",
   "month2": "شباط",
   "month3": "آذار",
@@ -175,5 +281,261 @@
   "am": "ص",
   "pm": "م",
   "today": "اليوم",
-  "tomorrow": "غداً"
+  "tomorrow": "غداً",
+  "tabMyShop": "محلي",
+  "openShopTitle": "افتح محلك على حجز",
+  "openShopBody": "سجّل محلك ليحجز الزبائن مواعيدهم مباشرة من التطبيق. نراجع الطلب ثم نفعّل المحل.",
+  "startApplication": "ابدأ طلب فتح المحل",
+  "continueApplication": "أكمل طلب فتح المحل",
+  "registerTitle": "بياناتك",
+  "registerBody": "اكتب اسمك ورقم هاتفك. الرقم نفسه يُستخدم للحجز ولإدارة محلك.",
+  "continueLabel": "متابعة",
+  "underReviewTitle": "طلبك قيد المراجعة",
+  "underReviewBody": "سنراجع بيانات محلك ونفعّله قريباً. يمكنك تعديل الخدمات والأوقات في هذه الأثناء.",
+  "rejectedTitle": "لم يُقبل الطلب",
+  "rejectedBody": "عدّل البيانات المطلوبة ثم أعد إرسال الطلب.",
+  "reviewNote": "ملاحظة الإدارة: {note}",
+  "@reviewNote": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "suspendedTitle": "المحل موقوف",
+  "suspendedBody": "تواصل مع إدارة حجز لمعرفة السبب.",
+  "editApplication": "تعديل البيانات",
+  "wizardStep": "طلب فتح محل · الخطوة {n} من 5",
+  "@wizardStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "stepDetails": "البيانات",
+  "stepAddress": "العنوان",
+  "stepPhotos": "الصور",
+  "stepShopServices": "الخدمات",
+  "stepHours": "الأوقات",
+  "detailsTitle": "بيانات المحل",
+  "addressTitle": "العنوان والموقع",
+  "photosTitle": "صور المحل",
+  "servicesTitle": "الخدمات والأسعار",
+  "hoursTitle": "أوقات العمل",
+  "shopNameLabel": "اسم المحل",
+  "businessTypeLabel": "نوع العمل",
+  "descriptionLabel": "وصف قصير (اختياري)",
+  "shopPhoneLabel": "رقم هاتف المحل",
+  "districtLabel": "القضاء",
+  "areaLabel": "المنطقة",
+  "missingArea": "لم تجد منطقتك؟ اطلب إضافتها",
+  "areaRequestTitle": "طلب إضافة منطقة",
+  "areaRequestHint": "اسم المنطقة",
+  "areaRequested": "أرسلنا طلبك، وسنضيف المنطقة قريباً.",
+  "sendLabel": "إرسال",
+  "streetLabel": "الشارع (اختياري)",
+  "streetHint": "رقم أو اسم الشارع",
+  "landmarkLabel": "أقرب نقطة دالة (اختياري)",
+  "landmarkHint": "مثلاً: مقابل مدرسة كذا",
+  "mapLabel": "الموقع على الخريطة",
+  "mapHint": "حرّك الخريطة حتى يقع الدبوس على المحل",
+  "iAmAtShop": "أنا في المحل الآن",
+  "locationFailed": "تعذّر تحديد موقعك. حرّك الخريطة يدوياً.",
+  "fieldRequired": "هذا الحقل مطلوب",
+  "photosHint": "أضف صوراً واضحة للمحل من الداخل والخارج. هذه الخطوة اختيارية.",
+  "addPhoto": "إضافة صورة",
+  "fromCamera": "الكاميرا",
+  "fromGallery": "المعرض",
+  "deletePhoto": "حذف الصورة",
+  "addService": "إضافة خدمة",
+  "editService": "تعديل الخدمة",
+  "serviceName": "اسم الخدمة",
+  "serviceDuration": "المدة بالدقائق",
+  "priceTypeLabel": "طريقة التسعير",
+  "priceFixedOption": "سعر ثابت",
+  "priceStartsFromOption": "يبدأ من",
+  "priceAfterInspectionOption": "بعد المعاينة",
+  "priceAmount": "السعر بالدينار",
+  "saveLabel": "حفظ",
+  "serviceHidden": "مخفية عن الزبائن",
+  "hideService": "إخفاء الخدمة",
+  "showService": "إظهار الخدمة",
+  "noServicesYet": "لم تضف أي خدمة بعد.",
+  "durationInvalid": "المدة من 5 إلى 480 دقيقة، ومن مضاعفات 5",
+  "hoursHint": "أضف أكثر من فترة في اليوم، والفراغ بينها يصبح استراحة تلقائياً.",
+  "addPeriod": "إضافة فترة",
+  "periodRange": "{from} إلى {to}",
+  "@periodRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "nextDay": "(اليوم التالي)",
+  "tempSchedules": "جداول مؤقتة",
+  "newTempSchedule": "جدول جديد",
+  "tempScheduleName": "اسم الجدول، مثل رمضان",
+  "fromDateLabel": "من تاريخ",
+  "toDateLabel": "إلى تاريخ",
+  "allDays": "كل الأيام",
+  "tempScheduleHint": "بعد انتهاء الجدول المؤقت يعود الجدول الأسبوعي تلقائياً.",
+  "tempScheduleRange": "من {from} إلى {to}",
+  "@tempScheduleRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteLabel": "حذف",
+  "emergencyClosure": "إغلاق طارئ",
+  "closureDay": "اليوم",
+  "closureAllDay": "اليوم كله",
+  "closureReasonLabel": "السبب (اختياري)",
+  "closureInfo": "الحجوزات داخل الإغلاق تُعرض على أصحابها بأقرب أوقات بديلة، وإذا لم يوجد بديل تُلغى.",
+  "closeLabel": "إغلاق",
+  "closureResult": "نُقلت {moved} حجوزات إلى أوقات بديلة، وأُلغيت {cancelled}.",
+  "@closureResult": {
+    "placeholders": {
+      "moved": {
+        "type": "int"
+      },
+      "cancelled": {
+        "type": "int"
+      }
+    }
+  },
+  "upcomingClosures": "إغلاقات قادمة",
+  "savedLabel": "تم الحفظ",
+  "submitTitle": "إرسال الطلب للمراجعة",
+  "missingItems": "ينقص: {items}",
+  "@missingItems": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "missingBusinessType": "نوع العمل",
+  "missingAddress": "العنوان",
+  "missingLocation": "الموقع على الخريطة",
+  "missingServices": "خدمة واحدة على الأقل",
+  "missingHours": "أوقات العمل",
+  "submitForReview": "إرسال للمراجعة",
+  "submittedForReview": "أُرسل طلبك للمراجعة",
+  "readyToSubmit": "كل البيانات مكتملة. أرسل الطلب لتراجعه الإدارة.",
+  "pendingRequests": "طلبات تنتظر ردك",
+  "todayBookings": "حجوزات اليوم",
+  "bookingsCount": "{count, plural, =0{لا حجوزات} =1{حجز واحد} =2{حجزان} few{{count} حجوزات} many{{count} حجزاً} other{{count} حجز}}",
+  "@bookingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "acceptLabel": "قبول",
+  "detailsLabel": "التفاصيل",
+  "noPending": "لا توجد طلبات جديدة.",
+  "noBookingsDay": "لا حجوزات في هذا اليوم.",
+  "upcomingLabel": "التالي",
+  "newDeviceBadge": "جهاز جديد",
+  "menuCalendar": "التقويم",
+  "menuServices": "الخدمات",
+  "menuHours": "الأوقات",
+  "menuSettings": "الإعدادات",
+  "bookingAccepted": "تم قبول الحجز",
+  "newRequestTitle": "طلب حجز جديد",
+  "ownerBookingTitle": "تفاصيل الحجز",
+  "autoCancelIn": "يُلغى الطلب تلقائياً إذا لم ترد خلال",
+  "statAttended": "حضر",
+  "statLateCancel": "ألغى متأخراً",
+  "statNoShow": "لم يحضر",
+  "newDeviceTitle": "رقم مستخدم من جهاز جديد",
+  "newDeviceBody": "اتصل بالزبون للتأكد أنه صاحب الرقم قبل القبول.",
+  "verifiedByCall": "تم التأكد بالاتصال",
+  "customerNote": "ملاحظة الزبون",
+  "acceptBooking": "قبول الحجز",
+  "proposeAlternatives": "اقتراح أوقات بديلة",
+  "rejectWithReason": "رفض مع سبب",
+  "rejectTitle": "سبب الرفض",
+  "cancelByShopTitle": "سبب الإلغاء",
+  "cancelInsteadHint": "بدل الإلغاء، يمكنك اقتراح وقت آخر على الزبون.",
+  "proposeInstead": "اقتراح وقت آخر",
+  "cancelAnyway": "إلغاء الحجز",
+  "markNoShow": "لم يحضر",
+  "markCompleted": "اكتمل",
+  "awaitingCustomer": "بانتظار رد الزبون على الأوقات المقترحة",
+  "proposedList": "الأوقات المقترحة",
+  "phoneHidden": "يظهر رقم الزبون فقط ما دام الحجز قائماً.",
+  "reasonBusy": "مشغول في هذا الوقت",
+  "reasonServiceUnavailable": "الخدمة غير متوفرة حالياً",
+  "reasonClosed": "المحل مغلق في هذا الوقت",
+  "reasonEmergency": "ظرف طارئ",
+  "reasonEmergencyClosure": "إغلاق طارئ للمحل",
+  "reasonOther": "سبب آخر",
+  "chooseUpTo3": "اختر حتى 3 أوقات",
+  "selectedCount": "{n} من 3",
+  "@selectedCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "slotsFitDuration": "أوقات متاحة تتسع لمدة {minutes} دقيقة",
+  "@slotsFitDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "selectedTimes": "الأوقات المختارة",
+  "messageToCustomer": "رسالة للزبون (اختياري)",
+  "messageHint": "مثلاً: عندي موعد في هذا الوقت",
+  "proposalNotHeld": "الأوقات المقترحة لا تُحجز للزبون، ومن يسبق إليها يأخذها.",
+  "sendProposal": "إرسال الاقتراح",
+  "removeLabel": "إزالة",
+  "requestedLabel": "طلب:",
+  "proposalSent": "أُرسل الاقتراح للزبون",
+  "settingsTitle": "الإعدادات",
+  "deadlineModeLabel": "مهلة الرد على الطلبات",
+  "modeFast": "سريع",
+  "modeNormal": "عادي",
+  "modeFlexible": "مرن",
+  "modeHint": "كلما اقترب الموعد قصرت المهلة. «مرن» يناسب الورش والعيادات.",
+  "freeCancelLabel": "الإلغاء المجاني للزبون حتى قبل الموعد بـ",
+  "instantBookingLabel": "الحجز الفوري",
+  "instantBookingHint": "يُحجز أي وقت متاح مباشرة دون موافقتك.",
+  "bufferLabel": "وقت فاصل بين المواعيد",
+  "noBuffer": "بدون",
+  "minLeadLabel": "أقل وقت قبل الحجز",
+  "editShopDetails": "تعديل بيانات المحل وعنوانه وصوره",
+  "calendarTitle": "التقويم",
+  "errIncompleteShop": "أكمل البيانات الناقصة أولاً.",
+  "errOverlappingPeriods": "توجد فترتان متداخلتان في الأوقات.",
+  "errInvalidPeriod": "وقت غير صحيح.",
+  "errInvalidService": "تحقق من اسم الخدمة ومدتها وسعرها.",
+  "errTempOverlap": "يوجد جدول مؤقت آخر في هذه الفترة.",
+  "errInvalidPhoto": "الصورة غير مدعومة أو كبيرة جداً.",
+  "errTooManyPhotos": "وصلت للحد الأقصى من الصور.",
+  "errTooEarly": "لم يحن وقت الموعد بعد.",
+  "errShopSuspended": "المحل موقوف حالياً.",
+  "errInvalidClosure": "تحقق من وقت الإغلاق.",
+  "ownerStatusPendingShop": "بانتظار ردك",
+  "ownerStatusPendingCustomer": "بانتظار رد الزبون",
+  "ownerStatusCancelledByCustomer": "ألغاه الزبون",
+  "ownerStatusCancelledByShop": "ألغيته",
+  "ownerStatusNoShow": "لم يحضر",
+  "untrustedDeviceTitle": "هذا الجهاز غير موثّق لإدارة المحل",
+  "untrustedDeviceBody": "إدارة المحل متاحة فقط من الجهاز الذي فتحت منه المحل. إذا غيّرت هاتفك، تواصل مع إدارة حجز لتوثيق الجهاز الجديد."
 }

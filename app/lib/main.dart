@@ -5,6 +5,7 @@ import 'api/api_client.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/my_bookings_screen.dart';
+import 'screens/owner/owner_tab.dart';
 import 'screens/update_required_screen.dart';
 import 'state/app_scope.dart';
 import 'state/session.dart';
@@ -60,6 +61,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _tab = 0;
   final _bookingsKey = GlobalKey<MyBookingsScreenState>();
+  final _ownerKey = GlobalKey<OwnerTabState>();
 
   @override
   Widget build(BuildContext context) {
@@ -67,17 +69,19 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: IndexedStack(
         index: _tab,
-        children: [const HomeScreen(), MyBookingsScreen(key: _bookingsKey)],
+        children: [const HomeScreen(), MyBookingsScreen(key: _bookingsKey), OwnerTab(key: _ownerKey)],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) {
           setState(() => _tab = i);
           if (i == 1) _bookingsKey.currentState?.refresh();
+          if (i == 2) _ownerKey.currentState?.refresh();
         },
         destinations: [
           NavigationDestination(icon: const Icon(Icons.storefront_outlined), label: l.tabHome),
           NavigationDestination(icon: const Icon(Icons.event_note_outlined), label: l.tabMyBookings),
+          NavigationDestination(icon: const Icon(Icons.store_mall_directory_outlined), label: l.tabMyShop),
         ],
       ),
     );

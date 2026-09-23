@@ -15,6 +15,16 @@ String errorMessage(AppLocalizations l, Object error) {
     'own_shop' => l.errOwnShop,
     'not_allowed' => l.errNotAllowed,
     'invalid_phone' => l.errInvalidPhone,
+    'incomplete_shop' => l.errIncompleteShop,
+    'overlapping_periods' => l.errOverlappingPeriods,
+    'invalid_period' => l.errInvalidPeriod,
+    'invalid_service' => l.errInvalidService,
+    'temporary_schedule_overlap' => l.errTempOverlap,
+    'invalid_photo' => l.errInvalidPhoto,
+    'too_many_photos' => l.errTooManyPhotos,
+    'too_early' => l.errTooEarly,
+    'shop_suspended' => l.errShopSuspended,
+    'invalid_closure' => l.errInvalidClosure,
     _ => l.errGeneric,
   };
 }

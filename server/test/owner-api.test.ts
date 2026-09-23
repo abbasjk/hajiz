@@ -228,6 +228,14 @@ describe('owner dashboard and actions', () => {
     expect((await call('GET', '/v1/me', other.token)).json().trustedDevice).toBe(true);
   });
 
+  it('refuses shop management from a second device with the same number', async () => {
+    const intruder = await register('07822222222', 'another-phone');
+    const res = await call('GET', '/v1/owner/dashboard', intruder.token);
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error.code).toBe('untrusted_device');
+    expect((await call('PUT', '/v1/owner/shop', intruder.token, { name: 'مخترق' })).statusCode).toBe(403);
+  });
+
   it('does not let another owner see or act on the booking', async () => {
     const stranger = await approvedShop('07844444444');
     const [p] = (await call('GET', '/v1/owner/dashboard', owner.token)).json().pending;

@@ -78,6 +78,11 @@ const datetime = z.iso.datetime({ offset: true }).transform((s) => new Date(s));
 
 export async function ownerRoutes(app: FastifyInstance) {
   app.addHook('onRequest', requireAuth(app.pool));
+  // لا رمز تحقق: من يعرف رقم صاحب المحل يستطيع تسجيله على جهاز آخر،
+  // فإدارة المحل من الجهاز الموثوق فقط (أول جهاز للرقم أو جهاز أكدته الإدارة)
+  app.addHook('preHandler', async (request) => {
+    if (!authOf(request).trusted) throw new AppError(403, 'untrusted_device');
+  });
   const owner = (request: FastifyRequest) => authOf(request).userId;
 
   const shopView = async (ownerId: number) => {

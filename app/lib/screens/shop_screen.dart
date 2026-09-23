@@ -87,7 +87,7 @@ class _ShopScreenState extends State<ShopScreen> {
             child: PageView(
               children: [
                 for (final url in shop.photos)
-                  Image.network(url, fit: BoxFit.cover,
+                  Image.network(AppScope.of(context).client.absoluteUrl(url), fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(color: AppColors.primarySoft)),
               ],
             ),

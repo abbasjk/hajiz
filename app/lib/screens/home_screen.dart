@@ -270,7 +270,7 @@ class ShopCard extends StatelessWidget {
                 decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
                 clipBehavior: Clip.antiAlias,
                 child: shop.coverPhoto != null
-                    ? Image.network(shop.coverPhoto!, fit: BoxFit.cover,
+                    ? Image.network(AppScope.of(context).client.absoluteUrl(shop.coverPhoto!), fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const Icon(Icons.storefront, color: AppColors.primary))
                     : const Icon(Icons.storefront, color: AppColors.primary),
               ),
