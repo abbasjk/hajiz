@@ -39,7 +39,8 @@ class OwnerTabState extends State<OwnerTab> {
     final services = AppScope.of(context);
     if (!services.session.isRegistered) return setState(() {});
     try {
-      final results = await Future.wait([services.owner.shop(), services.config()]);
+      // الإعدادات والقوائم تُجلب من جديد: المناطق المضافة حديثاً تظهر دون إعادة تشغيل التطبيق
+      final results = await Future.wait([services.owner.shop(), services.config(refresh: true)]);
       if (!mounted) return;
       setState(() {
         _state = results[0] as OwnerShopState;

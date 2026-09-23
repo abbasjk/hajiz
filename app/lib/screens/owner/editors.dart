@@ -254,6 +254,11 @@ class AddressEditorState extends StepEditorState<AddressEditor> {
             onChanged: (v) => setState(() => _areaId = v),
             validator: (v) => v == null ? l.fieldRequired : null,
           ),
+          if (_districtId != null && areas.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(l.noAreasYet, style: const TextStyle(fontSize: 13, color: AppColors.warning)),
+            ),
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: TextButton(onPressed: _districtId == null ? null : _requestArea, child: Text(l.missingArea)),
