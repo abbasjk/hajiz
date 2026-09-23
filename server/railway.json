@@ -4,7 +4,6 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "preDeployCommand": ["npm run migrate"],
     "startCommand": "npm start",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
