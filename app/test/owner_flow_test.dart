@@ -96,7 +96,7 @@ Future<FakeOwnerServer> openMyShop(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 2.75;
   addTearDown(tester.view.reset);
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'appMode': 'shop'});
   final server = FakeOwnerServer();
   final session = await Session.load();
   await session.saveRegistration('tok', const RegisteredUser(1, 'علي', '07800000000'));
@@ -106,9 +106,8 @@ Future<FakeOwnerServer> openMyShop(WidgetTester tester) async {
     locate: () async => null,
   );
   await tester.pumpWidget(HajizApp(services: services));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('محلي'));
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 300));
   return server;
 }
@@ -176,12 +175,19 @@ void main() {
     expect(find.text('بانتظار رد الزبون على الأوقات المقترحة'), findsOneWidget);
   });
 
-  testWidgets('management screens open and save', (tester) async {
+  testWidgets('shop mode has its own tabs and switches back to customer mode', (tester) async {
     final server = await openMyShop(tester);
+    expect(find.text('الطلبات'), findsOneWidget);
+    expect(find.text('حجوزاتي'), findsNothing); // لا شيء من واجهة الزبون
 
-    await tester.tap(find.text('الأوقات'));
+    await tester.tap(find.text('الإعدادات'));
     await tester.pumpAndSettle();
-    expect(find.text('أوقات العمل'), findsOneWidget);
+    await tester.tap(find.text('مرن'));
+    await tester.pumpAndSettle();
+    expect(server.settingsBodies.last, {'deadlineMode': 'flexible'});
+
+    await tester.tap(find.text('أوقات العمل'));
+    await tester.pumpAndSettle();
     expect(find.text('إغلاق طارئ'), findsOneWidget);
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
@@ -194,17 +200,26 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('الإعدادات'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('مرن'));
-    await tester.pumpAndSettle();
-    expect(server.settingsBodies.last, {'deadlineMode': 'flexible'});
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.text('التقويم'));
     await tester.pumpAndSettle();
     expect(find.text('لا حجوزات'), findsOneWidget);
+
+    await tester.tap(find.text('الإعدادات'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('التبديل إلى وضع الزبون'), 200);
+    await tester.tap(find.text('التبديل إلى وضع الزبون'));
+    await tester.pumpAndSettle();
+    expect(find.text('حجوزاتي'), findsOneWidget);
+    expect(find.text('الطلبات'), findsNothing);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('appMode'), 'customer');
+
+    // من "حسابي" يعود إلى وضع المحل
+    await tester.tap(find.text('حسابي'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('التبديل إلى وضع المحل'));
+    await tester.pumpAndSettle();
+    expect(find.text('الطلبات'), findsOneWidget);
   });
 
   testWidgets('a second device with the owner number cannot manage the shop', (tester) async {
@@ -218,7 +233,10 @@ void main() {
       services: AppServices(client: ApiClient(client: client, baseUrl: 'https://api.test'), session: session, locate: () async => null),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محلي'));
+    await tester.tap(find.text('حسابي'));
+    await tester.pumpAndSettle();
+    expect(find.text('هل تملك محلاً؟'), findsOneWidget);
+    await tester.tap(find.text('ابدأ طلب فتح المحل'));
     await tester.pumpAndSettle();
     expect(find.text('هذا الجهاز غير موثّق لإدارة المحل'), findsOneWidget);
   });
@@ -235,7 +253,10 @@ void main() {
       services: AppServices(client: ApiClient(client: MockClient(server.handle), baseUrl: 'https://api.test'), session: session, locate: () async => null),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محلي'));
+    await tester.tap(find.text('حسابي'));
+    await tester.pumpAndSettle();
+    expect(find.text('طلبك قيد المراجعة'), findsOneWidget);
+    await tester.tap(find.text('عرض'));
     await tester.pumpAndSettle();
     expect(find.text('طلبك قيد المراجعة'), findsOneWidget);
     expect(find.text('الخدمات'), findsOneWidget);

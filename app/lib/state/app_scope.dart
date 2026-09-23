@@ -8,6 +8,9 @@ import '../api/models.dart';
 import 'session.dart';
 
 /// الخدمات المشتركة بين الشاشات.
+/// وضع الزبون للجميع؛ وضع المحل لصاحب محل مقبول فقط، ويبدّل بينهما من الواجهة
+enum AppMode { customer, shop }
+
 typedef Locator = Future<({double lat, double lng})?> Function();
 
 class AppServices {
@@ -20,6 +23,13 @@ class AppServices {
 
   /// موقع الزبون لترتيب المحلات حسب القرب؛ null إذا رُفض أو تعذّر
   final Locator locate;
+
+  late final mode = ValueNotifier<AppMode>(AppMode.customer);
+
+  Future<void> switchMode(AppMode m) async {
+    mode.value = m;
+    await session.saveAppMode(m.name);
+  }
 
   final ApiClient client;
   final HajizApi api;

@@ -66,7 +66,7 @@ class OwnerTabState extends State<OwnerTab> {
     final registered = AppScope.of(context).session.isRegistered;
     if (!registered) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.tabMyShop)),
+        appBar: AppBar(title: Text(l.yourShop)),
         body: ListView(padding: const EdgeInsets.all(16), children: [
           _intro(l),
           const SizedBox(height: 16),
@@ -77,7 +77,7 @@ class OwnerTabState extends State<OwnerTab> {
     final error = _error;
     if (error is ApiException && error.code == 'untrusted_device') {
       return Scaffold(
-        appBar: AppBar(title: Text(l.tabMyShop)),
+        appBar: AppBar(title: Text(l.yourShop)),
         body: ListView(padding: const EdgeInsets.all(16), children: [
           Card(
             child: Padding(
@@ -96,14 +96,11 @@ class OwnerTabState extends State<OwnerTab> {
     }
     final state = _state;
     if (state == null) {
-      return Scaffold(appBar: AppBar(title: Text(l.tabMyShop)), body: LoadState(error: _error, onRetry: refresh));
+      return Scaffold(appBar: AppBar(title: Text(l.yourShop)), body: LoadState(error: _error, onRetry: refresh));
     }
     final shop = state.shop;
-    if (shop != null && shop.status == ShopStatus.approved) {
-      return OwnerDashboard(shop: shop, config: _config!, onShopChanged: (s) => setState(() => _state = s));
-    }
     return Scaffold(
-      appBar: AppBar(title: Text(shop?.name ?? l.tabMyShop)),
+      appBar: AppBar(title: Text(shop?.name ?? l.yourShop)),
       body: RefreshIndicator(
         onRefresh: refresh,
         child: ListView(padding: const EdgeInsets.all(16), children: [
@@ -115,7 +112,9 @@ class OwnerTabState extends State<OwnerTab> {
               onPressed: _openWizard,
               child: Text(shop == null ? l.startApplication : l.continueApplication),
             ),
-          ] else
+          ] else if (shop.status == ShopStatus.approved)
+            _approvedCard(l)
+          else
             _statusCard(l, shop),
           if (shop != null && shop.status == ShopStatus.underReview) ...[
             const SizedBox(height: 16),
@@ -125,6 +124,27 @@ class OwnerTabState extends State<OwnerTab> {
       ),
     );
   }
+
+  Widget _approvedCard(AppLocalizations l) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Row(children: [Icon(Icons.check_circle_outline, color: AppColors.primary)]),
+            const SizedBox(height: 8),
+            Text(l.shopApprovedTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              onPressed: () {
+                Navigator.of(context).popUntil((r) => r.isFirst);
+                AppScope.of(context).switchMode(AppMode.shop);
+              },
+              icon: const Icon(Icons.swap_horiz),
+              label: Text(l.switchToShop),
+            ),
+          ]),
+        ),
+      );
 
   Widget _intro(AppLocalizations l) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Icon(Icons.storefront_outlined, size: 48, color: AppColors.primary),
@@ -237,6 +257,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 64,
+        actions: [
+          TextButton.icon(
+            onPressed: () => AppScope.of(context).switchMode(AppMode.customer),
+            icon: const Icon(Icons.swap_horiz),
+            label: Text(l.customerModeShort),
+          ),
+        ],
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(formatDayLong(l, now), style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w400)),
           Text(widget.shop.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
@@ -245,8 +272,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: [
-          ManageMenu(shop: widget.shop, config: widget.config, onShopChanged: widget.onShopChanged),
-          const SizedBox(height: 16),
           if (_pending == null)
             SizedBox(height: 200, child: LoadState(error: _error, onRetry: _load))
           else ...[

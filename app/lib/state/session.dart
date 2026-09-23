@@ -32,6 +32,10 @@ class Session {
 
   bool get isRegistered => token != null;
 
+  /// آخر وضع استُخدم: 'customer' أو 'shop'، يفتح التطبيق عليه
+  String get appMode => _prefs.getString('appMode') ?? 'customer';
+  Future<void> saveAppMode(String mode) => _prefs.setString('appMode', mode);
+
   Future<void> saveRegistration(String token, RegisteredUser user) async {
     await _prefs.setString('token', token);
     await _prefs.setString('user', jsonEncode(user.toJson()));
@@ -41,6 +45,7 @@ class Session {
     await _prefs.remove('token');
     await _prefs.remove('user');
     await _prefs.remove('bookingsCache');
+    await _prefs.remove('appMode');
   }
 
   /// حجوزاتي تبقى ظاهرة من آخر تحميل، مع وقت آخر تحديث

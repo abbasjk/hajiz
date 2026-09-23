@@ -163,7 +163,7 @@ void main() {
     final post = server.requests.firstWhere((r) => r.url.path == '/v1/bookings');
     expect(post.headers['idempotency-key'], isNotEmpty);
     expect(post.headers['authorization'], 'Bearer tok');
-    expect(post.headers['x-app-version'], '0.2.0');
+    expect(post.headers['x-app-version'], '0.3.0');
     expect(services.session.isRegistered, isTrue);
 
     // تفاصيل الطلب مع العداد التنازلي

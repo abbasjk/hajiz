@@ -297,7 +297,7 @@ class ShopCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_left, color: AppColors.textMuted),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
             ],
           ),
         ),

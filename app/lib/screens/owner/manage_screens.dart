@@ -61,16 +61,26 @@ class ManageMenu extends StatelessWidget {
 }
 
 /// ينتظر تعديلات الشاشة ويعيد آخر حالة للمحل عند الرجوع
+/// في وضع المحل تكون الشاشة تبويباً (embedded) وتُبلغ التغيير فوراً عبر onChanged
 mixin _ReturnsShop<T extends StatefulWidget> on State<T> {
   OwnerShopState? latest;
+  bool get embedded => false;
+  ValueChanged<OwnerShopState>? get onChanged => null;
 
-  Widget returning(Widget child) => PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) Navigator.of(context).pop(latest);
-        },
-        child: child,
-      );
+  void report(OwnerShopState s) {
+    latest = s;
+    onChanged?.call(s);
+  }
+
+  Widget returning(Widget child) => embedded
+      ? child
+      : PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) Navigator.of(context).pop(latest);
+          },
+          child: child,
+        );
 }
 
 // ============================================================
@@ -150,8 +160,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 // ============================================================
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({super.key, required this.shop});
+  const ServicesScreen({super.key, required this.shop, this.embedded = false, this.onChanged});
   final OwnerShop shop;
+  final bool embedded;
+  final ValueChanged<OwnerShopState>? onChanged;
 
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();
@@ -159,14 +171,21 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen> with _ReturnsShop {
   late OwnerShop _shop = widget.shop;
+  @override
+  bool get embedded => widget.embedded;
+  @override
+  ValueChanged<OwnerShopState>? get onChanged => widget.onChanged;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return returning(Scaffold(
-      appBar: AppBar(title: Text(l.servicesTitle)),
+      appBar: AppBar(title: Text(l.servicesTitle), automaticallyImplyLeading: !widget.embedded),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        ServicesEditor(shop: _shop, onSaved: (s) => setState(() => (latest = s, _shop = s.shop!))),
+        ServicesEditor(shop: _shop, onSaved: (s) => setState(() {
+          report(s);
+          _shop = s.shop!;
+        })),
       ]),
     ));
   }
@@ -189,7 +208,10 @@ class _HoursScreenState extends State<HoursScreen> with _ReturnsShop {
   final _hours = GlobalKey<HoursEditorState>();
   bool _saving = false;
 
-  void _changed(OwnerShopState s) => setState(() => (latest = s, _shop = s.shop!));
+  void _changed(OwnerShopState s) => setState(() {
+        report(s);
+        _shop = s.shop!;
+      });
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context);
@@ -473,9 +495,11 @@ class _ClosureDialogState extends State<_ClosureDialog> {
 // ============================================================
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.shop, required this.config});
+  const SettingsScreen({super.key, required this.shop, required this.config, this.embedded = false, this.onChanged});
   final OwnerShop shop;
   final ServerConfig config;
+  final bool embedded;
+  final ValueChanged<OwnerShopState>? onChanged;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -483,11 +507,20 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
   late OwnerShop _shop = widget.shop;
+  @override
+  bool get embedded => widget.embedded;
+  @override
+  ValueChanged<OwnerShopState>? get onChanged => widget.onChanged;
+
+  void _set(OwnerShopState s) => setState(() {
+        report(s);
+        _shop = s.shop!;
+      });
 
   Future<void> _update(Map<String, Object> change) async {
     final owner = AppScope.of(context).owner;
     final s = await runSave(context, () => owner.updateSettings(change));
-    if (s != null) setState(() => (latest = s, _shop = s.shop!));
+    if (s != null) _set(s);
   }
 
   Widget _choice<T>(String title, T value, Map<T, String> options, ValueChanged<T> onChanged, {String? hint}) {
@@ -522,8 +555,21 @@ class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
     final l = AppLocalizations.of(context);
     String hours(int h) => formatDuration(l, h * 60);
     return returning(Scaffold(
-      appBar: AppBar(title: Text(l.settingsTitle)),
+      appBar: AppBar(title: Text(l.settingsTitle), automaticallyImplyLeading: !widget.embedded),
       body: ListView(padding: const EdgeInsets.all(16), children: [
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.schedule, color: AppColors.primary),
+            title: Text(l.hoursTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text('${l.tempSchedules} · ${l.emergencyClosure}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final r = await Navigator.of(context).push<OwnerShopState>(MaterialPageRoute(builder: (_) => HoursScreen(shop: _shop)));
+              if (r != null) _set(r);
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
         _choice(l.deadlineModeLabel, _shop.deadlineMode,
             {'fast': l.modeFast, 'normal': l.modeNormal, 'flexible': l.modeFlexible},
             (v) => _update({'deadlineMode': v}), hint: l.modeHint),
@@ -557,9 +603,20 @@ class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
             final result = await Navigator.of(context).push<OwnerShopState>(
               MaterialPageRoute(builder: (_) => SetupWizard(initial: state, config: widget.config, editOnly: true)),
             );
-            if (result != null) setState(() => (latest = result, _shop = result.shop!));
+            if (result != null) _set(result);
           },
         ),
+        if (widget.embedded) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.swap_horiz, color: AppColors.primary),
+              title: Text(l.switchToCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(l.customerModeHint),
+              onTap: () => AppScope.of(context).switchMode(AppMode.customer),
+            ),
+          ),
+        ],
       ]),
     ));
   }
