@@ -7,6 +7,7 @@ import { slotRoutes } from './routes/slots.js';
 import { authRoutes } from './routes/auth.js';
 import { bookingRoutes } from './routes/bookings.js';
 import { shopRoutes } from './routes/shops.js';
+import { ownerRoutes, photoRoutes } from './routes/owner.js';
 import { versionCheck } from './lib/version-check.js';
 
 export interface AppOptions {
@@ -41,6 +42,7 @@ export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise
   });
 
   await app.register(healthRoutes);
+  await app.register(photoRoutes);
   // كل مسارات التطبيق تحت /v1 وتمر بفحص الإصدار
   await app.register(
     async (v1) => {
@@ -50,6 +52,7 @@ export async function buildApp({ pool, logLevel = 'info' }: AppOptions): Promise
       await v1.register(shopRoutes);
       await v1.register(authRoutes);
       await v1.register(bookingRoutes);
+      await v1.register(ownerRoutes);
     },
     { prefix: '/v1' },
   );

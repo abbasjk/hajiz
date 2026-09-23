@@ -69,7 +69,7 @@ export async function shopRoutes(app: FastifyInstance) {
               s.district_id AS "districtId", d.name AS district, s.area_id AS "areaId", a.name AS area,
               s.landmark, s.latitude, s.longitude, s.instant_booking AS "instantBooking",
               ${distance} AS distance_km,
-              (SELECT url FROM shop_photos p WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1) AS "coverPhoto",
+              (SELECT coalesce(url, '/photos/' || id) FROM shop_photos p WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1) AS "coverPhoto",
               ${COMMITTED_SQL} AS committed,
               (SELECT min(duration_minutes) FROM services sv WHERE sv.shop_id = s.id AND sv.active) AS min_duration
        FROM shops s
@@ -131,7 +131,10 @@ export async function shopRoutes(app: FastifyInstance) {
     const { schedule_id: scheduleId, ...details } = shop;
 
     const [photos, services, hours, temporary] = await Promise.all([
-      app.pool.query('SELECT url FROM shop_photos WHERE shop_id = $1 ORDER BY sort_order, id', [shop.id]),
+      app.pool.query(
+        `SELECT coalesce(url, '/photos/' || id) AS url FROM shop_photos WHERE shop_id = $1 ORDER BY sort_order, id`,
+        [shop.id],
+      ),
       app.pool.query(
         `SELECT id, name, duration_minutes AS "durationMinutes", price_type AS "priceType", price
          FROM services WHERE shop_id = $1 AND active ORDER BY id`,

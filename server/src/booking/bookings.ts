@@ -254,6 +254,7 @@ export async function rejectBooking(pool: Pool, { bookingId, ownerId, now, reaso
 /**
  * صاحب المحل يقترح من وقت واحد إلى ثلاثة أوقات بديلة مع رسالة اختيارية.
  * الأوقات المقترحة لا تُقفل، والوقت الأصلي يبقى محجوزاً حتى يرد الزبون.
+ * يصح على طلب جديد، وعلى حجز مؤكد بدل إلغائه (قبل وقت الموعد).
  */
 export async function proposeTimes(
   pool: Pool,
@@ -265,8 +266,9 @@ export async function proposeTimes(
   }
   return withTransaction(pool, async (tx) => {
     const b = await lockBooking(tx, bookingId, { ownerId });
-    requireStatus(b, 'pending_shop');
+    requireStatus(b, 'pending_shop', 'confirmed');
     requireNotExpired(b, now);
+    if (now.getTime() >= b.startsAt.getTime()) throw new AppError(409, 'invalid_transition', { status: b.status });
     if (distinct.has(b.startsAt.getTime())) throw new AppError(400, 'invalid_proposal');
 
     const shop = await loadShop(tx, b.shopId);
@@ -281,6 +283,8 @@ export async function proposeTimes(
     const cap = new Date(Math.min(earliest.getTime(), b.startsAt.getTime()));
     const deadline = responseDeadline(now, earliest, settings.customerDeadline, cap);
 
+    // اقتراح جديد يحل محل أي اقتراح سابق على الحجز نفسه
+    await tx.query('DELETE FROM proposed_times WHERE booking_id = $1', [b.id]);
     for (const start of [...times].sort((x, y) => x.getTime() - y.getTime())) {
       await tx.query(`INSERT INTO proposed_times (booking_id, starts_at, ends_at) VALUES ($1, $2, $3)`, [
         b.id, start, addMinutes(start, durationMinutes),
@@ -293,12 +297,12 @@ export async function proposeTimes(
   });
 }
 
-/** إلغاء حجز مؤكد من صاحب المحل، مع سبب من قائمة قصيرة. */
+/** إلغاء حجز مؤكد (أو معروض على الزبون بأوقات بديلة) من صاحب المحل، مع سبب من قائمة قصيرة. */
 export async function cancelByShop(pool: Pool, { bookingId, ownerId, now, reason }: ShopAction & { reason: string }) {
   const r = requireReason(reason);
   return withTransaction(pool, async (tx) => {
     const b = await lockBooking(tx, bookingId, { ownerId });
-    requireStatus(b, 'confirmed');
+    requireStatus(b, 'confirmed', 'pending_customer');
     if (now.getTime() >= b.startsAt.getTime()) throw new AppError(409, 'invalid_transition', { status: b.status });
     return updateStatus(tx, b, 'cancelled_by_shop', 'shop', now, { cancel_reason: r, cancelled_by: 'shop' });
   });
