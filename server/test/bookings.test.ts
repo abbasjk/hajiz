@@ -219,9 +219,9 @@ describe('proposing other times', () => {
     return rows.map((r) => r.id as number);
   }
 
-  it('requires two or three different times', async () => {
+  it('requires one to three different times', async () => {
     const b = await book('10:00');
-    await expect(propose(b.id, ['11:00'])).rejects.toMatchObject({ code: 'invalid_proposal' });
+    await expect(propose(b.id, [])).rejects.toMatchObject({ code: 'invalid_proposal' });
     await expect(propose(b.id, ['11:00', '11:00'])).rejects.toMatchObject({ code: 'invalid_proposal' });
     await expect(propose(b.id, ['09:00', '09:30', '11:00', '11:30'])).rejects.toMatchObject({ code: 'invalid_proposal' });
   });
@@ -241,6 +241,12 @@ describe('proposing other times', () => {
     const monday = await availableSlots(pool, { shopId: shop.shopId, serviceIds: [shop.haircut], date: MONDAY, now: NOW });
     expect(monday.slots).not.toContainEqual(local(MONDAY, '10:00'));
     expect(monday.slots).toContainEqual(local(MONDAY, '11:00')); // المقترح لا يُقفل
+  });
+
+  it('accepts a single proposed time', async () => {
+    const b = await book('10:00');
+    expect((await propose(b.id, ['16:00'])).status).toBe('pending_customer');
+    expect(await proposedIds(b.id)).toHaveLength(1);
   });
 
   it('confirms the chosen time and frees the original one', async () => {

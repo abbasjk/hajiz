@@ -252,7 +252,7 @@ export async function rejectBooking(pool: Pool, { bookingId, ownerId, now, reaso
 }
 
 /**
- * صاحب المحل يقترح وقتين أو ثلاثة بديلة مع رسالة اختيارية.
+ * صاحب المحل يقترح من وقت واحد إلى ثلاثة أوقات بديلة مع رسالة اختيارية.
  * الأوقات المقترحة لا تُقفل، والوقت الأصلي يبقى محجوزاً حتى يرد الزبون.
  */
 export async function proposeTimes(
@@ -260,7 +260,7 @@ export async function proposeTimes(
   { bookingId, ownerId, now, times, message }: ShopAction & { times: Date[]; message?: string },
 ) {
   const distinct = new Set(times.map((t) => t.getTime()));
-  if (times.length < 2 || times.length > 3 || distinct.size !== times.length) {
+  if (times.length < 1 || times.length > 3 || distinct.size !== times.length) {
     throw new AppError(400, 'invalid_proposal');
   }
   return withTransaction(pool, async (tx) => {
