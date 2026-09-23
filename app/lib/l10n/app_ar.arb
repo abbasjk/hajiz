@@ -551,5 +551,35 @@
   "notRegisteredAccount": "لم تسجّل بعد. يُطلب اسمك ورقمك عند أول حجز.",
   "shopStatusDraft": "طلب فتح المحل لم يُرسل بعد",
   "openShopDetails": "عرض",
-  "customerModeShort": "وضع الزبون"
+  "customerModeShort": "وضع الزبون",
+  "openAction": "عرض",
+  "notificationsTitle": "الإشعارات",
+  "noNotifications": "لا توجد إشعارات بعد.",
+  "notificationSettingsTitle": "إعدادات الإشعارات",
+  "notifyAlwaysOn": "إشعارات الطلبات والردود والإلغاء تصلك دائماً، ولا يمكن إيقافها.",
+  "notifyReminders": "التذكيرات",
+  "notifyRemindersHint": "تذكير بمهلة الرد وبالموعد قبل ساعة.",
+  "notifyMorningSummary": "ملخص الصباح",
+  "notifyMorningSummaryHint": "الساعة 8 صباحاً: عدد حجوزات اليوم في محلك.",
+  "pushOffTitle": "الإشعارات متوقفة على هذا الهاتف",
+  "pushOffBody": "لن يصلك تنبيه بالطلبات الجديدة، وقد تُلغى تلقائياً إذا لم ترد في الوقت المحدد.",
+  "pushOffCustomer": "الإشعارات متوقفة، فلن يصلك رد المحل إلا عند فتح التطبيق.",
+  "pushTurnOn": "تفعيل الإشعارات",
+  "justNow": "الآن",
+  "minutesAgo": "قبل {n} د",
+  "@minutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "قبل {n} س",
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

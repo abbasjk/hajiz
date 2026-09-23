@@ -8,6 +8,7 @@ import '../theme/colors.dart';
 import '../util/format.dart';
 import '../util/reasons.dart';
 import '../widgets/common.dart';
+import '../widgets/refresh_on_push.dart';
 import 'shop_screen.dart';
 
 /// تفاصيل الحجز، والرد على تعديل المحل، والإلغاء.
@@ -20,7 +21,7 @@ class BookingDetailScreen extends StatefulWidget {
   State<BookingDetailScreen> createState() => _BookingDetailScreenState();
 }
 
-class _BookingDetailScreenState extends State<BookingDetailScreen> {
+class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshOnPush {
   Booking? _booking;
   Object? _error;
   int? _chosen;
@@ -32,6 +33,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     _booking = widget.initial;
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
+
+  @override
+  void onPush() => _load();
 
   Future<void> _load() async {
     try {

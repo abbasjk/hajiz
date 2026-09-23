@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// بدون ملف Firebase يُبنى التطبيق ويعمل بإشعارات داخلية فقط
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "iq.hajiz.hajiz"
     compileSdk = flutter.compileSdkVersion

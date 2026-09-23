@@ -79,4 +79,30 @@ class HajizApi {
   Future<Booking> decline(int id, String key) => _action(id, 'decline', key);
   Future<Booking> choose(int id, int proposedTimeId, String key) =>
       _action(id, 'choose', key, {'proposedTimeId': proposedTimeId});
+
+  // ---------------- الإشعارات ----------------
+
+  Future<void> savePushToken(String? token, {required bool enabled}) =>
+      client.put('/me/push-token', body: {'token': token, 'enabled': enabled});
+
+  /// audience: 'customer' أو 'shop'
+  Future<({List<AppNotification> items, int unread})> notifications(String audience) async {
+    final json = await client.get('/me/notifications', query: {'audience': audience});
+    return (
+      items: [for (final n in json['notifications'] as List) AppNotification.fromJson(n)],
+      unread: json['unreadCount'] as int,
+    );
+  }
+
+  Future<void> markNotificationsRead(String audience) =>
+      client.post('/me/notifications/read', body: {'audience': audience});
+
+  Future<NotificationSettings> notificationSettings() async =>
+      NotificationSettings.fromJson(await client.get('/me/notification-settings'));
+
+  Future<NotificationSettings> saveNotificationSettings({bool? reminders, bool? morningSummary}) async =>
+      NotificationSettings.fromJson(await client.put('/me/notification-settings', body: {
+        'reminders': ?reminders,
+        'morningSummary': ?morningSummary,
+      }));
 }

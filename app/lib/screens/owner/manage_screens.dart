@@ -8,6 +8,7 @@ import '../../state/app_scope.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
+import '../notifications_screen.dart';
 import 'editors.dart';
 import 'owner_booking_screen.dart';
 import 'owner_tab.dart';
@@ -592,6 +593,17 @@ class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
         const SizedBox(height: 10),
         _choice(l.minLeadLabel, _shop.minLeadMinutes,
             {for (final h in [3, 6, 12, 24]) h * 60: hours(h)}, (v) => _update({'minLeadMinutes': v})),
+        const SizedBox(height: 10),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.notifications_outlined, color: AppColors.primary),
+            title: Text(l.notificationSettingsTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text('${l.notifyReminders} · ${l.notifyMorningSummary}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const NotificationSettingsScreen(forShop: true))),
+          ),
+        ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),

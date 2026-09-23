@@ -7,6 +7,7 @@ import '../state/app_scope.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
 import '../widgets/common.dart';
+import '../widgets/refresh_on_push.dart';
 import 'booking_detail_screen.dart';
 
 /// حجوزاتي: قيد الانتظار، مؤكدة، سابقة؛ مع العداد التنازلي لأي طلب ينتظر رداً.
@@ -18,7 +19,7 @@ class MyBookingsScreen extends StatefulWidget {
   State<MyBookingsScreen> createState() => MyBookingsScreenState();
 }
 
-class MyBookingsScreenState extends State<MyBookingsScreen> {
+class MyBookingsScreenState extends State<MyBookingsScreen> with RefreshOnPush {
   List<Booking>? _bookings;
   DateTime? _updatedAt;
   bool _fromCache = false;
@@ -39,6 +40,9 @@ class MyBookingsScreenState extends State<MyBookingsScreen> {
       refresh();
     });
   }
+
+  @override
+  void onPush() => refresh();
 
   Future<void> refresh() async {
     final services = AppScope.of(context);

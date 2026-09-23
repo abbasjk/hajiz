@@ -8,6 +8,7 @@ import '../state/app_scope.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
 import '../widgets/common.dart';
+import 'notifications_screen.dart';
 import 'shop_screen.dart';
 
 /// الرئيسية: أنواع الأعمال مع المحلات القريبة، والبحث بالاسم أو النوع أو المنطقة.
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final l = AppLocalizations.of(context);
     final config = _config;
     return Scaffold(
-      appBar: AppBar(title: Text(l.appName)),
+      appBar: AppBar(title: Text(l.appName), actions: const [NotificationsBell(audience: 'customer'), SizedBox(width: 4)]),
       body: config == null
           ? LoadState(error: _error, onRetry: _start)
           : RefreshIndicator(

@@ -4,6 +4,7 @@ import '../api/owner_models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
+import 'notifications_screen.dart';
 import 'owner/owner_tab.dart';
 
 /// حسابي (وضع الزبون): بيانات الزبون، وبطاقة "هل تملك محلاً؟".
@@ -107,6 +108,18 @@ class AccountScreenState extends State<AccountScreen> {
               ]),
             ),
           ),
+          if (services.session.isRegistered) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.notifications_outlined, color: AppColors.primary),
+                title: Text(l.notificationSettingsTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
+              ),
+            ),
+          ],
         ]),
       ),
     );

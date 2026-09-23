@@ -3,6 +3,8 @@
     <!-- التقريبي لترتيب المحلات حسب القرب؛ الدقيق لزر "أنا في المحل الآن" عند فتح المحل -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- أندرويد 13 وما بعده يسأل المستخدم عن الإشعارات -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="حجز"
         android:name="${applicationName}"
@@ -29,6 +31,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- إشعارات الحجوزات تصل على قناة بأهمية عالية (تُنشأ في MainActivity) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="bookings" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

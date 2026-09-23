@@ -7,7 +7,7 @@ const apiBaseUrl = String.fromEnvironment(
 );
 
 /// يُرسل مع كل طلب لفحص الإصدار (إجبار التحديث)
-const appVersion = '0.3.0';
+const appVersion = '0.4.0';
 
 String get appPlatform {
   if (kIsWeb) return 'web';

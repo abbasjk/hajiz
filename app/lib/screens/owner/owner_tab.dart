@@ -10,6 +10,8 @@ import '../../state/app_scope.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
+import '../../widgets/refresh_on_push.dart';
+import '../notifications_screen.dart';
 import '../register_screen.dart';
 import 'manage_screens.dart';
 import 'owner_booking_screen.dart';
@@ -197,7 +199,7 @@ class OwnerDashboard extends StatefulWidget {
   State<OwnerDashboard> createState() => _OwnerDashboardState();
 }
 
-class _OwnerDashboardState extends State<OwnerDashboard> {
+class _OwnerDashboardState extends State<OwnerDashboard> with RefreshOnPush {
   List<OwnerBooking>? _pending;
   List<OwnerBooking>? _today;
   Object? _error;
@@ -216,6 +218,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     _poll?.cancel();
     super.dispose();
   }
+
+  @override
+  void onPush() => _load();
 
   Future<void> _load() async {
     try {
@@ -258,6 +263,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       appBar: AppBar(
         toolbarHeight: 64,
         actions: [
+          const NotificationsBell(audience: 'shop'),
           TextButton.icon(
             onPressed: () => AppScope.of(context).switchMode(AppMode.customer),
             icon: const Icon(Icons.swap_horiz),
@@ -272,6 +278,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: [
+          const PushOffBanner(forShop: true),
           if (_pending == null)
             SizedBox(height: 200, child: LoadState(error: _error, onRetry: _load))
           else ...[

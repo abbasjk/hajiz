@@ -9,6 +9,7 @@ import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../util/reasons.dart';
 import '../../widgets/common.dart';
+import '../../widgets/refresh_on_push.dart';
 import '../shop_screen.dart';
 import 'propose_screen.dart';
 
@@ -22,7 +23,7 @@ class OwnerBookingScreen extends StatefulWidget {
   State<OwnerBookingScreen> createState() => _OwnerBookingScreenState();
 }
 
-class _OwnerBookingScreenState extends State<OwnerBookingScreen> {
+class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnPush {
   OwnerBooking? _booking;
   Object? _error;
   bool _busy = false;
@@ -32,6 +33,9 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
+
+  @override
+  void onPush() => _load();
 
   Future<void> _load() async {
     try {

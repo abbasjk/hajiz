@@ -326,3 +326,43 @@ class RegisteredUser {
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'phone': phone};
 }
+
+/// إشعار داخل التطبيق؛ النص يكتبه الخادم (النص نفسه الذي وصل للهاتف)
+class AppNotification {
+  const AppNotification({
+    required this.id,
+    required this.type,
+    required this.bookingId,
+    required this.title,
+    required this.body,
+    required this.read,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String type;
+  final int? bookingId;
+  final String title;
+  final String body;
+  final bool read;
+  final DateTime createdAt;
+
+  factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
+        id: j['id'] as int,
+        type: j['type'] as String,
+        bookingId: j['bookingId'] as int?,
+        title: j['title'] as String,
+        body: j['body'] as String,
+        read: j['read'] as bool,
+        createdAt: DateTime.parse(j['createdAt'] as String).toUtc(),
+      );
+}
+
+class NotificationSettings {
+  const NotificationSettings({required this.reminders, required this.morningSummary});
+  final bool reminders;
+  final bool morningSummary;
+
+  factory NotificationSettings.fromJson(Map<String, dynamic> j) =>
+      NotificationSettings(reminders: j['reminders'] as bool, morningSummary: j['morningSummary'] as bool);
+}

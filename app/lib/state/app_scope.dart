@@ -1,10 +1,14 @@
-import 'package:flutter/widgets.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../api/api_client.dart';
 import '../api/hajiz_api.dart';
 import '../api/owner_api.dart';
 import '../api/models.dart';
+import '../l10n/app_localizations.dart';
+import 'push.dart';
 import 'session.dart';
 
 /// الخدمات المشتركة بين الشاشات.
@@ -14,11 +18,93 @@ enum AppMode { customer, shop }
 typedef Locator = Future<({double lat, double lng})?> Function();
 
 class AppServices {
-  AppServices({required this.client, required this.session, Locator? locate})
+  AppServices({required this.client, required this.session, Locator? locate, PushService? push})
       : api = HajizApi(client),
         owner = OwnerApi(client),
-        locate = locate ?? locateDevice {
+        locate = locate ?? locateDevice,
+        push = push ?? const NoPushService() {
     client.token = session.token;
+  }
+
+  // ---------------- الإشعارات ----------------
+
+  final PushService push;
+  final navigatorKey = GlobalKey<NavigatorState>();
+  final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// الإذن الحالي؛ صاحب المحل يرى تنبيهاً إذا كانت الإشعارات متوقفة
+  final pushPermission = ValueNotifier<PushPermission>(PushPermission.unavailable);
+
+  /// يزيد مع كل إشعار يصل والتطبيق مفتوح، فتعيد الشاشات المفتوحة تحميل بياناتها
+  final pushTick = ValueNotifier<int>(0);
+
+  /// عدد غير المقروء لكل وضع
+  final unread = {'customer': ValueNotifier<int>(0), 'shop': ValueNotifier<int>(0)};
+
+  /// إشعار فُتح والتطبيق يحتاج أن يعرض الحجز؛ AppShell يتولاه
+  final openedEvent = ValueNotifier<PushEvent?>(null);
+
+  final _subs = <StreamSubscription<Object?>>[];
+
+  /// يُستدعى مرة عند فتح التطبيق
+  Future<void> startPush() async {
+    pushPermission.value = await push.init();
+    _subs
+      ..add(push.tokenRefresh.listen((_) => syncPushToken()))
+      ..add(push.foreground.listen(_onForeground))
+      ..add(push.opened.listen((e) => openedEvent.value = e));
+    final first = await push.initial();
+    if (first != null) openedEvent.value = first;
+    await syncPushToken();
+  }
+
+  /// يرسل مفتاح الإشعارات للخادم؛ يُعاد بعد التسجيل وعند فتح التطبيق وعند تغيّر المفتاح
+  Future<void> syncPushToken() async {
+    if (!session.isRegistered) return;
+    try {
+      final permission = await push.permission();
+      pushPermission.value = permission;
+      if (permission == PushPermission.unavailable) return;
+      final token = await push.token();
+      await api.savePushToken(token, enabled: permission == PushPermission.granted);
+    } catch (_) {
+      // يُعاد عند الفتح التالي
+    }
+  }
+
+  /// بعد عودة المستخدم من إعدادات الهاتف
+  Future<void> recheckPush() async {
+    final before = pushPermission.value;
+    pushPermission.value = await push.permission();
+    if (pushPermission.value != before) await syncPushToken();
+  }
+
+  void _onForeground(PushEvent e) {
+    pushTick.value++;
+    refreshUnread(e.audience);
+    final title = e.title;
+    final context = messengerKey.currentContext;
+    if (title == null || context == null) return;
+    messengerKey.currentState?.showSnackBar(SnackBar(
+      content: Text(e.body == null ? title : '$title\n${e.body}'),
+      duration: const Duration(seconds: 6),
+      action: e.bookingId == null
+          ? null
+          : SnackBarAction(label: AppLocalizations.of(context).openAction, onPressed: () => openedEvent.value = e),
+    ));
+  }
+
+  Future<void> refreshUnread(String audience) async {
+    if (!session.isRegistered) return;
+    try {
+      unread[audience]!.value = (await api.notifications(audience)).unread;
+    } catch (_) {}
+  }
+
+  void dispose() {
+    for (final s in _subs) {
+      s.cancel();
+    }
   }
 
   /// موقع الزبون لترتيب المحلات حسب القرب؛ null إذا رُفض أو تعذّر
@@ -48,6 +134,7 @@ class AppServices {
     final r = await api.register(name, phone, session.deviceId);
     await session.saveRegistration(r.token, r.user);
     client.token = r.token;
+    unawaited(syncPushToken());
   }
 }
 
