@@ -32,7 +32,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          names, errors = {}, []
+          names, errors, prints = {}, [], {}
           for line in open('test-results.json', encoding='utf-8'):
               try:
                   e = json.loads(line)
@@ -40,14 +40,18 @@ jobs:
                   continue
               if e.get('type') == 'testStart':
                   names[e['test']['id']] = e['test']['name']
+              elif e.get('type') == 'print':
+                  prints.setdefault(e['testID'], []).append(e.get('message', ''))
               elif e.get('type') == 'error':
-                  errors.append((names.get(e['testID'], '?'), e.get('error', ''), e.get('stackTrace', '')))
+                  # فلاتر يطبع الاستثناء الحقيقي قبل رسالة الفشل
+                  printed = '\n'.join(prints.get(e['testID'], []))
+                  errors.append((names.get(e['testID'], '?'), printed + '\n' + e.get('error', ''), e.get('stackTrace', '')))
           n = 0
           for name, error, stack in errors:
               title = name.replace(',', ' ').replace(':', ' ')[:80]
               text = error + '\n' + '\n'.join(stack.splitlines()[:10])
               # الملاحظة الواحدة قصيرة، فيُقسم النص الطويل على عدة ملاحظات
-              for i in range(0, min(len(text), 4000), 800):
+              for i in range(0, min(len(text), 7000), 800):
                   chunk = text[i:i + 800].replace('%', '%25').replace('\r', '').replace('\n', '%0A').replace('::', ': :')
                   n += 1
                   if n <= 9:
