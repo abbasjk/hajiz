@@ -26,8 +26,27 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      # أخطاء الاختبارات تظهر كملاحظات على التشغيل نفسه
-      - run: flutter test --reporter github
+      # أخطاء الاختبارات تظهر كملاحظات على التشغيل نفسه (السجل الكامل لا يُقرأ من خارج الموقع)
+      - run: flutter test --reporter expanded --file-reporter json:test-results.json
+      - if: failure()
+        run: |
+          python3 - <<'PY'
+          import json
+          names, errors = {}, []
+          for line in open('test-results.json', encoding='utf-8'):
+              try:
+                  e = json.loads(line)
+              except ValueError:
+                  continue
+              if e.get('type') == 'testStart':
+                  names[e['test']['id']] = e['test']['name']
+              elif e.get('type') == 'error':
+                  errors.append((names.get(e['testID'], '?'), e.get('error', ''), e.get('stackTrace', '')))
+          for name, error, stack in errors[:8]:
+              text = (error + '\n' + '\n'.join(stack.splitlines()[:12]))[:3000]
+              text = text.replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+              print(f'::error title={name[:120]}::{text}')
+          PY
       # نسخة تجريبية للتثبيت المباشر على هاتف أندرويد (موقّعة بمفتاح التطوير)
       # رقم البناء يظهر في حسابي، ويزيد مع كل بناء فيُثبَّت فوق النسخة السابقة
       - run: flutter build apk --release --build-number=${{ github.run_number }} --dart-define=BUILD_NUMBER=${{ github.run_number }}
