@@ -22,7 +22,7 @@ const COLUMNS = `b.id, b.status, b.starts_at AS "startsAt", b.ends_at AS "endsAt
                                               'priceType', bs.price_type, 'price', bs.price) ORDER BY bs.id), '[]')
    FROM booking_services bs WHERE bs.booking_id = b.id) AS services,
   (SELECT json_build_object('stars', r.stars, 'comment', r.comment) FROM reviews r WHERE r.booking_id = b.id) AS review,
-  ${CAN_REVIEW_SQL} AS "canReview"
+  ${CAN_REVIEW_SQL} AS "canReview"`;
 
 export async function listCustomerBookings(pool: Pool, auth: AuthContext) {
   const { rows } = await pool.query(
