@@ -26,7 +26,8 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
+      # أخطاء الاختبارات تظهر كملاحظات على التشغيل نفسه
+      - run: flutter test --reporter github
       # نسخة تجريبية للتثبيت المباشر على هاتف أندرويد (موقّعة بمفتاح التطوير)
       # رقم البناء يظهر في حسابي، ويزيد مع كل بناء فيُثبَّت فوق النسخة السابقة
       - run: flutter build apk --release --build-number=${{ github.run_number }} --dart-define=BUILD_NUMBER=${{ github.run_number }}
