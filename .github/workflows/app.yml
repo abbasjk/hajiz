@@ -42,10 +42,16 @@ jobs:
                   names[e['test']['id']] = e['test']['name']
               elif e.get('type') == 'error':
                   errors.append((names.get(e['testID'], '?'), e.get('error', ''), e.get('stackTrace', '')))
-          for name, error, stack in errors[:8]:
-              text = (error + '\n' + '\n'.join(stack.splitlines()[:12]))[:3000]
-              text = text.replace('%', '%25').replace('\r', '').replace('\n', '%0A')
-              print(f'::error title={name[:120]}::{text}')
+          n = 0
+          for name, error, stack in errors:
+              title = name.replace(',', ' ').replace(':', ' ')[:80]
+              text = error + '\n' + '\n'.join(stack.splitlines()[:10])
+              # الملاحظة الواحدة قصيرة، فيُقسم النص الطويل على عدة ملاحظات
+              for i in range(0, min(len(text), 4000), 800):
+                  chunk = text[i:i + 800].replace('%', '%25').replace('\r', '').replace('\n', '%0A').replace('::', ': :')
+                  n += 1
+                  if n <= 9:
+                      print(f'::error title={title} {i // 800 + 1}::{chunk}')
           PY
       # نسخة تجريبية للتثبيت المباشر على هاتف أندرويد (موقّعة بمفتاح التطوير)
       # رقم البناء يظهر في حسابي، ويزيد مع كل بناء فيُثبَّت فوق النسخة السابقة
