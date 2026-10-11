@@ -111,6 +111,9 @@ describe('browsing shops', () => {
   beforeAll(async () => {
     second = await createShop(pool);
     await pool.query(`UPDATE shops SET name = 'حلاق الزبير', latitude = 30.39, longitude = 47.70 WHERE id = $1`, [second.shopId]);
+    // يعمل يوماً واحداً بعد ثلاثة أيام، فيكون المحل الأول (يعمل كل يوم) الأقرب موعداً في أي ساعة من اليوم
+    const day = (new Date(Date.now() + 3 * 3_600_000).getUTCDay() + 3) % 7;
+    await pool.query('UPDATE weekly_periods SET day_of_week = $2 WHERE schedule_id = $1', [second.scheduleId, day]);
     await pool.query(`UPDATE shops SET name = 'صالون العشار', latitude = 30.51, longitude = 47.78 WHERE id = $1`, [shop.shopId]);
   });
 
@@ -130,7 +133,7 @@ describe('browsing shops', () => {
   it('sorts by the soonest available time', async () => {
     const res = await call('GET', '/v1/shops?sort=soonest');
     const shops = res.json().shops;
-    expect(shops[0].id).toBe(shop.shopId); // يعمل كل يوم، والآخر الاثنين فقط
+    expect(shops[0].id).toBe(shop.shopId); // يعمل كل يوم، والآخر بعد ثلاثة أيام فقط
     expect(shops[0].nextAvailable).toEqual(expect.any(String));
   });
 
