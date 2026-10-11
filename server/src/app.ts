@@ -33,8 +33,7 @@ declare module 'fastify' {
 }
 
 export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions): Promise<FastifyInstance> {
-  // خلف وكيل المنصة: عنوان الزائر الحقيقي من آخر قفزة فقط (لتحديد المحاولات لكل عنوان)
-  const app = Fastify({ logger: { level: logLevel }, trustProxy: 1 });
+  const app = Fastify({ logger: { level: logLevel } });
   app.decorate('pool', pool);
   const notifier = new Notifier(pool, sender ?? new LogSender(app.log), app.log);
   app.decorate('notifier', notifier);

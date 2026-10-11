@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { LoginLimiter } from '../admin/auth.js';
 import { AppError } from '../lib/errors.js';
@@ -16,6 +16,17 @@ const requestBody = z.object({
   // حقل مخفي؛ البرامج الآلية تملؤه والإنسان لا يراه
   website: z.string().max(200).optional(),
 });
+
+/**
+ * عنوان الزائر: خلف وكيل المنصة يضيف الوكيل عنوان الزائر في آخر الترويسة،
+ * فنأخذ الأخير لا الأول (الأول يستطيع الزائر تزويره).
+ */
+function clientIp(request: FastifyRequest): string {
+  const header = request.headers['x-forwarded-for'];
+  const value = Array.isArray(header) ? header.join(',') : header;
+  const last = value?.split(',').map((x) => x.trim()).filter(Boolean).pop();
+  return last || request.ip;
+}
 
 /**
  * صفحة عامة لطلب حذف الحساب دون فتح التطبيق (يطلبها متجر التطبيقات).
@@ -39,8 +50,9 @@ export async function deletePageRoutes(app: FastifyInstance) {
     const r = requestBody.safeParse(request.body);
     if (!r.success) throw new AppError(400, 'invalid_request');
     const body = r.data;
-    if (perIp.blocked(request.ip) || global.blocked('all')) throw new AppError(429, 'too_many_attempts');
-    perIp.fail(request.ip);
+    const ip = clientIp(request);
+    if (perIp.blocked(ip) || global.blocked('all')) throw new AppError(429, 'too_many_attempts');
+    perIp.fail(ip);
     global.fail('all');
     if (body.website) return { ok: true };
     const phone = normalizeIraqiPhone(body.phone);
