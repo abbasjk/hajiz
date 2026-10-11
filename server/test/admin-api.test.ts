@@ -82,8 +82,8 @@ describe('passwords', () => {
   });
 
   it('creates the first admin from environment variables only once', async () => {
-    expect(await bootstrapAdmin(pool, 'second', 'another-password')).toBe(false); // يوجد حساب مسبقاً
-    expect(await bootstrapAdmin(pool, undefined, undefined)).toBe(false);
+    expect(await bootstrapAdmin(pool, 'second', 'another-password')).toBe('exists'); // يوجد حساب مسبقاً
+    expect(await bootstrapAdmin(pool, undefined, undefined)).toBe('skipped');
   });
 });
 
@@ -312,5 +312,18 @@ describe('settings', () => {
     const kinds = new Set(actions.map((a: { targetType: string }) => a.targetType));
     for (const k of ['shop', 'area_request', 'device', 'user', 'business_type', 'setting', 'app_version']) expect(kinds).toContain(k);
     expect(actions.every((a: { username: string }) => a.username === 'abbas')).toBe(true);
+  });
+});
+
+// آخر الاختبارات: يحذف حسابات الإدارة ليجرّب إنشاء أول حساب
+describe('first admin bootstrap', () => {
+  it('never stops the server on bad values, it only reports them', async () => {
+    await pool.query('DELETE FROM admins');
+    expect(await bootstrapAdmin(pool, 'abbas', 'short')).toBe('password_too_short');
+    expect(await bootstrapAdmin(pool, 'ab', 'long-enough-password')).toBe('invalid_username');
+    expect(await bootstrapAdmin(pool, ' abbas ', 'long-enough-password')).toBe('created');
+    const { rows } = await pool.query('SELECT username FROM admins');
+    expect(rows.map((r) => r.username)).toEqual(['abbas']);
+    expect(await bootstrapAdmin(pool, 'other', 'another-long-password')).toBe('exists');
   });
 });

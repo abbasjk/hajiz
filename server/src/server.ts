@@ -29,6 +29,8 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 app.log.info(applied.length ? `Applied migrations: ${applied.join(', ')}` : 'Database is up to date');
 if (demoCreated) app.log.info('Demo shop created');
-if (adminCreated) app.log.info('First admin account created; remove ADMIN_INITIAL_* variables now');
+if (adminCreated === 'created') app.log.info('First admin account created; remove ADMIN_INITIAL_* variables now');
+if (adminCreated === 'password_too_short') app.log.warn('ADMIN_INITIAL_PASSWORD must be at least 10 characters; admin account not created');
+if (adminCreated === 'invalid_username') app.log.warn('ADMIN_INITIAL_USERNAME must be 3 to 60 characters; admin account not created');
 app.log.info(sender ? 'Push notifications: Firebase' : 'Push notifications: not configured (in-app only)');
 await app.listen({ port: env.PORT, host: env.HOST });

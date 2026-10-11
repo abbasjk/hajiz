@@ -9,8 +9,9 @@ const schema = z.object({
   // مفتاح حساب الخدمة من Firebase (JSON أو base64)؛ يُوضع في Railway فقط
   FIREBASE_SERVICE_ACCOUNT: z.string().min(1).optional(),
   // أول حساب للوحة الإدارة: يُنشأ عند التشغيل إذا لم يوجد أي حساب، ثم يُحذف المتغير من المنصة
-  ADMIN_INITIAL_USERNAME: z.string().trim().min(3).max(60).optional(),
-  ADMIN_INITIAL_PASSWORD: z.string().min(10).max(200).optional(),
+  // يُتحقق منهما في bootstrapAdmin: قيمة خاطئة هنا لا توقف الخادم
+  ADMIN_INITIAL_USERNAME: z.string().optional(),
+  ADMIN_INITIAL_PASSWORD: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
