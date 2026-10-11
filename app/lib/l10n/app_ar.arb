@@ -644,5 +644,10 @@
   "requestTrustBody": "ستتصل بك الإدارة على رقمك للتأكد أنك صاحبه، ثم توثّق هذا الهاتف ويصلك إشعار.",
   "requestTrustNoteHint": "ملاحظة للإدارة (اختياري)، مثلاً: غيّرت هاتفي",
   "requestTrustSend": "أرسل الطلب",
-  "trustRequestedNote": "أُرسل طلب التوثيق. ستتصل بك الإدارة على رقمك قريباً."
+  "trustRequestedNote": "أُرسل طلب التوثيق. ستتصل بك الإدارة على رقمك قريباً.",
+  "getDirections": "الاتجاهات",
+  "appVersionLabel": "النسخة {version}",
+  "@appVersionLabel": {"placeholders": {"version": {"type": "String"}}},
+  "appVersionBuildLabel": "النسخة {version} · البناء {build}",
+  "@appVersionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}}
 }

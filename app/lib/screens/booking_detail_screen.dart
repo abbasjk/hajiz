@@ -8,6 +8,7 @@ import '../theme/colors.dart';
 import '../util/format.dart';
 import '../util/reasons.dart';
 import '../widgets/common.dart';
+import '../widgets/location_preview.dart';
 import '../widgets/refresh_on_push.dart';
 import 'shop_screen.dart';
 
@@ -191,7 +192,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
                     OutlinedButton.icon(onPressed: () => callPhone(b.shop.phone!), icon: const Icon(Icons.call_outlined), label: Text(l.call)),
                     OutlinedButton.icon(onPressed: () => openWhatsApp(b.shop.phone!), icon: const Icon(Icons.chat_outlined), label: Text(l.whatsapp)),
                   ],
-                  if (b.shop.latitude != null && b.shop.longitude != null)
+                  // للحجوزات الحالية تظهر الخريطة والاتجاهات أسفل البطاقة
+                  if (b.shop.latitude != null && b.shop.longitude != null &&
+                      b.status != BookingStatus.confirmed && b.status != BookingStatus.pendingShop)
                     OutlinedButton.icon(
                       onPressed: () => openInMaps(b.shop.latitude!, b.shop.longitude!, b.shop.name),
                       icon: const Icon(Icons.map_outlined),
@@ -203,6 +206,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
           ),
         ),
         if (b.status == BookingStatus.pendingCustomer) ..._proposal(l, b),
+        // يوم الموعد هو وقت الحاجة للطريق
+        if ((b.status == BookingStatus.confirmed || b.status == BookingStatus.pendingShop) &&
+            b.shop.latitude != null && b.shop.longitude != null) ...[
+          const SizedBox(height: 16),
+          LocationPreview(latitude: b.shop.latitude!, longitude: b.shop.longitude!, label: b.shop.name),
+        ],
         if (b.review != null)
           Card(
             margin: const EdgeInsets.only(top: 16),

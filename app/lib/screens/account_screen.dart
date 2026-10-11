@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/owner_models.dart';
+import '../config.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
@@ -195,6 +196,12 @@ class AccountScreenState extends State<AccountScreen> {
               label: Text(l.deleteAccount),
             ),
           ],
+          const SizedBox(height: 24),
+          Text(
+            buildNumber.isEmpty ? l.appVersionLabel(appVersion) : l.appVersionBuildLabel(appVersion, buildNumber),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          ),
         ]),
       ),
     );

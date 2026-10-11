@@ -116,15 +116,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final config = _config;
     return Scaffold(
       appBar: AppBar(title: Text(l.appName), actions: [
-        if (config != null)
-          IconButton(
-            tooltip: _mapView ? l.showList : l.showMap,
-            icon: Icon(_mapView ? Icons.view_list_outlined : Icons.map_outlined),
-            onPressed: () => _set(() => _mapView = !_mapView),
-          ),
         const NotificationsBell(audience: 'customer'),
         const SizedBox(width: 4),
       ]),
+      // زر عائم قريب من الإبهام يبدّل بين القائمة والخريطة
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: config == null
+          ? null
+          : FloatingActionButton.extended(
+              heroTag: 'map-toggle',
+              backgroundColor: AppColors.text,
+              foregroundColor: Colors.white,
+              onPressed: () => _set(() => _mapView = !_mapView),
+              icon: Icon(_mapView ? Icons.view_list_outlined : Icons.map_outlined),
+              label: Text(_mapView ? l.showList : l.showMap),
+            ),
       body: config == null
           ? LoadState(error: _error, onRetry: _start)
           : _mapView
@@ -270,7 +276,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        // مسافة في الأسفل حتى لا يغطي زر الخريطة آخر محل
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         sliver: SliverList.separated(
           itemCount: shops.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),

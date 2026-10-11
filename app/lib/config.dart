@@ -7,7 +7,10 @@ const apiBaseUrl = String.fromEnvironment(
 );
 
 /// يُرسل مع كل طلب لفحص الإصدار (إجبار التحديث)
-const appVersion = '0.4.0';
+const appVersion = '0.5.0';
+
+/// رقم البناء يُمرَّر عند البناء على خادم الاختبارات؛ يظهر في حسابي لمعرفة النسخة المثبتة
+const buildNumber = String.fromEnvironment('BUILD_NUMBER');
 
 String get appPlatform {
   if (kIsWeb) return 'web';

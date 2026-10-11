@@ -136,7 +136,8 @@ class _ShopsMapState extends State<ShopsMap> {
           PositionedDirectional(
             start: 12,
             end: 12,
-            bottom: 24,
+            // فوق زر "القائمة" العائم
+            bottom: 88,
             child: Material(
               elevation: 6,
               borderRadius: BorderRadius.circular(16),
