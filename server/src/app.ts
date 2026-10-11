@@ -13,6 +13,7 @@ import { Notifier } from './notify/notifier.js';
 import { LogSender, type PushSender } from './notify/sender.js';
 import { bookingEvent, type BookingEvent } from './notify/events.js';
 import { meRoutes } from './routes/me.js';
+import { adminRoutes } from './routes/admin.js';
 
 export interface AppOptions {
   pool: Pool;
@@ -61,6 +62,8 @@ export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions):
 
   await app.register(healthRoutes);
   await app.register(photoRoutes);
+  // لوحة الإدارة خارج /v1: صفحة في المتصفح لا تحمل ترويسات إصدار التطبيق
+  await app.register(adminRoutes);
   // كل مسارات التطبيق تحت /v1 وتمر بفحص الإصدار
   await app.register(
     async (v1) => {

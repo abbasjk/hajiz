@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة إدارة حجز</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --border: #e3e1db; --border-strong: #d4d1c9;
+    --text: #1d2321; --muted: #5f6662; --primary: #0f6e6e; --primary-dark: #0a5252;
+    --danger: #9a3412; --side: #1d2321; --side-text: #d6dbd8;
+    --warn-bg: #fdf0d5; --warn: #7a4b00; --ok-bg: #dff1ec; --ok: #0b5a4a; --info-bg: #e3ecfb; --info: #1f4f99;
+    --neutral-bg: #eeeceb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--primary); }
+  h1 { font-size: 24px; margin: 0 0 16px; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* الهيكل */
+  .layout { display: flex; flex-wrap: wrap; min-height: 100vh; }
+  aside { flex: 1 1 220px; background: var(--side); color: #fff; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; }
+  aside .brand { font-size: 18px; font-weight: 700; padding: 0 10px 14px; }
+  aside button { all: unset; cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 42px; padding: 0 12px; border-radius: 10px; color: var(--side-text); }
+  aside button[aria-current="page"] { background: var(--primary); color: #fff; font-weight: 600; }
+  aside button:focus-visible { outline: 2px solid #fff; }
+  aside .count { min-width: 22px; height: 22px; border-radius: 11px; background: #fff; color: var(--primary); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; }
+  aside .spacer { flex: 1; }
+  main { flex: 999 1 560px; min-width: 0; padding: 28px 32px; }
+  @media (max-width: 700px) {
+    aside { flex-direction: row; flex-wrap: wrap; padding: 10px; }
+    aside .brand, aside .spacer { display: none; }
+    main { padding: 18px 16px; }
+  }
+
+  /* العناصر */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat strong { display: block; font-size: 26px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tab { height: 38px; padding: 0 16px; border-radius: 19px; border: 1px solid var(--border-strong); background: #fff; cursor: pointer; }
+  .tab[aria-pressed="true"] { background: var(--text); color: #fff; border-color: var(--text); }
+  .table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border); border-radius: 14px; }
+  table { width: 100%; min-width: 720px; border-collapse: collapse; text-align: right; }
+  th { background: #f1efea; font-weight: 600; font-size: 14px; }
+  th, td { padding: 11px 14px; border-top: 1px solid #eeece7; vertical-align: top; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover td { background: #faf9f6; }
+  .btn { height: 38px; padding: 0 14px; border-radius: 9px; border: 1px solid var(--border-strong); background: #fff; cursor: pointer; white-space: nowrap; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.danger { color: var(--danger); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--neutral-bg); color: var(--muted); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.info { background: var(--info-bg); color: var(--info); }
+  .pill.bad { background: #fbe4dc; color: var(--danger); }
+  input[type=text], input[type=password], input[type=search], select, textarea {
+    height: 40px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: #fff; }
+  textarea { height: auto; padding: 10px 12px; width: 100%; resize: vertical; }
+  label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; font-size: 14px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .photos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .photos img { width: 120px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  .back { all: unset; cursor: pointer; color: var(--primary); margin-bottom: 12px; display: inline-block; }
+
+  /* الدخول */
+  .login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .login form { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* الرسائل والنوافذ */
+  #toast { position: fixed; bottom: 20px; inset-inline-start: 20px; max-width: 360px; padding: 12px 16px; border-radius: 10px; background: var(--text); color: #fff; display: none; z-index: 10; }
+  #toast.error { background: var(--danger); }
+  dialog { border: none; border-radius: 16px; padding: 20px; width: min(440px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  dialog form { display: flex; flex-direction: column; gap: 14px; margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="dlg"><form method="dialog" id="dlg-form"></form></dialog>
+
+<script>
+'use strict';
+
+// ------------------------------------------------------------------
+// أدوات
+// ------------------------------------------------------------------
+
+// بناء العناصر بالنصوص فقط (لا HTML من البيانات أبداً)
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+
+const ERRORS = {
+  invalid_login: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+  too_many_attempts: 'محاولات كثيرة، حاول بعد ربع ساعة',
+  unauthorized: 'انتهت الجلسة، سجّل الدخول مجدداً',
+  invalid_transition: 'لا يمكن تنفيذ هذا الإجراء في الحالة الحالية، حدّث الصفحة',
+  note_required: 'اكتب السبب، يصل لصاحب المحل',
+  name_exists: 'الاسم موجود مسبقاً',
+  invalid_value: 'القيمة لا تطابق شكل الإعداد الحالي',
+  invalid_version: 'رقم الإصدار غير صحيح، أو الأدنى أحدث من الأخير',
+  read_only: 'هذا الإعداد لا يُعدّل من اللوحة',
+  not_found: 'العنصر غير موجود',
+  invalid_request: 'البيانات المرسلة غير صحيحة',
+  network: 'تعذر الاتصال بالخادم',
+};
+
+let token = null;
+try { token = sessionStorage.getItem('admin_token'); } catch (_) {}
+
+function setToken(t) {
+  token = t;
+  try { t ? sessionStorage.setItem('admin_token', t) : sessionStorage.removeItem('admin_token'); } catch (_) {}
+}
+
+async function api(path, { method = 'GET', body } = {}) {
+  let res;
+  try {
+    res = await fetch('/admin/api' + path, {
+      method,
+      headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...(token ? { authorization: 'Bearer ' + token } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (_) {
+    throw new Error(ERRORS.network);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const code = data.error && data.error.code;
+    if (res.status === 401 && token) { setToken(null); render(); }
+    throw new Error(ERRORS[code] || 'حدث خطأ غير متوقع');
+  }
+  return data;
+}
+
+let toastTimer;
+function toast(text, error) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.className = error ? 'error' : '';
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.style.display = 'none'), 4000);
+}
+
+// ينفذ إجراءً مع رسالة نجاح أو خطأ
+async function run(fn, okText) {
+  try {
+    const r = await fn();
+    if (okText) toast(okText);
+    return r;
+  } catch (e) {
+    toast(e.message, true);
+    throw e;
+  }
+}
+
+// نافذة تأكيد مع حقل نص اختياري؛ ترجع النص أو null عند الإلغاء
+function ask({ title, text, field, required, okText = 'تأكيد', danger, initial = '' }) {
+  return new Promise((resolve) => {
+    const dlg = document.getElementById('dlg');
+    const form = document.getElementById('dlg-form');
+    const input = field ? h('textarea', { rows: 3, maxlength: 300 }) : null;
+    if (input) input.value = initial;
+    const ok = h('button', { class: 'btn ' + (danger ? 'danger' : 'primary'), value: 'ok' }, okText);
+    form.replaceChildren(
+      h('h2', {}, title),
+      text ? h('p', { class: 'muted', style: 'margin:0' }, text) : null,
+      input ? h('label', {}, field, input) : null,
+      h('div', { class: 'row' }, ok, h('button', { class: 'btn', value: 'cancel' }, 'تراجع')),
+    );
+    dlg.onclose = () => {
+      if (dlg.returnValue !== 'ok') return resolve(null);
+      const v = input ? input.value.trim() : '';
+      if (required && !v) { toast('هذا الحقل مطلوب', true); return resolve(null); }
+      resolve(v);
+    };
+    dlg.showModal();
+    (input || ok).focus();
+  });
+}
+
+const BAGHDAD = 3 * 3600 * 1000;
+const MONTHS = ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'];
+const DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+function fmtDate(iso, withTime = true) {
+  if (!iso) return '—';
+  const d = new Date(new Date(iso).getTime() + BAGHDAD);
+  const date = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  if (!withTime) return date;
+  const hr = d.getUTCHours();
+  return `${date} · ${hr % 12 || 12}:${String(d.getUTCMinutes()).padStart(2, '0')} ${hr < 12 ? 'ص' : 'م'}`;
+}
+
+function hhmm(t) {
+  const [hr, m] = t.split(':').map(Number);
+  return `${hr % 12 || 12}:${String(m).padStart(2, '0')} ${hr < 12 ? 'ص' : 'م'}`;
+}
+
+const phone = (p) => h('span', { class: 'ltr' }, p ? '0' + String(p).replace(/^964/, '') : '—');
+const price = (n) => n === null || n === undefined ? '—' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' د.ع';
+
+const SHOP_STATUS = {
+  draft: ['مسودة', ''], under_review: ['بانتظار المراجعة', 'warn'], approved: ['معتمد', 'ok'],
+  rejected: ['مرفوض', 'bad'], suspended: ['موقوف', 'bad'],
+};
+const shopPill = (s) => h('span', { class: 'pill ' + (SHOP_STATUS[s] || ['', ''])[1] }, (SHOP_STATUS[s] || [s])[0]);
+
+// ------------------------------------------------------------------
+// الحالة والتنقل
+// ------------------------------------------------------------------
+
+const state = { view: 'overview', shopStatus: 'under_review', detail: null, stats: null };
+
+const VIEWS = [
+  ['overview', 'نظرة عامة'],
+  ['shops', 'مراجعة المحلات', 'pendingShops'],
+  ['areas', 'طلبات المناطق', 'pendingAreas'],
+  ['users', 'المستخدمون'],
+  ['catalog', 'القوائم'],
+  ['settings', 'الإعدادات'],
+  ['actions', 'سجل الإجراءات'],
+];
+
+function go(view, detail = null) {
+  state.view = view;
+  state.detail = detail;
+  render();
+  window.scrollTo(0, 0);
+}
+
+async function refreshStats() {
+  try { state.stats = await api('/stats'); } catch (_) {}
+}
+
+function render() {
+  const root = document.getElementById('root');
+  if (!token) return root.replaceChildren(loginView());
+  const nav = VIEWS.map(([id, label, countKey]) => {
+    const n = countKey && state.stats ? state.stats[countKey] : 0;
+    return h('button', { 'aria-current': state.view === id ? 'page' : null, onclick: () => go(id) }, label, n ? h('span', { class: 'count' }, n) : null);
+  });
+  const main = h('main', {}, h('div', { class: 'empty' }, 'جارٍ التحميل…'));
+  root.replaceChildren(
+    h('div', { class: 'layout' },
+      h('aside', {}, h('div', { class: 'brand' }, 'لوحة إدارة حجز'), nav, h('div', { class: 'spacer' }),
+        h('button', { onclick: async () => { await api('/logout', { method: 'POST' }).catch(() => {}); setToken(null); render(); } }, 'تسجيل الخروج')),
+      main),
+  );
+  const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView,
+    users: state.detail ? userDetailView : usersView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
+  fn().then((content) => main.replaceChildren(...[].concat(content))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
+}
+
+// ------------------------------------------------------------------
+// الدخول
+// ------------------------------------------------------------------
+
+function loginView() {
+  const user = h('input', { type: 'text', autocomplete: 'username', required: true });
+  const pass = h('input', { type: 'password', autocomplete: 'current-password', required: true });
+  const btn = h('button', { class: 'btn primary', type: 'submit' }, 'دخول');
+  const form = h('form', { class: 'card', onsubmit: async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    try {
+      const r = await run(() => api('/login', { method: 'POST', body: { username: user.value, password: pass.value } }));
+      setToken(r.token);
+      await refreshStats();
+      render();
+    } catch (_) { btn.disabled = false; }
+  } }, h('h1', {}, 'لوحة إدارة حجز'), h('label', {}, 'اسم المستخدم', user), h('label', {}, 'كلمة المرور', pass), btn);
+  return h('div', { class: 'login' }, form);
+}
+
+// ------------------------------------------------------------------
+// نظرة عامة
+// ------------------------------------------------------------------
+
+async function overviewView() {
+  await refreshStats();
+  const s = state.stats || {};
+  const stat = (label, value, view) => h('div', { class: 'card stat', style: view ? 'cursor:pointer' : null, onclick: view ? () => go(view) : null },
+    h('span', { class: 'muted small' }, label), h('strong', {}, value ?? '—'));
+  return [
+    h('h1', {}, 'نظرة عامة'),
+    h('div', { class: 'stats' },
+      stat('محلات بانتظار المراجعة', s.pendingShops, 'shops'),
+      stat('محلات معتمدة', s.activeShops),
+      stat('طلبات مناطق جديدة', s.pendingAreas, 'areas'),
+      stat('المستخدمون', s.users, 'users'),
+      stat('حجوزات اليوم', s.bookingsToday),
+      stat('طلبات انتهت مهلتها اليوم', s.expiredToday)),
+    s.pendingShops ? h('div', { class: 'card' }, h('strong', {}, `${s.pendingShops} محل ينتظر المراجعة. `),
+      h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('shops'); } }, 'ابدأ المراجعة')) : null,
+  ];
+}
+
+// ------------------------------------------------------------------
+// المحلات
+// ------------------------------------------------------------------
+
+async function shopsView() {
+  const search = h('input', { type: 'search', placeholder: 'اسم المحل أو رقم الهاتف' });
+  const list = h('div', {});
+  async function load() {
+    const q = search.value.trim();
+    const { shops } = await api(`/shops?status=${state.shopStatus}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+    list.replaceChildren(shops.length ? h('div', { class: 'table-wrap' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['المحل', 'النوع', 'العنوان', 'صاحب المحل', state.shopStatus === 'under_review' ? 'أُرسل' : 'آخر مراجعة'].map((t) => h('th', {}, t)))),
+      h('tbody', {}, shops.map((s) => h('tr', { class: 'clickable', tabindex: 0, onclick: () => go('shops', s.id), onkeydown: (e) => e.key === 'Enter' && go('shops', s.id) },
+        h('td', {}, h('strong', {}, s.name)),
+        h('td', {}, s.businessType || '—'),
+        h('td', {}, [s.district, s.area].filter(Boolean).join(' · ') || '—'),
+        h('td', {}, s.ownerName, h('br'), phone(s.ownerPhone)),
+        h('td', { class: 'small' }, fmtDate(state.shopStatus === 'under_review' ? s.submittedAt : s.reviewedAt))))))) :
+      h('div', { class: 'card empty' }, 'لا توجد محلات في هذه الحالة'));
+  }
+  let timer;
+  search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => load().catch((e) => toast(e.message, true)), 350); });
+  const tabs = h('div', { class: 'tabs' }, ['under_review', 'approved', 'rejected', 'suspended', 'draft'].map((st) =>
+    h('button', { class: 'tab', 'aria-pressed': String(state.shopStatus === st), onclick: () => { state.shopStatus = st; render(); } }, SHOP_STATUS[st][0])));
+  await load();
+  return [h('h1', {}, 'المحلات'), tabs, h('div', { class: 'row', style: 'margin-bottom:12px' }, search), list];
+}
+
+async function shopDetailView() {
+  const s = await api('/shops/' + state.detail);
+  const act = async (action, opts) => {
+    let note;
+    if (opts) {
+      note = await ask(opts);
+      if (note === null) return;
+    }
+    await run(() => api(`/shops/${s.id}/${action}`, { method: 'POST', body: note ? { note } : {} }), opts && opts.done || 'تم');
+    await refreshStats();
+    render();
+  };
+  const actions = {
+    under_review: [
+      h('button', { class: 'btn primary', onclick: () => act('approve', { title: 'الموافقة على المحل؟', text: 'سيظهر للزبائن فوراً ويصل إشعار لصاحبه.', okText: 'موافقة', done: 'تمت الموافقة' }) }, 'موافقة'),
+      h('button', { class: 'btn danger', onclick: () => act('reject', { title: 'رفض الطلب', field: 'ما الذي يجب تعديله؟ (يصل لصاحب المحل)', required: true, okText: 'رفض', danger: true, done: 'رُفض الطلب' }) }, 'رفض مع ملاحظة'),
+    ],
+    approved: [h('button', { class: 'btn danger', onclick: () => act('suspend', { title: 'إيقاف المحل', text: s.upcomingBookings ? `لدى المحل ${s.upcomingBookings} حجز قادم. الإيقاف يخفي المحل عن الزبائن، والحجوزات القائمة تبقى كما هي.` : 'سيختفي المحل عن الزبائن.', field: 'السبب (يصل لصاحب المحل)', required: true, okText: 'إيقاف', danger: true, done: 'أُوقف المحل' }) }, 'إيقاف المحل')],
+    suspended: [h('button', { class: 'btn primary', onclick: () => act('reinstate', { title: 'إعادة تفعيل المحل؟', okText: 'إعادة التفعيل', done: 'عاد المحل للعمل' }) }, 'إعادة التفعيل')],
+  }[s.status] || [];
+
+  const byDay = [6, 0, 1, 2, 3, 4, 5].map((d) => {
+    const ps = s.weeklyHours.filter((x) => x.dayOfWeek === d);
+    return h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', {}, DAYS[d]),
+      h('span', { class: ps.length ? '' : 'muted' }, ps.length ? ps.map((p) => `${hhmm(p.from)} – ${hhmm(p.to)}`).join('  ·  ') : 'عطلة'));
+  });
+
+  return [
+    h('button', { class: 'back', onclick: () => go('shops') }, '→ رجوع للقائمة'),
+    h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:16px' },
+      h('div', {}, h('h1', { style: 'margin:0' }, s.name), shopPill(s.status)),
+      h('div', { class: 'row' }, actions)),
+    s.reviewNote ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'ملاحظة الإدارة: '), s.reviewNote) : null,
+    h('div', { class: 'grid2' },
+      h('div', { class: 'card' }, h('h2', {}, 'البيانات'), h('dl', {},
+        h('dt', {}, 'النوع'), h('dd', {}, s.businessType || '—'),
+        h('dt', {}, 'العنوان'), h('dd', {}, [s.district, s.area, s.street, s.landmark].filter(Boolean).join(' · ') || '—'),
+        h('dt', {}, 'الموقع'), h('dd', {}, s.latitude !== null ? h('a', { href: `https://www.google.com/maps?q=${s.latitude},${s.longitude}`, target: '_blank', rel: 'noopener' }, 'فتح على الخريطة') : '—'),
+        h('dt', {}, 'هاتف المحل'), h('dd', {}, phone(s.phone)),
+        h('dt', {}, 'الوصف'), h('dd', {}, s.description || '—'),
+        h('dt', {}, 'الحجز'), h('dd', {}, s.instantBooking ? 'تأكيد فوري' : 'بموافقة المحل'),
+        h('dt', {}, 'أُرسل للمراجعة'), h('dd', {}, fmtDate(s.submittedAt)),
+        h('dt', {}, 'آخر مراجعة'), h('dd', {}, s.reviewedAt ? `${fmtDate(s.reviewedAt)} · ${s.reviewedBy || ''}` : '—'))),
+      h('div', { class: 'card' }, h('h2', {}, 'صاحب المحل'), h('dl', {},
+        h('dt', {}, 'الاسم'), h('dd', {}, s.ownerName),
+        h('dt', {}, 'الرقم'), h('dd', {}, phone(s.ownerPhone)),
+        h('dt', {}, 'حجوزات قادمة'), h('dd', {}, s.upcomingBookings)),
+        h('div', { style: 'margin-top:10px' }, h('button', { class: 'btn', onclick: () => go('users', s.ownerId) }, 'صفحة المستخدم والأجهزة')))),
+    h('div', { class: 'grid2', style: 'margin-top:14px' },
+      h('div', { class: 'card' }, h('h2', {}, `الخدمات (${s.services.length})`),
+        s.services.length ? s.services.map((x) => h('div', { class: 'row', style: 'justify-content:space-between;' + (x.active ? '' : 'opacity:.5') },
+          h('span', {}, x.name, x.active ? '' : ' (موقوفة)'), h('span', { class: 'muted' }, `${x.durationMinutes} دقيقة · ${x.priceType === 'after_inspection' ? 'بعد الفحص' : (x.priceType === 'starts_from' ? 'يبدأ من ' : '') + price(x.price)}`))) :
+          h('p', { class: 'muted' }, 'لا خدمات')),
+      h('div', { class: 'card' }, h('h2', {}, 'الدوام الأسبوعي'), byDay)),
+    s.photos.length ? h('div', { class: 'card', style: 'margin-top:14px' }, h('h2', {}, 'الصور'),
+      h('div', { class: 'photos' }, s.photos.map((u) => h('a', { href: u, target: '_blank', rel: 'noopener' }, h('img', { src: u, alt: 'صورة المحل', loading: 'lazy' }))))) : null,
+    s.history.length ? h('div', { class: 'card', style: 'margin-top:14px' }, h('h2', {}, 'سجل المراجعة'),
+      s.history.map((x) => h('div', { class: 'small' }, `${fmtDate(x.createdAt)} · ${x.username || ''} · ${ACTION_LABELS[x.action] || x.action}${x.note ? ' · ' + x.note : ''}`))) : null,
+  ];
+}
+
+// ------------------------------------------------------------------
+// طلبات المناطق
+// ------------------------------------------------------------------
+
+async function areasView() {
+  const { requests } = await api('/area-requests');
+  if (!requests.length) return [h('h1', {}, 'طلبات المناطق'), h('div', { class: 'card empty' }, 'لا توجد طلبات جديدة')];
+  return [
+    h('h1', {}, 'طلبات المناطق'),
+    h('p', { class: 'muted' }, 'أصحاب محلات طلبوا إضافة منطقة غير موجودة في القائمة. راجع الاسم قبل الموافقة.'),
+    h('div', { class: 'table-wrap' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['المنطقة المطلوبة', 'القضاء', 'طلبها', 'التاريخ', ''].map((t) => h('th', {}, t)))),
+      h('tbody', {}, requests.map((r) => h('tr', {},
+        h('td', {}, h('strong', {}, r.name), r.alreadyExists ? h('div', { class: 'small muted' }, 'موجودة مسبقاً بالاسم نفسه') : null),
+        h('td', {}, r.district),
+        h('td', {}, r.requestedByName || '—', h('br'), phone(r.requestedByPhone)),
+        h('td', { class: 'small' }, fmtDate(r.createdAt)),
+        h('td', {}, h('div', { class: 'row' },
+          h('button', { class: 'btn primary', onclick: async () => {
+            const name = await ask({ title: 'إضافة المنطقة', text: `في قضاء ${r.district}. يمكنك تصحيح الاسم قبل الإضافة.`, field: 'اسم المنطقة', initial: r.name, required: true, okText: 'إضافة' });
+            if (name === null) return;
+            await run(() => api(`/area-requests/${r.id}/approve`, { method: 'POST', body: { name } }), 'أُضيفت المنطقة');
+            await refreshStats(); render();
+          } }, 'إضافة'),
+          h('button', { class: 'btn danger', onclick: async () => {
+            if (await ask({ title: 'رفض الطلب؟', okText: 'رفض', danger: true }) === null) return;
+            await run(() => api(`/area-requests/${r.id}/reject`, { method: 'POST' }), 'رُفض الطلب');
+            await refreshStats(); render();
+          } }, 'رفض')))))))),
+  ];
+}
+
+// ------------------------------------------------------------------
+// المستخدمون
+// ------------------------------------------------------------------
+
+async function usersView() {
+  const search = h('input', { type: 'search', placeholder: 'رقم الهاتف أو الاسم' });
+  const list = h('div', {});
+  async function load() {
+    const q = search.value.trim();
+    const { users } = await api('/users' + (q ? '?q=' + encodeURIComponent(q) : ''));
+    list.replaceChildren(users.length ? h('div', { class: 'table-wrap' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['الاسم', 'الرقم', 'محل', 'الأجهزة', 'الحالة', 'التسجيل'].map((t) => h('th', {}, t)))),
+      h('tbody', {}, users.map((u) => h('tr', { class: 'clickable', tabindex: 0, onclick: () => go('users', u.id), onkeydown: (e) => e.key === 'Enter' && go('users', u.id) },
+        h('td', {}, u.name), h('td', {}, phone(u.phone)), h('td', {}, u.shopStatus ? shopPill(u.shopStatus) : '—'),
+        h('td', {}, u.devices), h('td', {}, userPill(u)), h('td', { class: 'small' }, fmtDate(u.createdAt, false))))))) :
+      h('div', { class: 'card empty' }, 'لا نتائج'));
+  }
+  let timer;
+  search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => load().catch((e) => toast(e.message, true)), 350); });
+  await load();
+  return [h('h1', {}, 'المستخدمون'), h('div', { class: 'row', style: 'margin-bottom:12px' }, search), list];
+}
+
+const userPill = (u) => u.bannedAt ? h('span', { class: 'pill bad' }, 'محظور') : u.deletedAt ? h('span', { class: 'pill' }, 'حذف حسابه') : h('span', { class: 'pill ok' }, 'فعّال');
+
+async function userDetailView() {
+  const u = await api('/users/' + state.detail);
+  const userAct = async (action, opts) => {
+    const note = await ask(opts);
+    if (note === null) return;
+    await run(() => api(`/users/${u.id}/${action}`, { method: 'POST', body: note ? { note } : {} }), 'تم');
+    render();
+  };
+  const devAct = async (d, action) => {
+    const text = action === 'trust'
+      ? 'هذا الجهاز سيستطيع إدارة المحل واستلام إشعاراته. تأكد من هوية صاحب المحل بالاتصال على رقمه قبل التوثيق.'
+      : 'سيفقد هذا الجهاز صلاحية إدارة المحل (إلا إذا كان أول جهاز سُجّل به الرقم).';
+    if (await ask({ title: action === 'trust' ? 'توثيق الجهاز؟' : 'إلغاء توثيق الجهاز؟', text, okText: 'تأكيد', danger: action !== 'trust' }) === null) return;
+    await run(() => api(`/devices/${d.id}/${action}`, { method: 'POST' }), 'تم');
+    render();
+  };
+  return [
+    h('button', { class: 'back', onclick: () => go('users') }, '→ رجوع للقائمة'),
+    h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:16px' },
+      h('div', {}, h('h1', { style: 'margin:0' }, u.name), userPill(u)),
+      u.bannedAt
+        ? h('button', { class: 'btn primary', onclick: () => userAct('unban', { title: 'رفع الحظر؟', okText: 'رفع الحظر' }) }, 'رفع الحظر')
+        : h('button', { class: 'btn danger', onclick: () => userAct('ban', { title: 'حظر المستخدم', text: 'لن يستطيع الدخول أو الحجز من أي جهاز.', field: 'السبب (للسجل فقط)', required: true, okText: 'حظر', danger: true }) }, 'حظر')),
+    h('div', { class: 'grid2' },
+      h('div', { class: 'card' }, h('h2', {}, 'البيانات'), h('dl', {},
+        h('dt', {}, 'الرقم'), h('dd', {}, phone(u.phone)),
+        h('dt', {}, 'التسجيل'), h('dd', {}, fmtDate(u.createdAt)),
+        h('dt', {}, 'المحل'), h('dd', {}, u.shop ? h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('shops', u.shop.id); } }, u.shop.name) : '—'),
+        u.shop ? [h('dt', {}, 'حالة المحل'), h('dd', {}, shopPill(u.shop.status))] : null)),
+      h('div', { class: 'card' }, h('h2', {}, 'سجل الالتزام'), h('dl', {},
+        h('dt', {}, 'حجوزات تمت'), h('dd', {}, u.record.completed),
+        h('dt', {}, 'كل الحجوزات'), h('dd', {}, u.record.total),
+        h('dt', {}, 'لم يحضر'), h('dd', {}, u.record.noShows),
+        h('dt', {}, 'إلغاء متأخر'), h('dd', {}, u.record.lateCancels)))),
+    h('div', { class: 'card', style: 'margin-top:14px' }, h('h2', {}, 'الأجهزة'),
+      h('p', { class: 'muted small' }, 'أول جهاز سُجّل به الرقم موثوق تلقائياً. وثّق جهازاً آخر فقط بعد التأكد من صاحب الرقم بالاتصال.'),
+      h('div', { class: 'table-wrap' }, h('table', {},
+        h('thead', {}, h('tr', {}, ['#', 'أول ظهور', 'آخر ظهور', 'الإشعارات', 'الحالة', ''].map((t) => h('th', {}, t)))),
+        h('tbody', {}, u.devices.map((d, i) => h('tr', {},
+          h('td', {}, i + 1), h('td', { class: 'small' }, fmtDate(d.firstSeenAt)), h('td', { class: 'small' }, fmtDate(d.lastSeenAt)),
+          h('td', {}, d.hasPush ? 'مفعّلة' : '—'),
+          h('td', {}, d.trusted ? h('span', { class: 'pill ok' }, i === 0 && !d.verifiedAt ? 'موثوق (الأول)' : 'موثوق') : h('span', { class: 'pill' }, 'غير موثوق')),
+          h('td', {}, d.verifiedAt ? h('button', { class: 'btn danger', onclick: () => devAct(d, 'untrust') }, 'إلغاء التوثيق')
+            : !d.trusted ? h('button', { class: 'btn', onclick: () => devAct(d, 'trust') }, 'توثيق') : null))))))),
+  ];
+}
+
+// ------------------------------------------------------------------
+// القوائم
+// ------------------------------------------------------------------
+
+async function catalogView() {
+  const c = await api('/catalog');
+  const toggle = (path, item) => h('button', { class: 'btn' + (item.active ? ' danger' : ''), onclick: async () => {
+    await run(() => api(`/${path}/${item.id}`, { method: 'PATCH', body: { active: !item.active } }), item.active ? 'أُخفي' : 'أُظهر');
+    render();
+  } }, item.active ? 'إخفاء' : 'إظهار');
+  const rename = (path, item) => h('button', { class: 'btn', onclick: async () => {
+    const name = await ask({ title: 'تعديل الاسم', field: 'الاسم', initial: item.name, required: true, okText: 'حفظ' });
+    if (name === null || name === item.name) return;
+    await run(() => api(`/${path}/${item.id}`, { method: 'PATCH', body: { name } }), 'حُفظ');
+    render();
+  } }, 'تعديل');
+  const itemRow = (path, item, extra) => h('div', { class: 'row', style: 'justify-content:space-between;padding:6px 0;border-top:1px solid #eeece7;' + (item.active ? '' : 'opacity:.55') },
+    h('span', {}, item.name, extra ? h('span', { class: 'muted small' }, ' · ' + extra) : null, item.active ? '' : ' (مخفي)'),
+    h('div', { class: 'row' }, rename(path, item), toggle(path, item)));
+
+  const typeName = h('input', { type: 'text', placeholder: 'نوع نشاط جديد', maxlength: 60 });
+  const districtSel = h('select', {}, c.districts.map((d) => h('option', { value: d.id }, d.name)));
+  const areaName = h('input', { type: 'text', placeholder: 'منطقة جديدة', maxlength: 60 });
+  const filter = h('select', {}, h('option', { value: '' }, 'كل الأقضية'), c.districts.map((d) => h('option', { value: d.id }, d.name)));
+  const areaList = h('div', {});
+  const showAreas = () => {
+    const id = Number(filter.value) || null;
+    const items = c.areas.filter((a) => !id || a.districtId === id);
+    const dname = (a) => (c.districts.find((d) => d.id === a.districtId) || {}).name;
+    areaList.replaceChildren(...(items.length ? items.map((a) => itemRow('areas', a, `${id ? '' : dname(a) + ' · '}${a.shops} محل`)) : [h('p', { class: 'muted' }, 'لا مناطق بعد')]));
+  };
+  filter.addEventListener('change', showAreas);
+  showAreas();
+
+  return [
+    h('h1', {}, 'القوائم'),
+    h('div', { class: 'grid2' },
+      h('div', { class: 'card' }, h('h2', {}, 'أنواع النشاط'),
+        c.businessTypes.map((t) => itemRow('business-types', t, `${t.shops} محل`)),
+        h('form', { class: 'row', style: 'margin-top:10px', onsubmit: async (e) => {
+          e.preventDefault();
+          await run(() => api('/business-types', { method: 'POST', body: { name: typeName.value.trim() } }), 'أُضيف');
+          render();
+        } }, typeName, h('button', { class: 'btn primary' }, 'إضافة'))),
+      h('div', { class: 'card' }, h('h2', {}, 'الأقضية'),
+        h('p', { class: 'muted small' }, 'القضاء المخفي يختفي من التطبيق مع مناطقه.'),
+        c.districts.map((d) => itemRow('districts', d)))),
+    h('div', { class: 'card', style: 'margin-top:14px' }, h('h2', {}, 'المناطق'),
+      h('div', { class: 'row', style: 'margin-bottom:8px' }, h('span', { class: 'muted' }, 'عرض:'), filter),
+      areaList,
+      h('form', { class: 'row', style: 'margin-top:12px', onsubmit: async (e) => {
+        e.preventDefault();
+        await run(() => api('/areas', { method: 'POST', body: { districtId: Number(districtSel.value), name: areaName.value.trim() } }), 'أُضيفت المنطقة');
+        render();
+      } }, districtSel, areaName, h('button', { class: 'btn primary' }, 'إضافة منطقة'))),
+  ];
+}
+
+// ------------------------------------------------------------------
+// الإعدادات
+// ------------------------------------------------------------------
+
+const SETTING_LABELS = {
+  min_lead_minutes: 'أقل مدة قبل الموعد للحجز (دقيقة)',
+  slot_step_minutes: 'فاصل عرض الأوقات المتاحة (دقيقة)',
+  auto_complete_after_minutes: 'إكمال الحجز تلقائياً بعد انتهائه (دقيقة)',
+  max_pending_requests_per_customer: 'أقصى عدد طلبات معلقة للزبون',
+  free_cancel_hours_default: 'مهلة الإلغاء المجاني الافتراضية (ساعة)',
+  free_cancel_hours_options: 'خيارات مهلة الإلغاء المجاني (ساعات)',
+  max_shop_photos: 'أقصى عدد صور للمحل',
+  morning_summary_hour: 'ساعة ملخص الصباح لصاحب المحل',
+  final_deadline_reminder_minutes: 'التذكير الأخير قبل انتهاء المهلة (دقيقة)',
+  reminder_before_appointment_minutes: 'تذكير الزبون قبل الموعد (دقيقة)',
+  no_show_penalty: 'عقوبة عدم الحضور (العدد خلال الأيام)',
+  shop_commitment_badge: 'شارة المحل الملتزم',
+  shop_deadline_modes: 'مهل رد المحل حسب قرب الموعد (دقيقة)',
+  customer_deadline: 'مهل رد الزبون على الاقتراح (دقيقة)',
+  display_timezone: 'المنطقة الزمنية للعرض',
+};
+
+async function settingsView() {
+  const [{ settings }, { versions }] = await Promise.all([api('/settings'), api('/app-versions')]);
+  const rows = settings.map((s) => {
+    const simple = typeof s.value === 'number';
+    const input = simple
+      ? h('input', { type: 'text', inputmode: 'numeric', value: s.value, style: 'width:120px', disabled: !s.editable })
+      : h('textarea', { rows: Math.min(10, JSON.stringify(s.value, null, 2).split('\n').length), class: 'ltr', style: 'width:100%;font-family:monospace;font-size:13px', disabled: !s.editable });
+    if (!simple) input.value = JSON.stringify(s.value, null, 2);
+    const save = h('button', { class: 'btn primary', disabled: !s.editable, onclick: async () => {
+      let value;
+      try { value = simple ? Number(input.value) : JSON.parse(input.value); } catch (_) { return toast('صيغة القيمة غير صحيحة', true); }
+      await run(() => api('/settings/' + encodeURIComponent(s.key), { method: 'PUT', body: { value } }), 'حُفظ الإعداد ويُطبّق فوراً');
+    } }, 'حفظ');
+    return h('div', { class: 'card', style: 'margin-bottom:10px' },
+      h('div', { class: 'row', style: 'justify-content:space-between' }, h('strong', {}, SETTING_LABELS[s.key] || s.key), h('span', { class: 'muted small ltr' }, s.key)),
+      h('div', { class: simple ? 'row' : '', style: 'margin-top:8px;display:flex;gap:8px;flex-direction:' + (simple ? 'row' : 'column') }, input, s.editable ? save : h('span', { class: 'muted small' }, 'للقراءة فقط')));
+  });
+  const versionRows = versions.map((v) => {
+    const min = h('input', { type: 'text', value: v.minVersion, class: 'ltr', style: 'width:110px' });
+    const latest = h('input', { type: 'text', value: v.latestVersion, class: 'ltr', style: 'width:110px' });
+    return h('div', { class: 'row', style: 'margin-bottom:8px' },
+      h('strong', { style: 'width:80px' }, { android: 'أندرويد', ios: 'آيفون', web: 'الويب' }[v.platform]),
+      h('label', {}, 'أقل إصدار مسموح', min), h('label', {}, 'أحدث إصدار', latest),
+      h('button', { class: 'btn primary', style: 'align-self:flex-end', onclick: () => run(() => api('/app-versions/' + v.platform, { method: 'PUT', body: { minVersion: min.value.trim(), latestVersion: latest.value.trim() } }), 'حُفظ') }, 'حفظ'));
+  });
+  return [
+    h('h1', {}, 'الإعدادات'),
+    h('p', { class: 'muted' }, 'التغييرات تُطبّق فوراً على كل المستخدمين دون تحديث التطبيق. القيمة يجب أن تبقى بنفس الشكل.'),
+    h('div', { class: 'card', style: 'margin-bottom:16px' }, h('h2', {}, 'إصدارات التطبيق'),
+      h('p', { class: 'muted small' }, 'من يستخدم نسخة أقدم من "أقل إصدار مسموح" يُطلب منه تحديث التطبيق.'), versionRows),
+    rows,
+  ];
+}
+
+// ------------------------------------------------------------------
+// سجل الإجراءات
+// ------------------------------------------------------------------
+
+const ACTION_LABELS = {
+  approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
+  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل',
+};
+const TARGET_LABELS = {
+  shop: 'محل', area_request: 'طلب منطقة', user: 'مستخدم', device: 'جهاز', business_type: 'نوع نشاط', business_types: 'نوع نشاط',
+  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق',
+};
+
+async function actionsView() {
+  const { actions } = await api('/actions');
+  return [
+    h('h1', {}, 'سجل الإجراءات'),
+    actions.length ? h('div', { class: 'table-wrap' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['الوقت', 'المسؤول', 'الإجراء', 'العنصر', 'ملاحظة'].map((t) => h('th', {}, t)))),
+      h('tbody', {}, actions.map((a) => h('tr', {},
+        h('td', { class: 'small' }, fmtDate(a.createdAt)), h('td', {}, a.username || '—'),
+        h('td', {}, ACTION_LABELS[a.action] || a.action),
+        h('td', {}, (TARGET_LABELS[a.targetType] || a.targetType) + (a.targetId ? ` #${a.targetId}` : '')),
+        h('td', { class: 'small' }, a.note || '')))))) : h('div', { class: 'card empty' }, 'لا إجراءات بعد'),
+  ];
+}
+
+// ------------------------------------------------------------------
+
+(async () => {
+  if (token) await refreshStats();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -182,7 +182,10 @@ export async function submitForReview(pool: Pool, ownerId: number) {
     }
     const missing = await missingForReview(tx, shop.id);
     if (missing.length) throw new AppError(400, 'incomplete_shop', { missing });
-    await tx.query(`UPDATE shops SET status = 'under_review', review_note = NULL, updated_at = now() WHERE id = $1`, [shop.id]);
+    await tx.query(
+      `UPDATE shops SET status = 'under_review', review_note = NULL, submitted_at = now(), updated_at = now() WHERE id = $1`,
+      [shop.id],
+    );
   });
 }
 

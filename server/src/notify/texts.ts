@@ -14,6 +14,10 @@ export type NotificationType =
   | 'deadline_half'
   | 'deadline_final'
   | 'morning_summary'
+  | 'shop_approved'
+  | 'shop_rejected'
+  | 'shop_suspended'
+  | 'shop_reinstated'
   // للزبون
   | 'accepted'
   | 'rejected'
@@ -35,6 +39,10 @@ export const AUDIENCE: Record<NotificationType, 'customer' | 'shop'> = {
   deadline_half: 'shop',
   deadline_final: 'shop',
   morning_summary: 'shop',
+  shop_approved: 'shop',
+  shop_rejected: 'shop',
+  shop_suspended: 'shop',
+  shop_reinstated: 'shop',
   accepted: 'customer',
   rejected: 'customer',
   proposal: 'customer',
@@ -64,6 +72,8 @@ export const URGENT = new Set<NotificationType>([
 
 export interface TextParams {
   shop?: string;
+  /** ملاحظة الإدارة عند الرفض أو الإيقاف */
+  note?: string;
   customer?: string;
   startsAt?: string; // ISO
   minutes?: number;
@@ -109,6 +119,14 @@ export function renderText(type: NotificationType, p: TextParams): { title: stri
       return { title: 'مهلة الرد تنتهي الآن', body: `بقي ${duration(p.minutes)} فقط على طلب ${p.customer}.` };
     case 'morning_summary':
       return { title: 'حجوزات اليوم', body: p.count === 1 ? 'عندك حجز واحد اليوم.' : p.count === 2 ? 'عندك حجزان اليوم.' : `عندك ${p.count} حجوزات اليوم.` };
+    case 'shop_approved':
+      return { title: 'تمت الموافقة على محلك', body: `${p.shop} ظاهر الآن للزبائن ويستقبل الحجوزات.` };
+    case 'shop_rejected':
+      return { title: 'طلب فتح المحل يحتاج تعديلاً', body: p.note ? `ملاحظة الإدارة: ${p.note}` : 'راجع بيانات المحل وأعد الإرسال.' };
+    case 'shop_suspended':
+      return { title: 'تم إيقاف محلك', body: p.note ? `السبب: ${p.note}` : 'تواصل مع الإدارة لمعرفة التفاصيل.' };
+    case 'shop_reinstated':
+      return { title: 'عاد محلك للعمل', body: `${p.shop} ظاهر مجدداً للزبائن.` };
     case 'accepted':
       return { title: 'تم قبول حجزك', body: `موعدك في ${p.shop} ${when}.` };
     case 'rejected':
