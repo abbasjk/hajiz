@@ -74,6 +74,8 @@ class ShopSummary {
     this.matchedService,
     this.rating,
     this.ratingCount = 0,
+    this.latitude,
+    this.longitude,
   });
 
   final int id;
@@ -95,6 +97,10 @@ class ShopSummary {
   final double? rating;
   final int ratingCount;
 
+  /// موقع المحل على الخريطة
+  final double? latitude;
+  final double? longitude;
+
   factory ShopSummary.fromJson(Map<String, dynamic> j) => ShopSummary(
         id: j['id'] as int,
         name: j['name'] as String,
@@ -110,6 +116,8 @@ class ShopSummary {
         matchedService: j['matchedService'] == null ? null : Service.fromJson(j['matchedService'] as Map<String, dynamic>),
         rating: _double(j['rating']),
         ratingCount: j['ratingCount'] as int? ?? 0,
+        latitude: _double(j['latitude']),
+        longitude: _double(j['longitude']),
       );
 }
 

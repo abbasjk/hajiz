@@ -21,4 +21,6 @@ class AppColors {
   static const danger = Color(0xFFA23B2A);
   static const dangerSoft = Color(0xFFFBE9E6);
   static const star = Color(0xFFD97706);
+  static const myLocation = Color(0xFF2563EB);
+  static const shadow = Color(0x40000000);
 }

@@ -10,6 +10,7 @@ import '../util/format.dart';
 import '../widgets/common.dart';
 import 'notifications_screen.dart';
 import 'shop_screen.dart';
+import 'shops_map.dart';
 
 /// الرئيسية: أنواع الأعمال مع المحلات القريبة، والبحث بالاسم أو النوع أو المنطقة.
 class HomeScreen extends StatefulWidget {
@@ -35,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _debounce;
   int _requestId = 0;
 
+  /// عرض المحلات على الخريطة بدل القائمة، بنفس البحث والتصفية
+  bool _mapView = false;
+  final _search = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _search.dispose();
     super.dispose();
   }
 
@@ -84,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
             lat: _position?.lat,
             lng: _position?.lng,
             sort: _sort,
+            // الخريطة تعرض محلات أكثر من القائمة
+            limit: _mapView ? 200 : null,
           );
       if (mounted && id == _requestId) setState(() => _shops = shops);
     } catch (e) {
@@ -107,9 +115,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final l = AppLocalizations.of(context);
     final config = _config;
     return Scaffold(
-      appBar: AppBar(title: Text(l.appName), actions: const [NotificationsBell(audience: 'customer'), SizedBox(width: 4)]),
+      appBar: AppBar(title: Text(l.appName), actions: [
+        if (config != null)
+          IconButton(
+            tooltip: _mapView ? l.showList : l.showMap,
+            icon: Icon(_mapView ? Icons.view_list_outlined : Icons.map_outlined),
+            onPressed: () => _set(() => _mapView = !_mapView),
+          ),
+        const NotificationsBell(audience: 'customer'),
+        const SizedBox(width: 4),
+      ]),
       body: config == null
           ? LoadState(error: _error, onRetry: _start)
+          : _mapView
+          ? Column(
+              children: [
+                _searchAndFilters(l, config, forMap: true),
+                Expanded(
+                  child: _shops == null
+                      ? LoadState(error: _error, onRetry: _load)
+                      : ShopsMap(shops: _shops!, position: _position),
+                ),
+              ],
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: CustomScrollView(
@@ -122,7 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _searchAndFilters(AppLocalizations l, ServerConfig config) {
+  /// forMap: على الخريطة لا معنى للترتيب، فيُخفى
+  Widget _searchAndFilters(AppLocalizations l, ServerConfig config, {bool forMap = false}) {
     final areas = config.areas.where((a) => a.districtId == _districtId).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
           child: TextField(
+            controller: _search,
             onChanged: _onQuery,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(hintText: l.searchHint, prefixIcon: const Icon(Icons.search)),
@@ -171,6 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        if (forMap) const SizedBox(height: 8),
+        if (!forMap)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: SegmentedButton<String>(
@@ -187,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
           ),
         ),
-        if (_locationDenied)
+        if (_locationDenied && !forMap)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(l.locationDenied, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),

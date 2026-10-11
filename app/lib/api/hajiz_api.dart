@@ -16,8 +16,10 @@ class HajizApi {
     double? lat,
     double? lng,
     String sort = 'name',
+    int? limit,
   }) async {
     final json = await client.get('/shops', query: {
+      if (limit != null) 'limit': '$limit',
       if (businessTypeId != null) 'businessTypeId': '$businessTypeId',
       if (districtId != null) 'districtId': '$districtId',
       if (areaId != null) 'areaId': '$areaId',

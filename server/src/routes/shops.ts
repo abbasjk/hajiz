@@ -14,9 +14,12 @@ const listQuery = z.object({
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   sort: z.enum(['name', 'distance', 'soonest']).default('name'),
+  // الخريطة تطلب أكثر من القائمة؛ "أقرب موعد" يحسب المواعيد لكل محل فيبقى على الحد الافتراضي
+  limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
 const LIST_LIMIT = 50;
+const MAP_LIMIT = 200;
 const SOONEST_DAYS = 7;
 
 // شارة "ملتزم بمواعيده": عدد كافٍ من الحجوزات المنتهية ونسبة إلغاء قليلة من المحل
@@ -92,7 +95,7 @@ export async function shopRoutes(app: FastifyInstance) {
        LEFT JOIN areas a ON a.id = s.area_id
        WHERE ${where.join(' AND ')}
        ORDER BY ${order}
-       LIMIT ${LIST_LIMIT}`,
+       LIMIT ${f.sort === 'soonest' ? LIST_LIMIT : Math.min(f.limit ?? LIST_LIMIT, MAP_LIMIT)}`,
       params,
     );
 

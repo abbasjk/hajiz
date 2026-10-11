@@ -101,4 +101,12 @@ describe('search', () => {
     expect(shops).toHaveLength(2);
     expect(shops.every((s) => s.matchedService === null)).toBe(true);
   });
+
+  it('returns coordinates for the map and honours the limit', async () => {
+    const all = (await call('GET', '/v1/shops')).json().shops;
+    expect(all.length).toBeGreaterThan(1);
+    expect(all[0]).toMatchObject({ latitude: expect.any(Number), longitude: expect.any(Number) });
+    expect((await call('GET', '/v1/shops?limit=1')).json().shops).toHaveLength(1);
+    expect((await call('GET', '/v1/shops?limit=500')).statusCode).toBe(400);
+  });
 });

@@ -630,5 +630,9 @@
   "reasonShopClosed": "أُغلق المحل نهائياً",
   "errUntrustedDevice": "هذا الإجراء متاح فقط من الهاتف الذي سجّلت به رقمك أول مرة.",
   "privacyPolicy": "سياسة الخصوصية",
-  "registerPrivacyNote": "بالمتابعة توافق على سياسة الخصوصية."
+  "registerPrivacyNote": "بالمتابعة توافق على سياسة الخصوصية.",
+  "showMap": "الخريطة",
+  "showList": "القائمة",
+  "myLocation": "موقعي",
+  "noShopsOnMap": "لا توجد محلات على الخريطة ضمن هذا البحث"
 }
