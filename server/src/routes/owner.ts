@@ -242,7 +242,7 @@ export async function ownerRoutes(app: FastifyInstance) {
   action('cancel', 'shop_cancelled', (r, bookingId, ownerId, now) =>
     cancelByShop(app.pool, { bookingId, ownerId, now, reason: parse(reasonBody, r.body).reason }));
   action('no-show', null, (_r, bookingId, ownerId, now) => markNoShow(app.pool, { bookingId, ownerId, now }));
-  action('complete', null, (_r, bookingId, ownerId, now) => markCompleted(app.pool, { bookingId, ownerId, now }));
+  action('complete', 'completed', (_r, bookingId, ownerId, now) => markCompleted(app.pool, { bookingId, ownerId, now }));
   action('verify-device', null, async (_r, bookingId, ownerId) =>
     verifyCustomerDevice(app.pool, await requireShop(app.pool, ownerId), bookingId));
 }

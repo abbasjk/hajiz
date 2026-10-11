@@ -223,6 +223,41 @@ class BottomActionBar extends StatelessWidget {
   }
 }
 
+/// صف نجوم للعرض، أو للاختيار إن مُرّر onChanged.
+/// النجمة الأولى في بداية السطر (يمين العربية) كما يتوقع القارئ.
+class StarRow extends StatelessWidget {
+  const StarRow({super.key, required this.stars, this.size = 16, this.onChanged});
+  final int stars;
+  final double size;
+  final ValueChanged<int>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Semantics(
+      label: l.starsOutOf5(stars),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 1; i <= 5; i++)
+            onChanged == null
+                ? Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: size, color: i <= stars ? AppColors.star : AppColors.textDisabled)
+                : InkResponse(
+                    onTap: () => onChanged!(i),
+                    radius: size * 0.75,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: size, color: i <= stars ? AppColors.star : AppColors.textDisabled),
+                    ),
+                  ),
+        ],
+      ),
+    );
+  }
+}
+
 void showError(BuildContext context, Object error) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()

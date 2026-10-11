@@ -3,6 +3,7 @@ import type { AuthContext } from '../auth/devices.js';
 import { isSlotAvailable, loadShop } from './availability.js';
 import { loadSettings } from './settings.js';
 import { minutesBetween } from './time.js';
+import { CAN_REVIEW_SQL } from './reviews.js';
 
 /**
  * ما يراه الزبون من حجوزاته. من جهاز غير موثوق (الرقم نفسه من جهاز آخر)
@@ -19,7 +20,9 @@ const COLUMNS = `b.id, b.status, b.starts_at AS "startsAt", b.ends_at AS "endsAt
                     'freeCancelHours', s.free_cancel_hours) AS shop,
   (SELECT coalesce(json_agg(json_build_object('name', bs.service_name, 'durationMinutes', bs.duration_minutes,
                                               'priceType', bs.price_type, 'price', bs.price) ORDER BY bs.id), '[]')
-   FROM booking_services bs WHERE bs.booking_id = b.id) AS services`;
+   FROM booking_services bs WHERE bs.booking_id = b.id) AS services,
+  (SELECT json_build_object('stars', r.stars, 'comment', r.comment) FROM reviews r WHERE r.booking_id = b.id) AS review,
+  ${CAN_REVIEW_SQL} AS "canReview"
 
 export async function listCustomerBookings(pool: Pool, auth: AuthContext) {
   const { rows } = await pool.query(

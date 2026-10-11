@@ -203,6 +203,25 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
           ),
         ),
         if (b.status == BookingStatus.pendingCustomer) ..._proposal(l, b),
+        if (b.review != null)
+          Card(
+            margin: const EdgeInsets.only(top: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l.yourReview, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  StarRow(stars: b.review!.stars, size: 20),
+                  if (b.review!.comment != null) ...[
+                    const SizedBox(height: 8),
+                    Text(b.review!.comment!, style: const TextStyle(height: 1.6)),
+                  ],
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -256,9 +275,36 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
         Text(l.proposalExpiryHint, style: const TextStyle(fontSize: 13, height: 1.6, color: AppColors.textMuted)),
       ];
 
+  Future<void> _rate(Booking b) async {
+    final l = AppLocalizations.of(context);
+    final api = AppScope.of(context).api;
+    final result = await showModalBottomSheet<(int, String?)>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => const _RateSheet(),
+    );
+    if (result == null || !mounted) return;
+    final before = _booking;
+    await _run((key) => api.review(b.id, result.$1, result.$2, key));
+    if (mounted && _booking?.review != null && before?.review == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.reviewSent)));
+    }
+  }
+
   Widget? _actions(AppLocalizations l, Booking b) {
     final api = AppScope.of(context).api;
     final now = AppScope.of(context).client.serverNow;
+    if (b.canReview) {
+      return BottomActionBar(
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          onPressed: _busy ? null : () => _rate(b),
+          icon: const Icon(Icons.star_outline_rounded),
+          label: Text(l.rateVisit),
+        ),
+      );
+    }
     if (b.status == BookingStatus.pendingCustomer) {
       return BottomActionBar(
         child: Column(
@@ -291,6 +337,72 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
         ),
         onPressed: _busy ? null : () => _cancel(b),
         child: Text(l.cancelBooking),
+      ),
+    );
+  }
+}
+
+/// نافذة التقييم: نجوم إجبارية وتعليق اختياري
+class _RateSheet extends StatefulWidget {
+  const _RateSheet();
+
+  @override
+  State<_RateSheet> createState() => _RateSheetState();
+}
+
+class _RateSheetState extends State<_RateSheet> {
+  int _stars = 0;
+  final _comment = TextEditingController();
+
+  @override
+  void dispose() {
+    _comment.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final labels = [l.rateLabel1, l.rateLabel2, l.rateLabel3, l.rateLabel4, l.rateLabel5];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.rateTitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            Center(child: StarRow(stars: _stars, size: 40, onChanged: (v) => setState(() => _stars = v))),
+            const SizedBox(height: 8),
+            Text(
+              _stars == 0 ? l.rateChooseStars : labels[_stars - 1],
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _stars == 0 ? AppColors.textMuted : AppColors.text, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _comment,
+              maxLength: 500,
+              minLines: 2,
+              maxLines: 5,
+              decoration: InputDecoration(hintText: l.rateCommentHint),
+            ),
+            Text(l.rateFirstNameHint, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            const SizedBox(height: 16),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              onPressed: _stars == 0
+                  ? null
+                  : () {
+                      final text = _comment.text.trim();
+                      Navigator.pop(context, (_stars, text.isEmpty ? null : text));
+                    },
+              child: Text(l.rateSubmit),
+            ),
+          ],
+        ),
       ),
     );
   }

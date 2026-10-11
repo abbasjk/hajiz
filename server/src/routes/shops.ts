@@ -4,6 +4,7 @@ import { loadShop, slotsForDate } from '../booking/availability.js';
 import { loadSettings } from '../booking/settings.js';
 import { addDays, toLocalDate } from '../booking/time.js';
 import { AppError } from '../lib/errors.js';
+import { latestReviews, RATING_SQL } from '../booking/reviews.js';
 
 const listQuery = z.object({
   businessTypeId: z.coerce.number().int().positive().optional(),
@@ -83,6 +84,7 @@ export async function shopRoutes(app: FastifyInstance) {
               (SELECT coalesce(url, '/photos/' || id) FROM shop_photos p WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1) AS "coverPhoto",
               ${COMMITTED_SQL} AS committed,
               ${matched} AS "matchedService",
+              ${RATING_SQL('s.id')},
               (SELECT min(duration_minutes) FROM services sv WHERE sv.shop_id = s.id AND sv.active) AS min_duration
        FROM shops s
        LEFT JOIN business_types bt ON bt.id = s.business_type_id
@@ -131,6 +133,7 @@ export async function shopRoutes(app: FastifyInstance) {
               d.name AS district, a.name AS area, s.street, s.landmark, s.latitude, s.longitude,
               s.instant_booking AS "instantBooking", s.deadline_mode AS "deadlineMode",
               s.free_cancel_hours AS "freeCancelHours", ${COMMITTED_SQL} AS committed,
+              ${RATING_SQL('s.id')},
               (SELECT id FROM schedules WHERE shop_id = s.id ORDER BY id LIMIT 1) AS schedule_id
        FROM shops s
        LEFT JOIN business_types bt ON bt.id = s.business_type_id
@@ -143,7 +146,7 @@ export async function shopRoutes(app: FastifyInstance) {
     if (!shop) throw new AppError(404, 'shop_not_found');
     const { schedule_id: scheduleId, ...details } = shop;
 
-    const [photos, services, hours, temporary] = await Promise.all([
+    const [photos, services, hours, temporary, reviews] = await Promise.all([
       app.pool.query(
         `SELECT coalesce(url, '/photos/' || id) AS url FROM shop_photos WHERE shop_id = $1 ORDER BY sort_order, id`,
         [shop.id],
@@ -163,6 +166,7 @@ export async function shopRoutes(app: FastifyInstance) {
          FROM temporary_schedules WHERE schedule_id = $1 AND to_date >= $2::date ORDER BY from_date LIMIT 3`,
         [scheduleId, toLocalDate(new Date())],
       ),
+      latestReviews(app.pool, shop.id),
     ]);
     return {
       shop: {
@@ -171,6 +175,7 @@ export async function shopRoutes(app: FastifyInstance) {
         services: services.rows,
         weeklyHours: hours.rows,
         temporarySchedules: temporary.rows,
+        reviews,
       },
     };
   });

@@ -99,6 +99,15 @@ class _ShopScreenState extends State<ShopScreen> {
             children: [
               if (shop.businessType != null)
                 Text(shop.businessType!, style: const TextStyle(color: AppColors.textMuted)),
+              if (shop.rating != null && shop.ratingCount > 0) ...[
+                const SizedBox(height: 6),
+                Row(children: [
+                  StarRow(stars: shop.rating!.round()),
+                  const SizedBox(width: 6),
+                  Text('${shop.rating!.toStringAsFixed(1)} (${shop.ratingCount})',
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ],
               if (shop.committed || shop.instantBooking) ...[
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, children: [
@@ -162,6 +171,22 @@ class _ShopScreenState extends State<ShopScreen> {
           for (final day in const [6, 0, 1, 2, 3, 4, 5]) _hoursRow(l, day, shop.weeklyHours),
         ]),
         if (address.isNotEmpty) _section(l.shopLocation, [Text(address.join('، '))]),
+        if (shop.reviews.isNotEmpty)
+          _section(l.reviewsTitle, [
+            for (final (i, r) in shop.reviews.indexed) ...[
+              if (i > 0) const Divider(height: 20),
+              Row(children: [
+                Expanded(
+                  child: Text(r.customerName ?? l.anonymousCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                StarRow(stars: r.stars, size: 14),
+              ]),
+              if (r.comment != null) ...[
+                const SizedBox(height: 4),
+                Text(r.comment!, style: const TextStyle(height: 1.6)),
+              ],
+            ],
+          ]),
       ],
     );
   }

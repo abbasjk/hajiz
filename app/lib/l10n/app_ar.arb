@@ -581,5 +581,32 @@
         "type": "int"
       }
     }
+  },
+  "newShop": "جديد",
+  "reviewsTitle": "آراء الزبائن",
+  "rateVisit": "قيّم زيارتك",
+  "rateTitle": "كيف كانت زيارتك؟",
+  "rateCommentHint": "اكتب رأيك ليستفيد منه غيرك (اختياري)",
+  "rateFirstNameHint": "يظهر تقييمك باسمك الأول فقط.",
+  "rateSubmit": "إرسال التقييم",
+  "rateChooseStars": "اختر عدد النجوم",
+  "rateLabel1": "سيئة",
+  "rateLabel2": "مقبولة",
+  "rateLabel3": "جيدة",
+  "rateLabel4": "جيدة جداً",
+  "rateLabel5": "ممتازة",
+  "yourReview": "تقييمك",
+  "reviewSent": "شكراً لتقييمك",
+  "anonymousCustomer": "زبون",
+  "errAlreadyReviewed": "قيّمت هذا الحجز مسبقاً",
+  "errReviewClosed": "انتهت مدة تقييم هذا الحجز",
+  "errReviewNotAllowed": "يمكن التقييم فقط بعد إتمام الزيارة",
+  "starsOutOf5": "{n} من 5",
+  "@starsOutOf5": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }

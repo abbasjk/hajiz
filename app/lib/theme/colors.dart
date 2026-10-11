@@ -20,4 +20,5 @@ class AppColors {
   static const warning = Color(0xFF7A4300);
   static const danger = Color(0xFFA23B2A);
   static const dangerSoft = Color(0xFFFBE9E6);
+  static const star = Color(0xFFD97706);
 }

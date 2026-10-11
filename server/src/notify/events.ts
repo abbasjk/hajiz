@@ -13,7 +13,8 @@ export type BookingEvent =
   | 'customer_cancelled'
   | 'shop_cancelled'
   | 'closure_moved'
-  | 'expired';
+  | 'expired'
+  | 'completed';
 
 interface Context {
   id: number;
@@ -73,6 +74,8 @@ export async function bookingEvent(notifier: Notifier, db: Queryable, bookingId:
       return toCustomer('shop_cancelled');
     case 'closure_moved':
       return toCustomer('closure_proposal');
+    case 'completed':
+      return toCustomer('review_request');
     case 'expired':
       // المحل لم يرد، أو الزبون لم يختر من الأوقات المقترحة
       return toCustomer(c.expiredFrom === 'pending_customer' ? 'expired_customer' : 'expired_shop');

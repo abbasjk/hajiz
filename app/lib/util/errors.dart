@@ -25,6 +25,9 @@ String errorMessage(AppLocalizations l, Object error) {
     'too_early' => l.errTooEarly,
     'shop_suspended' => l.errShopSuspended,
     'invalid_closure' => l.errInvalidClosure,
+    'already_reviewed' => l.errAlreadyReviewed,
+    'review_window_closed' => l.errReviewClosed,
+    'review_not_allowed' => l.errReviewNotAllowed,
     _ => l.errGeneric,
   };
 }

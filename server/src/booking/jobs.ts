@@ -56,6 +56,7 @@ export async function runMinuteJobs(pool: Pool, now = new Date(), notifier?: Not
   let reminders = 0;
   if (notifier) {
     for (const id of expired) await bookingEvent(notifier, pool, id, 'expired', now);
+    for (const id of completed) await bookingEvent(notifier, pool, id, 'completed', now);
     reminders += await deadlineReminders(pool, notifier, now);
     reminders += await appointmentReminders(pool, notifier, now);
     reminders += await morningSummaries(pool, notifier, now);

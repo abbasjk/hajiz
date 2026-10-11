@@ -10,6 +10,7 @@ import { toLocalDate } from '../booking/time.js';
 import { AppError } from '../lib/errors.js';
 import { compareVersions, isValidVersion } from '../lib/version.js';
 import type { NotificationType } from '../notify/texts.js';
+import { RATING_SQL } from '../booking/reviews.js';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const r = schema.safeParse(value);
@@ -165,6 +166,7 @@ export async function adminRoutes(app: FastifyInstance) {
                     u.id AS "ownerId", u.phone AS "ownerPhone", u.name AS "ownerName",
                     bt.name AS "businessType", d.name AS district, a.name AS area,
                     rv.username AS "reviewedBy",
+                    ${RATING_SQL('s.id')},
                     (SELECT id FROM schedules WHERE shop_id = s.id ORDER BY id LIMIT 1) AS "scheduleId"
              FROM shops s
              JOIN users u ON u.id = s.owner_id
@@ -437,6 +439,39 @@ export async function adminRoutes(app: FastifyInstance) {
           await logAction(app.pool, adminId(request), 'create', 'area', rows[0].id, body.name);
           return { id: rows[0].id };
         });
+
+        // ------------------------------------------------------------
+        // التقييمات: الإدارة تخفي المسيء منها فلا يظهر ولا يُحسب في المتوسط
+        // ------------------------------------------------------------
+        secure.get('/reviews', async (request) => {
+          const q = parse(z.object({ hidden: z.enum(['true', 'false']).default('false') }), request.query);
+          const { rows } = await app.pool.query(
+            `SELECT r.id, r.stars, r.comment, r.created_at AS "createdAt", r.hidden_at AS "hiddenAt",
+                    s.id AS "shopId", s.name AS "shopName", u.id AS "customerId", u.name AS "customerName", u.phone AS "customerPhone"
+             FROM reviews r
+             JOIN shops s ON s.id = r.shop_id
+             JOIN bookings b ON b.id = r.booking_id
+             JOIN users u ON u.id = b.customer_id
+             WHERE (r.hidden_at IS NOT NULL) = $1
+             ORDER BY r.created_at DESC, r.id DESC LIMIT 200`,
+            [q.hidden === 'true'],
+          );
+          return { reviews: rows };
+        });
+
+        for (const [action, sql] of [
+          ['hide', 'UPDATE reviews SET hidden_at = now(), hidden_by = $2 WHERE id = $1 AND hidden_at IS NULL'],
+          ['unhide', 'UPDATE reviews SET hidden_at = NULL, hidden_by = NULL WHERE id = $1 AND hidden_at IS NOT NULL AND $2::int IS NOT NULL'],
+        ] as const) {
+          secure.post(`/reviews/:id/${action}`, async (request) => {
+            const { id } = parse(idParams, request.params);
+            const { note } = parse(noteBody, request.body ?? {});
+            const { rowCount } = await app.pool.query(sql, [id, adminId(request)]);
+            if (!rowCount) throw new AppError(409, 'invalid_transition');
+            await logAction(app.pool, adminId(request), action, 'review', id, note);
+            return { ok: true };
+          });
+        }
 
         // ------------------------------------------------------------
         // الإعدادات والإصدارات

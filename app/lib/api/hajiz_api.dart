@@ -80,6 +80,9 @@ class HajizApi {
   Future<Booking> choose(int id, int proposedTimeId, String key) =>
       _action(id, 'choose', key, {'proposedTimeId': proposedTimeId});
 
+  Future<Booking> review(int id, int stars, String? comment, String key) =>
+      _action(id, 'review', key, {'stars': stars, if (comment != null && comment.isNotEmpty) 'comment': comment});
+
   // ---------------- الإشعارات ----------------
 
   Future<void> savePushToken(String? token, {required bool enabled}) =>

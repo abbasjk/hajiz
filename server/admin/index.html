@@ -246,6 +246,7 @@ const VIEWS = [
   ['shops', 'مراجعة المحلات', 'pendingShops'],
   ['areas', 'طلبات المناطق', 'pendingAreas'],
   ['users', 'المستخدمون'],
+  ['reviews', 'التقييمات'],
   ['catalog', 'القوائم'],
   ['settings', 'الإعدادات'],
   ['actions', 'سجل الإجراءات'],
@@ -277,7 +278,7 @@ function render() {
       main),
   );
   const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView,
-    users: state.detail ? userDetailView : usersView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
+    users: state.detail ? userDetailView : usersView, reviews: reviewsView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
   fn().then((content) => main.replaceChildren(...[].concat(content).filter((x) => x !== null && x !== undefined && x !== false))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
 }
 
@@ -394,6 +395,7 @@ async function shopDetailView() {
         h('dt', {}, 'هاتف المحل'), h('dd', {}, phone(s.phone)),
         h('dt', {}, 'الوصف'), h('dd', {}, s.description || '—'),
         h('dt', {}, 'الحجز'), h('dd', {}, s.instantBooking ? 'تأكيد فوري' : 'بموافقة المحل'),
+        h('dt', {}, 'التقييم'), h('dd', {}, s.ratingCount ? `${s.rating} من 5 · ${s.ratingCount} تقييم` : 'لا تقييمات بعد'),
         h('dt', {}, 'أُرسل للمراجعة'), h('dd', {}, fmtDate(s.submittedAt)),
         h('dt', {}, 'آخر مراجعة'), h('dd', {}, s.reviewedAt ? `${fmtDate(s.reviewedAt)} · ${s.reviewedBy || ''}` : '—'))),
       h('div', { class: 'card' }, h('h2', {}, 'صاحب المحل'), h('dl', {},
@@ -519,6 +521,40 @@ async function userDetailView() {
 }
 
 // ------------------------------------------------------------------
+// التقييمات
+// ------------------------------------------------------------------
+
+const stars = (n) => h('span', { style: 'color:#d97706;letter-spacing:1px', 'aria-label': `${n} من 5` }, '★'.repeat(n), h('span', { style: 'color:#d4d1c9' }, '★'.repeat(5 - n)));
+
+async function reviewsView() {
+  const hidden = state.reviewsHidden === true;
+  const { reviews } = await api('/reviews?hidden=' + hidden);
+  const act = async (r, action) => {
+    const note = await ask(action === 'hide'
+      ? { title: 'إخفاء التقييم؟', text: 'لن يظهر للزبائن ولن يُحسب في متوسط تقييم المحل.', field: 'السبب (للسجل فقط)', okText: 'إخفاء', danger: true }
+      : { title: 'إظهار التقييم مجدداً؟', okText: 'إظهار' });
+    if (note === null) return;
+    await run(() => api(`/reviews/${r.id}/${action}`, { method: 'POST', body: note ? { note } : {} }), action === 'hide' ? 'أُخفي التقييم' : 'ظهر التقييم');
+    render();
+  };
+  const tabs = h('div', { class: 'tabs' },
+    h('button', { class: 'tab', 'aria-pressed': String(!hidden), onclick: () => { state.reviewsHidden = false; render(); } }, 'الظاهرة'),
+    h('button', { class: 'tab', 'aria-pressed': String(hidden), onclick: () => { state.reviewsHidden = true; render(); } }, 'المخفية'));
+  return [
+    h('h1', {}, 'التقييمات'), tabs,
+    reviews.length ? reviews.map((r) => h('div', { class: 'card', style: 'margin-bottom:10px' },
+      h('div', { class: 'row', style: 'justify-content:space-between' },
+        h('div', {}, stars(r.stars), ' ', h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('shops', r.shopId); } }, r.shopName)),
+        h('span', { class: 'muted small' }, fmtDate(r.createdAt))),
+      r.comment ? h('p', { style: 'margin:8px 0' }, r.comment) : h('p', { class: 'muted small', style: 'margin:8px 0' }, 'بدون تعليق'),
+      h('div', { class: 'row', style: 'justify-content:space-between' },
+        h('a', { href: '#', class: 'small', onclick: (e) => { e.preventDefault(); go('users', r.customerId); } }, r.customerName, ' · ', phone(r.customerPhone)),
+        hidden ? h('button', { class: 'btn', onclick: () => act(r, 'unhide') }, 'إظهار') : h('button', { class: 'btn danger', onclick: () => act(r, 'hide') }, 'إخفاء'))))
+      : h('div', { class: 'card empty' }, hidden ? 'لا توجد تقييمات مخفية' : 'لا توجد تقييمات بعد'),
+  ];
+}
+
+// ------------------------------------------------------------------
 // القوائم
 // ------------------------------------------------------------------
 
@@ -591,6 +627,7 @@ const SETTING_LABELS = {
   morning_summary_hour: 'ساعة ملخص الصباح لصاحب المحل',
   final_deadline_reminder_minutes: 'التذكير الأخير قبل انتهاء المهلة (دقيقة)',
   reminder_before_appointment_minutes: 'تذكير الزبون قبل الموعد (دقيقة)',
+  review_window_days: 'مدة إتاحة التقييم بعد الموعد (يوم)',
   no_show_penalty: 'عقوبة عدم الحضور (العدد خلال الأيام)',
   shop_commitment_badge: 'شارة المحل الملتزم',
   shop_deadline_modes: 'مهل رد المحل حسب قرب الموعد (دقيقة)',
@@ -638,11 +675,11 @@ async function settingsView() {
 
 const ACTION_LABELS = {
   approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
-  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل',
+  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار',
 };
 const TARGET_LABELS = {
   shop: 'محل', area_request: 'طلب منطقة', user: 'مستخدم', device: 'جهاز', business_type: 'نوع نشاط', business_types: 'نوع نشاط',
-  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق',
+  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق', review: 'تقييم',
 };
 
 async function actionsView() {

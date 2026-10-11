@@ -6,6 +6,7 @@ import { getCustomerBooking, listCustomerBookings } from '../booking/customer-vi
 import { AppError } from '../lib/errors.js';
 import { idempotent } from '../lib/idempotency.js';
 import type { BookingEvent } from '../notify/events.js';
+import { addReview } from '../booking/reviews.js';
 
 const createBody = z.object({
   shopId: z.number().int().positive(),
@@ -76,6 +77,18 @@ export async function bookingRoutes(app: FastifyInstance) {
 
   action('cancel', 'customer_cancelled', (_r, bookingId, customerId) => cancelByCustomer(app.pool, { bookingId, customerId, now: new Date() }));
   action('decline', 'customer_declined', (_r, bookingId, customerId) => declineProposal(app.pool, { bookingId, customerId, now: new Date() }));
+  // تقييم الزيارة بعد اكتمال الحجز
+  app.post('/bookings/:bookingId/review', async (request) => {
+    const { bookingId } = parse(idParams, request.params);
+    const body = parse(z.object({ stars: z.number().int().min(1).max(5), comment: z.string().max(500).optional() }), request.body);
+    const auth = authOf(request);
+    await view(request, bookingId);
+    return idempotent(app.pool, request, auth.userId, async () => {
+      await addReview(app.pool, { bookingId, customerId: auth.userId, stars: body.stars, comment: body.comment });
+      return view(request, bookingId);
+    });
+  });
+
   action('choose', 'customer_chose', (request, bookingId, customerId) => {
     const { proposedTimeId } = parse(z.object({ proposedTimeId: z.number().int().positive() }), request.body);
     return chooseProposedTime(app.pool, { bookingId, customerId, proposedTimeId, now: new Date() });

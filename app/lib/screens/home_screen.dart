@@ -293,6 +293,15 @@ class ShopCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 4,
                       children: [
+                        if (shop.rating != null && shop.ratingCount > 0)
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.star_rounded, size: 14, color: AppColors.star),
+                            const SizedBox(width: 2),
+                            Text('${shop.rating!.toStringAsFixed(1)} (${shop.ratingCount})',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text)),
+                          ])
+                        else
+                          _meta(l.newShop),
                         if (shop.distanceKm != null) _meta(l.distanceKm(shop.distanceKm!.toStringAsFixed(1))),
                         if (shop.nextAvailable != null)
                           _meta(l.nextAvailable('${formatDayShort(l, shop.nextAvailable!)} ${formatTime(l, shop.nextAvailable!)}')),

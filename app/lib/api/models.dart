@@ -72,6 +72,8 @@ class ShopSummary {
     required this.committed,
     required this.instantBooking,
     this.matchedService,
+    this.rating,
+    this.ratingCount = 0,
   });
 
   final int id;
@@ -89,6 +91,10 @@ class ShopSummary {
   /// الخدمة التي طابقت نص البحث (إن كان البحث باسم خدمة)
   final Service? matchedService;
 
+  /// متوسط التقييم وعددها (المخفية من الإدارة لا تُحسب)
+  final double? rating;
+  final int ratingCount;
+
   factory ShopSummary.fromJson(Map<String, dynamic> j) => ShopSummary(
         id: j['id'] as int,
         name: j['name'] as String,
@@ -102,6 +108,8 @@ class ShopSummary {
         committed: j['committed'] == true,
         instantBooking: j['instantBooking'] == true,
         matchedService: j['matchedService'] == null ? null : Service.fromJson(j['matchedService'] as Map<String, dynamic>),
+        rating: _double(j['rating']),
+        ratingCount: j['ratingCount'] as int? ?? 0,
       );
 }
 
@@ -172,6 +180,9 @@ class ShopDetails {
     required this.services,
     required this.weeklyHours,
     required this.temporarySchedules,
+    this.rating,
+    this.ratingCount = 0,
+    this.reviews = const [],
   });
 
   final int id;
@@ -193,6 +204,9 @@ class ShopDetails {
   final List<Service> services;
   final List<WorkingPeriod> weeklyHours;
   final List<TemporarySchedule> temporarySchedules;
+  final double? rating;
+  final int ratingCount;
+  final List<Review> reviews;
 
   factory ShopDetails.fromJson(Map<String, dynamic> j) => ShopDetails(
         id: j['id'] as int,
@@ -214,6 +228,25 @@ class ShopDetails {
         services: [for (final s in j['services'] as List? ?? []) Service.fromJson(s)],
         weeklyHours: [for (final h in j['weeklyHours'] as List? ?? []) WorkingPeriod.fromJson(h)],
         temporarySchedules: [for (final t in j['temporarySchedules'] as List? ?? []) TemporarySchedule.fromJson(t)],
+        rating: _double(j['rating']),
+        ratingCount: j['ratingCount'] as int? ?? 0,
+        reviews: [for (final r in j['reviews'] as List? ?? []) Review.fromJson(r)],
+      );
+}
+
+/// تقييم زبون كما يظهر في صفحة المحل (الاسم الأول فقط)
+class Review {
+  const Review({required this.stars, this.comment, this.customerName, this.createdAt});
+  final int stars;
+  final String? comment;
+  final String? customerName;
+  final DateTime? createdAt;
+
+  factory Review.fromJson(Map<String, dynamic> j) => Review(
+        stars: j['stars'] as int,
+        comment: j['comment'] as String?,
+        customerName: j['customerName'] as String?,
+        createdAt: _timeOrNull(j['createdAt']),
       );
 }
 
@@ -287,6 +320,8 @@ class Booking {
     required this.shop,
     required this.services,
     required this.proposedTimes,
+    this.review,
+    this.canReview = false,
   });
 
   final int id;
@@ -301,6 +336,10 @@ class Booking {
   final BookingShop shop;
   final List<Service> services;
   final List<ProposedTime> proposedTimes;
+
+  /// تقييم الزبون لهذا الحجز إن قيّمه، وهل يستطيع التقييم الآن
+  final Review? review;
+  final bool canReview;
 
   int get durationMinutes => endsAt.difference(startsAt).inMinutes;
 
@@ -317,6 +356,8 @@ class Booking {
         shop: BookingShop.fromJson(j['shop'] as Map<String, dynamic>),
         services: [for (final s in j['services'] as List? ?? []) Service.fromJson(s)],
         proposedTimes: [for (final t in j['proposedTimes'] as List? ?? []) ProposedTime.fromJson(t)],
+        review: j['review'] == null ? null : Review.fromJson(j['review'] as Map<String, dynamic>),
+        canReview: j['canReview'] == true,
       );
 }
 

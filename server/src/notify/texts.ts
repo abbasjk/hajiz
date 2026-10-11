@@ -28,7 +28,8 @@ export type NotificationType =
   | 'expired_customer'
   | 'shop_cancelled'
   | 'closure_proposal'
-  | 'appointment_reminder';
+  | 'appointment_reminder'
+  | 'review_request';
 
 export const AUDIENCE: Record<NotificationType, 'customer' | 'shop'> = {
   new_request: 'shop',
@@ -53,6 +54,7 @@ export const AUDIENCE: Record<NotificationType, 'customer' | 'shop'> = {
   shop_cancelled: 'customer',
   closure_proposal: 'customer',
   appointment_reminder: 'customer',
+  review_request: 'customer',
 };
 
 /** الاختيارية تُوقف من الإعدادات؛ كل ما عداها إجباري لا يُوقف */
@@ -62,6 +64,7 @@ export const OPTIONAL: Partial<Record<NotificationType, 'reminders' | 'morningSu
   proposal_half: 'reminders',
   proposal_final: 'reminders',
   appointment_reminder: 'reminders',
+  review_request: 'reminders',
   morning_summary: 'morningSummary',
 };
 
@@ -145,6 +148,8 @@ export function renderText(type: NotificationType, p: TextParams): { title: stri
       return { title: 'ألغى المحل حجزك', body: `${p.shop} ألغى موعد ${when}. نعتذر عن ذلك.` };
     case 'closure_proposal':
       return { title: 'المحل مغلق وقت موعدك', body: `${p.shop} أُغلق طارئاً. اختر أحد الأوقات البديلة خلال ${duration(p.minutes)}.` };
+    case 'review_request':
+      return { title: 'كيف كانت زيارتك؟', body: `قيّم ${p.shop} ليستفيد غيرك من تجربتك.` };
     case 'appointment_reminder':
       return { title: 'موعدك بعد ساعة', body: `موعدك في ${p.shop} ${when}.` };
   }

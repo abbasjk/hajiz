@@ -158,6 +158,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with RefreshO
         'proposal' || 'closure_proposal' => Icons.schedule,
         'morning_summary' => Icons.wb_sunny_outlined,
         'appointment_reminder' => Icons.alarm,
+        'review_request' => Icons.star_outline_rounded,
         'shop_approved' || 'shop_reinstated' => Icons.storefront_outlined,
         'shop_rejected' || 'shop_suspended' => Icons.info_outline,
         _ => Icons.inbox_outlined,
