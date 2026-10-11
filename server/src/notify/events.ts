@@ -45,9 +45,18 @@ async function loadContext(db: Queryable, bookingId: number): Promise<Context | 
 const minutesLeft = (deadline: Date | null, now: Date) =>
   deadline ? Math.max(1, Math.ceil((deadline.getTime() - now.getTime()) / 60_000)) : undefined;
 
-export async function bookingEvent(notifier: Notifier, db: Queryable, bookingId: number, event: BookingEvent, now = new Date()) {
+export async function bookingEvent(
+  notifier: Notifier,
+  db: Queryable,
+  bookingId: number,
+  event: BookingEvent,
+  now = new Date(),
+  /** اسم الزبون قبل حذف حسابه (بعد الحذف يُمسح من قاعدة البيانات) */
+  customerName?: string,
+) {
   const c = await loadContext(db, bookingId);
   if (!c) return;
+  if (customerName) c.customerName = customerName;
   const startsAt = c.startsAt.toISOString();
   const minutes = minutesLeft(c.responseDeadline, now);
   const toShop = (type: NotificationType) =>

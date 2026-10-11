@@ -411,3 +411,57 @@ export async function cancelByCustomer(pool: Pool, { bookingId, customerId, now 
     return result;
   });
 }
+
+// ============================================================
+// حذف الحساب
+// ============================================================
+
+export const ACCOUNT_DELETED_REASON = 'account_deleted';
+export const SHOP_CLOSED_REASON = 'shop_closed';
+const ACTIVE = `('pending_shop', 'pending_customer', 'confirmed')`;
+
+/**
+ * يلغي حجوزات المستخدم القادمة زبوناً، وحجوزات محله القادمة إن كان صاحب محل.
+ * إلغاء الزبون يخضع لقاعدة الإلغاء المتأخر نفسها (لا يصبح الحذف طريقاً للتهرب منها).
+ * يعيد أرقام الحجوزات لإبلاغ الطرف الآخر بعد الحفظ.
+ */
+export async function cancelForAccountDeletion(tx: Tx, userId: number, now: Date) {
+  const { rows } = await tx.query<LockedBooking & { asCustomer: boolean }>(
+    `SELECT b.id, b.status, b.starts_at AS "startsAt", b.ends_at AS "endsAt",
+            b.response_deadline AS "responseDeadline", b.is_instant AS "isInstant",
+            b.customer_id AS "customerId", u.phone AS "customerPhone", b.shop_id AS "shopId",
+            s.owner_id AS "shopOwnerId", s.free_cancel_hours AS "freeCancelHours",
+            b.customer_id = $1 AS "asCustomer"
+     FROM bookings b
+     JOIN users u ON u.id = b.customer_id
+     JOIN shops s ON s.id = b.shop_id
+     WHERE (b.customer_id = $1 OR s.owner_id = $1)
+       AND b.status IN ${ACTIVE} AND b.starts_at > $2
+     ORDER BY b.id
+     FOR UPDATE OF b`,
+    [userId, now],
+  );
+  const asCustomer: number[] = [];
+  const asShop: number[] = [];
+  for (const b of rows) {
+    if (b.asCustomer) {
+      const late = b.status === 'confirmed' && minutesBetween(now, b.startsAt) < b.freeCancelHours * 60;
+      await updateStatus(tx, b, 'cancelled_by_customer', 'customer', now, {
+        response_deadline: null,
+        cancelled_by: 'customer',
+        cancelled_late: late,
+        cancel_reason: ACCOUNT_DELETED_REASON,
+      });
+      if (late) await recordCommitmentEvent(tx, b, 'late_cancel', now);
+      asCustomer.push(b.id);
+    } else {
+      await updateStatus(tx, b, 'cancelled_by_shop', 'shop', now, {
+        response_deadline: null,
+        cancelled_by: 'shop',
+        cancel_reason: SHOP_CLOSED_REASON,
+      });
+      asShop.push(b.id);
+    }
+  }
+  return { asCustomer, asShop };
+}

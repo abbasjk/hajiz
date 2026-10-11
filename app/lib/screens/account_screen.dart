@@ -4,6 +4,7 @@ import '../api/owner_models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
+import 'delete_account_screen.dart';
 import 'notifications_screen.dart';
 import 'owner/owner_tab.dart';
 
@@ -118,6 +119,13 @@ class AccountScreenState extends State<AccountScreen> {
                 onTap: () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
               ),
+            ),
+            const SizedBox(height: 32),
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
+              icon: const Icon(Icons.delete_outline),
+              label: Text(l.deleteAccount),
             ),
           ],
         ]),

@@ -322,7 +322,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> with RefreshOnPush {
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
-              Expanded(child: Text(b.customer.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
+              Expanded(child: Text(customerName(l, b.customer), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
               if (b.customer.newDevice)
                 Container(
                   margin: const EdgeInsetsDirectional.only(end: 6),
@@ -404,7 +404,7 @@ class DayBookingsList extends StatelessWidget {
                   ),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(b.customer.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(customerName(l, b.customer), style: const TextStyle(fontWeight: FontWeight.w600)),
                       Text(b.services.map((s) => s.name).join('، '), style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                     ]),
                   ),

@@ -27,16 +27,15 @@ export class Notifier {
   async notify(n: NotifyInput): Promise<boolean> {
     try {
       const optional = OPTIONAL[n.type];
-      if (optional) {
-        const { rows } = await this.db.query(
-          'SELECT notify_reminders, notify_morning_summary FROM users WHERE id = $1',
-          [n.userId],
-        );
-        const u = rows[0];
-        if (!u) return false;
-        if (optional === 'reminders' && !u.notify_reminders) return false;
-        if (optional === 'morningSummary' && !u.notify_morning_summary) return false;
-      }
+      const { rows } = await this.db.query(
+        'SELECT notify_reminders, notify_morning_summary, deleted_at FROM users WHERE id = $1',
+        [n.userId],
+      );
+      const u = rows[0];
+      // الحساب المحذوف لا تُحفظ له إشعارات
+      if (!u || u.deleted_at) return false;
+      if (optional === 'reminders' && !u.notify_reminders) return false;
+      if (optional === 'morningSummary' && !u.notify_morning_summary) return false;
       const audience = AUDIENCE[n.type];
       const inserted = await this.db.query(
         `INSERT INTO notifications (user_id, type, booking_id, audience, params, dedupe_key)

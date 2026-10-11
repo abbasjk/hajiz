@@ -123,6 +123,7 @@ const ERRORS = {
   too_many_attempts: 'محاولات كثيرة، حاول بعد ربع ساعة',
   unauthorized: 'انتهت الجلسة، سجّل الدخول مجدداً',
   invalid_transition: 'لا يمكن تنفيذ هذا الإجراء في الحالة الحالية، حدّث الصفحة',
+  shop_closed: 'صاحب المحل حذف حسابه، والمحل مغلق نهائياً',
   note_required: 'اكتب السبب، يصل لصاحب المحل',
   name_exists: 'الاسم موجود مسبقاً',
   invalid_value: 'القيمة لا تطابق شكل الإعداد الحالي',
@@ -226,7 +227,7 @@ function hhmm(t) {
   return `${hr % 12 || 12}:${String(m).padStart(2, '0')} ${hr < 12 ? 'ص' : 'م'}`;
 }
 
-const phone = (p) => h('span', { class: 'ltr' }, p ? (String(p).startsWith('964') ? '0' + String(p).slice(3) : String(p)) : '—');
+const phone = (p) => p && String(p).startsWith('deleted:') ? h('span', { class: 'muted' }, 'محذوف') : h('span', { class: 'ltr' }, p ? (String(p).startsWith('964') ? '0' + String(p).slice(3) : String(p)) : '—');
 const price = (n) => n === null || n === undefined ? '—' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' د.ع';
 
 const SHOP_STATUS = {
@@ -374,6 +375,7 @@ async function shopDetailView() {
     approved: [h('button', { class: 'btn danger', onclick: () => act('suspend', { title: 'إيقاف المحل', text: s.upcomingBookings ? `لدى المحل ${s.upcomingBookings} حجز قادم. الإيقاف يخفي المحل عن الزبائن، والحجوزات القائمة تبقى كما هي.` : 'سيختفي المحل عن الزبائن.', field: 'السبب (يصل لصاحب المحل)', required: true, okText: 'إيقاف', danger: true, done: 'أُوقف المحل' }) }, 'إيقاف المحل')],
     suspended: [h('button', { class: 'btn primary', onclick: () => act('reinstate', { title: 'إعادة تفعيل المحل؟', okText: 'إعادة التفعيل', done: 'عاد المحل للعمل' }) }, 'إعادة التفعيل')],
   }[s.status] || [];
+  if (s.closedAt) actions.length = 0;
 
   const byDay = [6, 0, 1, 2, 3, 4, 5].map((d) => {
     const ps = s.weeklyHours.filter((x) => x.dayOfWeek === d);
@@ -386,6 +388,7 @@ async function shopDetailView() {
     h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:16px' },
       h('div', {}, h('h1', { style: 'margin:0' }, s.name), shopPill(s.status)),
       h('div', { class: 'row' }, actions)),
+    s.closedAt ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'مغلق نهائياً: '), `حذف صاحبه حسابه في ${fmtDate(s.closedAt)}، ولا يمكن إعادة تفعيله.`) : null,
     s.reviewNote ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'ملاحظة الإدارة: '), s.reviewNote) : null,
     h('div', { class: 'grid2' },
       h('div', { class: 'card' }, h('h2', {}, 'البيانات'), h('dl', {},

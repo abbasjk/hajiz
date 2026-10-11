@@ -181,9 +181,12 @@ class CustomerStats {
 }
 
 class BookingCustomer {
-  const BookingCustomer(this.id, this.name, this.phone, this.newDevice, this.stats);
+  const BookingCustomer(this.id, this.name, this.phone, this.newDevice, this.stats, {this.deleted = false});
   final int id;
   final String name;
+
+  /// الزبون حذف حسابه: لا اسم ولا رقم
+  final bool deleted;
 
   /// يظهر فقط ما دام بين الطرفين حجز قائم
   final String? phone;
@@ -198,6 +201,7 @@ class BookingCustomer {
       j['phone'] as String?,
       j['newDevice'] == true,
       s == null ? null : CustomerStats(s['attended'] as int, s['lateCancels'] as int, s['noShows'] as int),
+      deleted: j['deleted'] == true,
     );
   }
 }

@@ -608,5 +608,25 @@
         "type": "int"
       }
     }
-  }
+  },
+  "deleteAccount": "حذف الحساب",
+  "deleteAccountTitle": "حذف حسابك نهائياً",
+  "deleteAccountIntro": "عند الحذف:",
+  "deleteWhatName": "يُمسح اسمك ورقمك من التطبيق، وتُحذف إشعاراتك، وتخرج من هذا الهاتف.",
+  "deleteWhatBookings": "{n, plural, =0{لا حجوزات قادمة عندك.} =1{يُلغى حجزك القادم ويُبلَّغ المحل.} =2{يُلغى حجزاك القادمان وتُبلَّغ المحلات.} few{تُلغى حجوزاتك القادمة ({n}) وتُبلَّغ المحلات.} other{تُلغى حجوزاتك القادمة ({n}) وتُبلَّغ المحلات.}}",
+  "@deleteWhatBookings": {"placeholders": {"n": {"type": "int"}}},
+  "deleteWhatLate": "إلغاء حجز مؤكد قبل موعده بوقت قصير يُحسب إلغاءً متأخراً كالمعتاد.",
+  "deleteWhatShop": "يُغلق محل «{name}» نهائياً ويختفي عن الزبائن، ولا يمكن إعادته.",
+  "@deleteWhatShop": {"placeholders": {"name": {"type": "String"}}},
+  "deleteWhatShopBookings": "{n, plural, =0{لا حجوزات قادمة في المحل.} =1{يُلغى حجز قادم واحد في المحل ويُبلَّغ صاحبه.} =2{يُلغى حجزان قادمان في المحل ويُبلَّغ أصحابهما.} few{تُلغى {n} حجوزات قادمة في المحل ويُبلَّغ أصحابها.} other{يُلغى {n} حجزاً قادماً في المحل ويُبلَّغ أصحابها.}}",
+  "@deleteWhatShopBookings": {"placeholders": {"n": {"type": "int"}}},
+  "deleteWhatKept": "تبقى عند المحلات مواعيدك السابقة دون اسمك، وتبقى نجوم تقييماتك دون اسم ولا تعليق.",
+  "deleteWhatAgain": "تستطيع التسجيل لاحقاً بالرقم نفسه كحساب جديد.",
+  "deleteConfirmCheck": "فهمت أن الحذف نهائي ولا يمكن التراجع عنه",
+  "deleteConfirmButton": "احذف حسابي",
+  "accountDeleted": "حُذف حسابك",
+  "deletedCustomer": "حساب محذوف",
+  "reasonAccountDeleted": "حذف الزبون حسابه",
+  "reasonShopClosed": "أُغلق المحل نهائياً",
+  "errUntrustedDevice": "هذا الإجراء متاح فقط من الهاتف الذي سجّلت به رقمك أول مرة."
 }

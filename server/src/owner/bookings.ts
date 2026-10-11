@@ -13,7 +13,9 @@ const COLUMNS = `b.id, b.status, b.starts_at AS "startsAt", b.ends_at AS "endsAt
   b.cancelled_by AS "cancelledBy", b.cancelled_late AS "cancelledLate", b.created_at AS "createdAt",
   json_build_object(
     'id', u.id, 'name', u.name,
-    'phone', CASE WHEN b.status IN ('pending_shop', 'pending_customer', 'confirmed') THEN u.phone END,
+    -- الزبون الذي حذف حسابه: لا اسم ولا رقم
+    'deleted', u.deleted_at IS NOT NULL,
+    'phone', CASE WHEN b.status IN ('pending_shop', 'pending_customer', 'confirmed') AND u.deleted_at IS NULL THEN u.phone END,
     -- "رقم مستخدم من جهاز جديد": الجهاز ليس أول جهاز للرقم ولم يُؤكَّد بالاتصال
     'newDevice', d.id IS NOT NULL AND d.verified_by_call_at IS NULL
                  AND d.id <> (SELECT min(id) FROM devices WHERE user_id = u.id)

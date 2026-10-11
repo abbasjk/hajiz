@@ -11,5 +11,7 @@ String reasonText(AppLocalizations l, String code) => switch (code) {
       'emergency' => l.reasonEmergency,
       'emergency_closure' => l.reasonEmergencyClosure,
       'other' => l.reasonOther,
+      'account_deleted' => l.reasonAccountDeleted,
+      'shop_closed' => l.reasonShopClosed,
       _ => code,
     };

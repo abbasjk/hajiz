@@ -163,6 +163,7 @@ export async function adminRoutes(app: FastifyInstance) {
             `SELECT s.id, s.name, s.status, s.description, s.phone, s.street, s.landmark, s.latitude, s.longitude,
                     s.review_note AS "reviewNote", s.submitted_at AS "submittedAt", s.reviewed_at AS "reviewedAt",
                     s.instant_booking AS "instantBooking", s.deadline_mode AS "deadlineMode", s.created_at AS "createdAt",
+                    s.closed_at AS "closedAt",
                     u.id AS "ownerId", u.phone AS "ownerPhone", u.name AS "ownerName",
                     bt.name AS "businessType", d.name AS district, a.name AS area,
                     rv.username AS "reviewedBy",
@@ -222,12 +223,14 @@ export async function adminRoutes(app: FastifyInstance) {
             const { note } = parse(noteBody, request.body ?? {});
             if (rule.noteRequired && !note) throw new AppError(400, 'note_required');
             const changed = await withTransaction(app.pool, async (tx) => {
-              const { rows } = await tx.query<{ status: string; owner_id: number; name: string }>(
-                'SELECT status, owner_id, name FROM shops WHERE id = $1 FOR UPDATE',
+              const { rows } = await tx.query<{ status: string; owner_id: number; name: string; closed_at: Date | null }>(
+                'SELECT status, owner_id, name, closed_at FROM shops WHERE id = $1 FOR UPDATE',
                 [id],
               );
               const shop = rows[0];
               if (!shop) throw new AppError(404, 'not_found');
+              // صاحبه حذف حسابه؛ لا يعود المحل
+              if (shop.closed_at) throw new AppError(409, 'shop_closed');
               if (!(rule.from as readonly string[]).includes(shop.status)) {
                 throw new AppError(409, 'invalid_transition', { status: shop.status });
               }

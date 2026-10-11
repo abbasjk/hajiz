@@ -28,6 +28,7 @@ String errorMessage(AppLocalizations l, Object error) {
     'already_reviewed' => l.errAlreadyReviewed,
     'review_window_closed' => l.errReviewClosed,
     'review_not_allowed' => l.errReviewNotAllowed,
+    'untrusted_device' => l.errUntrustedDevice,
     _ => l.errGeneric,
   };
 }

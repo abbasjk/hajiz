@@ -121,9 +121,16 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     if (!_ready) return const Scaffold();
-    return ValueListenableBuilder<AppMode>(
-      valueListenable: AppScope.of(context).mode,
-      builder: (context, mode, _) => mode == AppMode.shop ? const ShopModeShell() : const CustomerShell(),
+    final services = AppScope.of(context);
+    return ValueListenableBuilder<int>(
+      valueListenable: services.accountEpoch,
+      builder: (context, epoch, _) => ValueListenableBuilder<AppMode>(
+        valueListenable: services.mode,
+        builder: (context, mode, _) => KeyedSubtree(
+          key: ValueKey(epoch),
+          child: mode == AppMode.shop ? const ShopModeShell() : const CustomerShell(),
+        ),
+      ),
     );
   }
 }

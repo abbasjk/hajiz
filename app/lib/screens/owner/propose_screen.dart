@@ -131,7 +131,7 @@ class _ProposeScreenState extends State<ProposeScreen> {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${b.customer.name} · ${l.minutes(b.durationMinutes)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text('${customerName(l, b.customer)} · ${l.minutes(b.durationMinutes)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text.rich(TextSpan(style: const TextStyle(fontSize: 13, color: AppColors.textMuted), children: [
                   TextSpan(text: '${l.requestedLabel} '),

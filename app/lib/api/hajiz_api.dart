@@ -108,4 +108,8 @@ class HajizApi {
         'reminders': ?reminders,
         'morningSummary': ?morningSummary,
       }));
+
+  Future<DeletionPreview> deletionPreview() async => DeletionPreview.fromJson(await client.get('/me/deletion'));
+
+  Future<void> deleteAccount() => client.delete('/me');
 }

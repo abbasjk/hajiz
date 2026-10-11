@@ -147,7 +147,7 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(c.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(customerName(l, c), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   if (c.phone != null)
                     Text(c.phone!, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 13, color: AppColors.textMuted))
                   else

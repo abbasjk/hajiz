@@ -412,3 +412,20 @@ class NotificationSettings {
   factory NotificationSettings.fromJson(Map<String, dynamic> j) =>
       NotificationSettings(reminders: j['reminders'] as bool, morningSummary: j['morningSummary'] as bool);
 }
+
+/// ما سيحدث عند حذف الحساب، يُعرض قبل التأكيد
+class DeletionPreview {
+  const DeletionPreview({required this.upcomingBookings, this.shopName, this.shopUpcomingBookings = 0});
+  final int upcomingBookings;
+  final String? shopName;
+  final int shopUpcomingBookings;
+
+  factory DeletionPreview.fromJson(Map<String, dynamic> j) {
+    final shop = j['shop'] as Map<String, dynamic>?;
+    return DeletionPreview(
+      upcomingBookings: j['upcomingBookings'] as int,
+      shopName: shop?['name'] as String?,
+      shopUpcomingBookings: shop?['upcomingBookings'] as int? ?? 0,
+    );
+  }
+}

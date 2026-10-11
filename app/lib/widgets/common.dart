@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/models.dart';
+import '../api/owner_models.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/colors.dart';
 import '../util/errors.dart';
@@ -263,3 +264,6 @@ void showError(BuildContext context, Object error) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(errorMessage(AppLocalizations.of(context), error))));
 }
+
+/// اسم الزبون عند صاحب المحل؛ من حذف حسابه يظهر "حساب محذوف"
+String customerName(AppLocalizations l, BookingCustomer c) => c.deleted ? l.deletedCustomer : c.name;

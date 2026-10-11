@@ -128,6 +128,20 @@ class AppServices {
     return _config!;
   }
 
+  /// يزيد عند حذف الحساب، فتُبنى الواجهة من جديد دون بيانات الحساب السابق
+  final accountEpoch = ValueNotifier<int>(0);
+
+  /// بعد حذف الحساب: يُنسى المفتاح والبيانات المحفوظة على الهاتف ويعود وضع الزبون
+  Future<void> forgetAccount() async {
+    await session.clearRegistration();
+    client.token = null;
+    for (final u in unread.values) {
+      u.value = 0;
+    }
+    mode.value = AppMode.customer;
+    accountEpoch.value++;
+  }
+
   /// يسجل الرقم والاسم والجهاز عند أول حجز
   Future<void> ensureRegistered(String name, String phone) async {
     if (session.isRegistered) return;
