@@ -11,6 +11,7 @@ import { AppError } from '../lib/errors.js';
 import { compareVersions, isValidVersion } from '../lib/version.js';
 import type { NotificationType } from '../notify/texts.js';
 import { RATING_SQL } from '../booking/reviews.js';
+import { deleteAccountAndNotify } from '../account/delete.js';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const r = schema.safeParse(value);
@@ -116,6 +117,7 @@ export async function adminRoutes(app: FastifyInstance) {
                (SELECT count(*)::int FROM shops WHERE status = 'under_review') AS "pendingShops",
                (SELECT count(*)::int FROM shops WHERE status = 'approved') AS "activeShops",
                (SELECT count(*)::int FROM area_requests WHERE status = 'pending') AS "pendingAreas",
+               (SELECT count(*)::int FROM deletion_requests WHERE status = 'pending') AS "pendingDeletions",
                (SELECT count(*)::int FROM users WHERE deleted_at IS NULL) AS users,
                (SELECT count(*)::int FROM bookings
                  WHERE (starts_at AT TIME ZONE 'Asia/Baghdad')::date = $1::date
@@ -294,6 +296,71 @@ export async function adminRoutes(app: FastifyInstance) {
           );
           if (!rowCount) throw new AppError(404, 'not_found');
           await logAction(app.pool, adminId(request), 'reject', 'area_request', id);
+          return { ok: true };
+        });
+
+        // ------------------------------------------------------------
+        // طلبات حذف الحساب من صفحة الموقع
+        // بعد البت في الطلب لا يبقى منه إلا آخر أربعة أرقام
+        // ------------------------------------------------------------
+        const MASK = `'*******' || right(phone, 4)`;
+
+        secure.get('/deletion-requests', async (request) => {
+          const { status } = parse(z.object({ status: z.enum(['pending', 'resolved']).default('pending') }), request.query);
+          const { rows } = await app.pool.query(
+            status === 'pending'
+              ? `SELECT r.id, r.phone, r.name, r.note, r.status, r.created_at AS "createdAt",
+                        u.id AS "userId", u.name AS "userName", u.created_at AS "userSince",
+                        (SELECT count(*)::int FROM bookings b WHERE b.customer_id = u.id
+                          AND b.status IN ('pending_shop', 'pending_customer', 'confirmed') AND b.starts_at > now()) AS "upcomingBookings",
+                        (SELECT json_build_object('id', s.id, 'name', s.name, 'status', s.status)
+                         FROM shops s WHERE s.owner_id = u.id AND s.closed_at IS NULL) AS shop
+                 FROM deletion_requests r
+                 LEFT JOIN users u ON u.phone = r.phone AND u.deleted_at IS NULL
+                 WHERE r.status = 'pending'
+                 ORDER BY r.created_at`
+              : `SELECT r.id, r.phone, r.status, r.created_at AS "createdAt", r.resolved_at AS "resolvedAt",
+                        r.resolution_note AS "resolutionNote", a.username AS "resolvedBy"
+                 FROM deletion_requests r LEFT JOIN admins a ON a.id = r.resolved_by
+                 WHERE r.status <> 'pending'
+                 ORDER BY r.resolved_at DESC LIMIT 100`,
+          );
+          return { requests: rows };
+        });
+
+        secure.post('/deletion-requests/:id/delete', async (request) => {
+          const { id } = parse(idParams, request.params);
+          const { rows } = await app.pool.query<{ userId: number | null }>(
+            `SELECT u.id AS "userId" FROM deletion_requests r
+             LEFT JOIN users u ON u.phone = r.phone AND u.deleted_at IS NULL
+             WHERE r.id = $1 AND r.status = 'pending'`,
+            [id],
+          );
+          const req = rows[0];
+          if (!req) throw new AppError(404, 'not_found');
+          if (!req.userId) throw new AppError(409, 'account_not_found');
+          await deleteAccountAndNotify(app, req.userId);
+          await app.pool.query(
+            `UPDATE deletion_requests SET status = 'done', resolved_at = now(), resolved_by = $2,
+                    phone = ${MASK}, name = NULL, note = NULL
+             WHERE id = $1`,
+            [id, adminId(request)],
+          );
+          await logAction(app.pool, adminId(request), 'delete_account', 'user', req.userId);
+          return { ok: true };
+        });
+
+        secure.post('/deletion-requests/:id/reject', async (request) => {
+          const { id } = parse(idParams, request.params);
+          const { note } = parse(noteBody, request.body ?? {});
+          const { rowCount } = await app.pool.query(
+            `UPDATE deletion_requests SET status = 'rejected', resolved_at = now(), resolved_by = $2, resolution_note = $3,
+                    phone = ${MASK}, name = NULL, note = NULL
+             WHERE id = $1 AND status = 'pending'`,
+            [id, adminId(request), note || null],
+          );
+          if (!rowCount) throw new AppError(404, 'not_found');
+          await logAction(app.pool, adminId(request), 'reject', 'deletion_request', id, note);
           return { ok: true };
         });
 

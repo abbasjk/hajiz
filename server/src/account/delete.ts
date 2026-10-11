@@ -1,8 +1,10 @@
+import type { FastifyInstance } from 'fastify';
 import type { Pool } from '../db/pool.js';
 import type { Queryable } from '../booking/db.js';
 import { cancelForAccountDeletion } from '../booking/bookings.js';
 import { withTransaction } from '../booking/tx.js';
 import { AppError } from '../lib/errors.js';
+import { bookingEvent } from '../notify/events.js';
 
 const ACTIVE = `('pending_shop', 'pending_customer', 'confirmed')`;
 
@@ -69,4 +71,18 @@ export async function deleteAccount(pool: Pool, userId: number, now: Date): Prom
     );
     return { customerName: user.name, ...cancelled };
   });
+}
+
+/** يحذف ثم يبلّغ أصحاب الحجوزات الملغاة؛ من التطبيق ومن لوحة الإدارة */
+export async function deleteAccountAndNotify(app: FastifyInstance, userId: number) {
+  const now = new Date();
+  const result = await deleteAccount(app.pool, userId, now);
+  for (const id of result.asCustomer) {
+    await bookingEvent(app.notifier, app.pool, id, 'customer_cancelled', now, result.customerName).catch((err) =>
+      app.log.error(err, 'booking event failed'),
+    );
+  }
+  for (const id of result.asShop) await app.bookingEvent(id, 'shop_cancelled');
+  app.log.info({ userId }, 'account deleted');
+  return result;
 }

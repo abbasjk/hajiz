@@ -1,9 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authOf, requireAuth } from '../auth/hook.js';
-import { deleteAccount, deletionPreview } from '../account/delete.js';
+import { deleteAccountAndNotify, deletionPreview } from '../account/delete.js';
 import { AppError } from '../lib/errors.js';
-import { bookingEvent } from '../notify/events.js';
 import { renderText, type NotificationType, type TextParams } from '../notify/texts.js';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -103,15 +102,7 @@ export async function meRoutes(app: FastifyInstance) {
   app.delete('/me', async (request) => {
     const auth = authOf(request);
     requireTrusted(auth.trusted);
-    const now = new Date();
-    const result = await deleteAccount(app.pool, auth.userId, now);
-    for (const id of result.asCustomer) {
-      await bookingEvent(app.notifier, app.pool, id, 'customer_cancelled', now, result.customerName).catch((err) =>
-        request.log.error(err, 'booking event failed'),
-      );
-    }
-    for (const id of result.asShop) await app.bookingEvent(id, 'shop_cancelled');
-    request.log.info({ userId: auth.userId }, 'account deleted');
+    await deleteAccountAndNotify(app, auth.userId);
     return { ok: true };
   });
 }

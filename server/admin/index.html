@@ -124,6 +124,7 @@ const ERRORS = {
   unauthorized: 'انتهت الجلسة، سجّل الدخول مجدداً',
   invalid_transition: 'لا يمكن تنفيذ هذا الإجراء في الحالة الحالية، حدّث الصفحة',
   shop_closed: 'صاحب المحل حذف حسابه، والمحل مغلق نهائياً',
+  account_not_found: 'لا يوجد حساب بهذا الرقم، ارفض الطلب',
   note_required: 'اكتب السبب، يصل لصاحب المحل',
   name_exists: 'الاسم موجود مسبقاً',
   invalid_value: 'القيمة لا تطابق شكل الإعداد الحالي',
@@ -246,6 +247,7 @@ const VIEWS = [
   ['overview', 'نظرة عامة'],
   ['shops', 'مراجعة المحلات', 'pendingShops'],
   ['areas', 'طلبات المناطق', 'pendingAreas'],
+  ['deletions', 'طلبات حذف الحساب', 'pendingDeletions'],
   ['users', 'المستخدمون'],
   ['reviews', 'التقييمات'],
   ['catalog', 'القوائم'],
@@ -278,7 +280,7 @@ function render() {
         h('button', { onclick: async () => { await api('/logout', { method: 'POST' }).catch(() => {}); setToken(null); render(); } }, 'تسجيل الخروج')),
       main),
   );
-  const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView,
+  const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView, deletions: deletionsView,
     users: state.detail ? userDetailView : usersView, reviews: reviewsView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
   fn().then((content) => main.replaceChildren(...[].concat(content).filter((x) => x !== null && x !== undefined && x !== false))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
 }
@@ -319,6 +321,7 @@ async function overviewView() {
       stat('محلات بانتظار المراجعة', s.pendingShops, 'shops'),
       stat('محلات معتمدة', s.activeShops),
       stat('طلبات مناطق جديدة', s.pendingAreas, 'areas'),
+      stat('طلبات حذف حساب', s.pendingDeletions, 'deletions'),
       stat('المستخدمون', s.users, 'users'),
       stat('حجوزات اليوم', s.bookingsToday),
       stat('طلبات انتهت مهلتها اليوم', s.expiredToday)),
@@ -448,6 +451,62 @@ async function areasView() {
             await run(() => api(`/area-requests/${r.id}/reject`, { method: 'POST' }), 'رُفض الطلب');
             await refreshStats(); render();
           } }, 'رفض')))))))),
+  ];
+}
+
+// ------------------------------------------------------------------
+// طلبات حذف الحساب (من صفحة الموقع)
+// ------------------------------------------------------------------
+
+async function deletionsView() {
+  const showResolved = state.deletionsResolved === true;
+  const tabs = h('div', { class: 'row', style: 'margin-bottom:14px' },
+    h('button', { class: 'btn' + (showResolved ? '' : ' primary'), onclick: () => { state.deletionsResolved = false; render(); } }, 'بانتظار التنفيذ'),
+    h('button', { class: 'btn' + (showResolved ? ' primary' : ''), onclick: () => { state.deletionsResolved = true; render(); } }, 'السابقة'));
+  const intro = h('p', { class: 'muted' }, 'طلبات أُرسلت من صفحة حذف الحساب على الموقع. لا يوجد رمز تحقق، فاتصل بالرقم وتأكد أن صاحبه هو من طلب قبل الحذف. بعد البت يُمسح الرقم ولا يبقى إلا آخر أربعة أرقام.');
+  if (showResolved) {
+    const { requests } = await api('/deletion-requests?status=resolved');
+    return [h('h1', {}, 'طلبات حذف الحساب'), tabs,
+      requests.length ? h('div', { class: 'table-wrap' }, h('table', {},
+        h('thead', {}, h('tr', {}, ['الرقم', 'النتيجة', 'أُرسل', 'بُتّ فيه', 'ملاحظة'].map((t) => h('th', {}, t)))),
+        h('tbody', {}, requests.map((r) => h('tr', {},
+          h('td', {}, h('span', { class: 'ltr' }, r.phone)),
+          h('td', {}, r.status === 'done' ? h('span', { class: 'pill ok' }, 'حُذف') : h('span', { class: 'pill' }, 'رُفض')),
+          h('td', { class: 'small' }, fmtDate(r.createdAt)),
+          h('td', { class: 'small' }, `${fmtDate(r.resolvedAt)} · ${r.resolvedBy || ''}`),
+          h('td', { class: 'small' }, r.resolutionNote || '—')))))) : h('div', { class: 'card empty' }, 'لا يوجد')];
+  }
+  const { requests } = await api('/deletion-requests');
+  if (!requests.length) return [h('h1', {}, 'طلبات حذف الحساب'), tabs, intro, h('div', { class: 'card empty' }, 'لا توجد طلبات جديدة')];
+  return [
+    h('h1', {}, 'طلبات حذف الحساب'), tabs, intro,
+    ...requests.map((r) => {
+      const account = r.userId
+        ? h('dl', {},
+            h('dt', {}, 'الحساب'), h('dd', {}, h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('users', r.userId); } }, r.userName), ` · منذ ${fmtDate(r.userSince)}`),
+            h('dt', {}, 'حجوزات قادمة'), h('dd', {}, r.upcomingBookings ? `${r.upcomingBookings} (ستُلغى ويُبلَّغ المحل)` : 'لا يوجد'),
+            r.shop ? [h('dt', {}, 'المحل'), h('dd', {}, h('strong', { style: 'color:var(--danger)' }, r.shop.name), ' · سيُغلق نهائياً ', shopPill(r.shop.status))] : null)
+        : h('p', { class: 'muted' }, 'لا يوجد حساب بهذا الرقم. ارفض الطلب.');
+      return h('div', { class: 'card', style: 'margin-bottom:12px' },
+        h('div', { class: 'row', style: 'justify-content:space-between' },
+          h('div', {}, h('strong', {}, phone(r.phone)), r.name ? ` · كتب الاسم: ${r.name}` : null),
+          h('span', { class: 'small muted' }, fmtDate(r.createdAt))),
+        r.note ? h('p', {}, 'ملاحظته: ', r.note) : null,
+        account,
+        h('div', { class: 'row', style: 'margin-top:10px' },
+          r.userId ? h('button', { class: 'btn danger', onclick: async () => {
+            const text = 'تأكدت بالاتصال أن صاحب الرقم هو من طلب؟ يُحذف الحساب نهائياً' + (r.shop ? ' ويُغلق المحل' : '') + (r.upcomingBookings ? ` وتُلغى ${r.upcomingBookings} حجوزات قادمة` : '') + '.';
+            if (await ask({ title: 'حذف الحساب', text, okText: 'حذف نهائي', danger: true }) === null) return;
+            await run(() => api(`/deletion-requests/${r.id}/delete`, { method: 'POST' }), 'حُذف الحساب');
+            await refreshStats(); render();
+          } }, 'حذف الحساب') : null,
+          h('button', { class: 'btn', onclick: async () => {
+            const note = await ask({ title: 'رفض الطلب', text: 'مثلاً: لم يرد على الاتصال، أو صاحب الرقم لم يطلب الحذف.', field: 'السبب (للسجل فقط)', okText: 'رفض' });
+            if (note === null) return;
+            await run(() => api(`/deletion-requests/${r.id}/reject`, { method: 'POST', body: note ? { note } : {} }), 'رُفض الطلب');
+            await refreshStats(); render();
+          } }, 'رفض')));
+    }),
   ];
 }
 
@@ -678,11 +737,11 @@ async function settingsView() {
 
 const ACTION_LABELS = {
   approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
-  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار',
+  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', delete_account: 'حذف حساب',
 };
 const TARGET_LABELS = {
   shop: 'محل', area_request: 'طلب منطقة', user: 'مستخدم', device: 'جهاز', business_type: 'نوع نشاط', business_types: 'نوع نشاط',
-  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق', review: 'تقييم',
+  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق', review: 'تقييم', deletion_request: 'طلب حذف حساب',
 };
 
 async function actionsView() {

@@ -14,6 +14,7 @@ import { LogSender, type PushSender } from './notify/sender.js';
 import { bookingEvent, type BookingEvent } from './notify/events.js';
 import { meRoutes } from './routes/me.js';
 import { adminRoutes } from './routes/admin.js';
+import { deletePageRoutes } from './routes/delete-page.js';
 
 export interface AppOptions {
   pool: Pool;
@@ -32,7 +33,8 @@ declare module 'fastify' {
 }
 
 export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions): Promise<FastifyInstance> {
-  const app = Fastify({ logger: { level: logLevel } });
+  // خلف وكيل المنصة: عنوان الزائر الحقيقي من آخر قفزة فقط (لتحديد المحاولات لكل عنوان)
+  const app = Fastify({ logger: { level: logLevel }, trustProxy: 1 });
   app.decorate('pool', pool);
   const notifier = new Notifier(pool, sender ?? new LogSender(app.log), app.log);
   app.decorate('notifier', notifier);
@@ -64,6 +66,8 @@ export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions):
   await app.register(photoRoutes);
   // لوحة الإدارة خارج /v1: صفحة في المتصفح لا تحمل ترويسات إصدار التطبيق
   await app.register(adminRoutes);
+  // صفحة طلب حذف الحساب من المتصفح
+  await app.register(deletePageRoutes);
   // كل مسارات التطبيق تحت /v1 وتمر بفحص الإصدار
   await app.register(
     async (v1) => {

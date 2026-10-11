@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حذف الحساب · حجز</title>
+<meta name="description" content="طريقة حذف حسابك في تطبيق حجز، وما يُحذف من بياناتك وما يبقى.">
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --border: #e3e1db; --text: #1c1b19; --muted: #5f5b54;
+    --primary: #0f6e63; --primary-soft: #e3f1ee; --danger: #a23b2a; --danger-soft: #fbe9e6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.8 "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--primary); margin-bottom: 24px; }
+  .brand span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--primary); color: #fff; font-size: 18px; }
+  h1 { font-size: 26px; margin: 0 0 8px; line-height: 1.4; }
+  h2 { font-size: 18px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lead { color: var(--muted); margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .card.quick { border-color: var(--primary); background: var(--primary-soft); }
+  ol, ul { margin: 0; padding-inline-start: 22px; }
+  li { margin-bottom: 6px; }
+  .path { font-weight: 700; }
+  .kept li::marker { color: var(--muted); }
+  label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 14px; }
+  input, textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); }
+  input:focus, textarea:focus, button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 1px; border-color: var(--primary); }
+  input[name="phone"] { direction: ltr; text-align: right; }
+  .trap { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; margin-top: 16px; }
+  .check input { width: 20px; height: 20px; margin-top: 5px; flex: none; accent-color: var(--danger); }
+  button { margin-top: 18px; width: 100%; padding: 12px; font: inherit; font-weight: 700; color: #fff; background: var(--danger); border: 0; border-radius: 10px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .error { color: var(--danger); background: var(--danger-soft); border-radius: 10px; padding: 10px 12px; margin-top: 14px; }
+  .done { text-align: center; padding: 28px 20px; }
+  .done .tick { width: 56px; height: 56px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-size: 28px; margin: 0 auto 12px; }
+  footer { color: var(--muted); font-size: 14px; text-align: center; margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span aria-hidden="true">ح</span>حجز</div>
+
+  <h1>حذف حسابك</h1>
+  <p class="lead">تستطيع حذف حسابك وبياناتك في أي وقت. هذه الصفحة تشرح الطريقة، وما يُحذف وما يبقى.</p>
+
+  <section class="card quick">
+    <h2>الأسرع: من التطبيق مباشرة</h2>
+    <ol>
+      <li>افتح التطبيق على الهاتف الذي سجّلت به رقمك.</li>
+      <li>اذهب إلى <span class="path">حسابي</span>، ثم اضغط <span class="path">حذف الحساب</span> في الأسفل.</li>
+      <li>راجع ما سيحدث، ثم أكّد. يُحذف الحساب فوراً.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>ما الذي يُحذف</h2>
+    <ul>
+      <li>اسمك ورقم هاتفك.</li>
+      <li>أجهزتك المسجّلة وإشعاراتك.</li>
+      <li>حجوزاتك القادمة تُلغى، ويصل إشعار للمحل.</li>
+      <li>إن كنت صاحب محل: يُغلق محلك نهائياً ويختفي عن الزبائن، وتُحذف صوره ورقمه، وتُلغى حجوزاته القادمة ويُبلَّغ أصحابها.</li>
+      <li>تعليقاتك على المحلات.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>ما الذي يبقى</h2>
+    <ul class="kept">
+      <li>مواعيدك السابقة تبقى في سجل المحل الذي زرته، دون اسمك ورقمك.</li>
+      <li>نجوم تقييماتك تبقى محسوبة في متوسط المحل، دون اسم ولا تعليق.</li>
+      <li>سجل الالتزام (الإلغاء المتأخر وعدم الحضور) يبقى مرتبطاً بالرقم، فيظهر إن سجّلت به من جديد.</li>
+    </ul>
+    <p style="margin-top:12px">تستطيع التسجيل لاحقاً بالرقم نفسه، ويبدأ حساب جديد فارغ.</p>
+  </section>
+
+  <section class="card" id="form-card">
+    <h2>لا تستطيع فتح التطبيق؟ اطلب الحذف من هنا</h2>
+    <p>اكتب رقمك، وسنتصل بك عليه للتأكد أنك صاحبه، ثم نحذف الحساب خلال سبعة أيام.</p>
+    <form id="form" novalidate>
+      <label for="phone">رقم الهاتف المسجّل في التطبيق</label>
+      <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="07XX XXX XXXX" required>
+      <label for="name">الاسم <span class="hint">(اختياري، يساعدنا على التأكد)</span></label>
+      <input id="name" name="name" type="text" maxlength="60" autocomplete="name">
+      <label for="note">ملاحظة <span class="hint">(اختياري)</span></label>
+      <textarea id="note" name="note" rows="3" maxlength="500"></textarea>
+      <div class="trap" aria-hidden="true"><label for="website">اترك هذا الحقل فارغاً</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+      <label class="check"><input type="checkbox" id="sure"> فهمت أن الحذف نهائي ولا يمكن التراجع عنه</label>
+      <div id="error" class="error" role="alert" hidden></div>
+      <button type="submit" id="submit" disabled>أرسل طلب الحذف</button>
+    </form>
+  </section>
+
+  <footer>حجز · حجز المواعيد في المحلات</footer>
+</main>
+<script>
+(function () {
+  var form = document.getElementById('form');
+  var sure = document.getElementById('sure');
+  var submit = document.getElementById('submit');
+  var error = document.getElementById('error');
+  var MESSAGES = {
+    invalid_phone: 'اكتب رقم موبايل عراقي صحيح، مثل 07701234567.',
+    too_many_attempts: 'أُرسلت طلبات كثيرة. حاول بعد ساعة.',
+    network: 'تعذّر الاتصال. تأكد من الإنترنت وحاول مجدداً.'
+  };
+  function showError(code) {
+    error.textContent = MESSAGES[code] || 'حدث خطأ غير متوقع، حاول مجدداً.';
+    error.hidden = false;
+  }
+  sure.addEventListener('change', function () { submit.disabled = !sure.checked; });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    error.hidden = true;
+    var phone = form.phone.value.trim();
+    if (!phone) { showError('invalid_phone'); form.phone.focus(); return; }
+    submit.disabled = true;
+    submit.textContent = 'جارٍ الإرسال…';
+    fetch('/delete-account', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ phone: phone, name: form.name.value.trim() || undefined, note: form.note.value.trim() || undefined, website: form.website.value || undefined })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (!res.ok) throw (body.error && body.error.code) || 'unknown';
+        var card = document.getElementById('form-card');
+        var done = document.createElement('div');
+        done.className = 'done';
+        var tick = document.createElement('div'); tick.className = 'tick'; tick.setAttribute('aria-hidden', 'true'); tick.textContent = '✓';
+        var title = document.createElement('h2'); title.textContent = 'وصل طلبك';
+        var text = document.createElement('p');
+        text.textContent = 'إن كان الرقم مسجّلاً عندنا فسنتصل بك عليه للتأكد، ثم نحذف الحساب خلال سبعة أيام.';
+        done.append(tick, title, text);
+        card.replaceChildren(done);
+        card.className = 'card';
+        done.setAttribute('tabindex', '-1');
+        done.focus();
+      });
+    }).catch(function (code) {
+      showError(typeof code === 'string' ? code : 'network');
+      submit.disabled = !sure.checked;
+      submit.textContent = 'أرسل طلب الحذف';
+    });
+  });
+})();
+</script>
+</body>
+</html>
