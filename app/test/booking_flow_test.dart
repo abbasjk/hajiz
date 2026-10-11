@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hajiz/api/api_client.dart';
 import 'package:hajiz/api/models.dart';
+import 'package:hajiz/config.dart';
 import 'package:hajiz/main.dart';
 import 'package:hajiz/state/app_scope.dart';
 import 'package:hajiz/state/session.dart';
@@ -163,7 +164,7 @@ void main() {
     final post = server.requests.firstWhere((r) => r.url.path == '/v1/bookings');
     expect(post.headers['idempotency-key'], isNotEmpty);
     expect(post.headers['authorization'], 'Bearer tok');
-    expect(post.headers['x-app-version'], '0.4.0');
+    expect(post.headers['x-app-version'], appVersion);
     expect(services.session.isRegistered, isTrue);
 
     // تفاصيل الطلب مع العداد التنازلي
