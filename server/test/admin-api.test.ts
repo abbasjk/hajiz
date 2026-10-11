@@ -139,7 +139,7 @@ describe('shop review', () => {
 
     const details = await admin('GET', `/shops/${a.shopId}`);
     expect(details.statusCode).toBe(200);
-    expect(details.json()).toMatchObject({ status: 'under_review', ownerPhone: '9647700000101' });
+    expect(details.json()).toMatchObject({ status: 'under_review', ownerPhone: '07700000101' });
     expect(details.json().services).toHaveLength(1);
     expect(details.json().weeklyHours).toHaveLength(7);
     expect((await admin('GET', '/stats')).json().pendingShops).toBe(2);
@@ -244,7 +244,7 @@ describe('users and devices', () => {
   });
 
   it('bans and unbans a user', async () => {
-    const user = await register('07700000302', 'ban-me');
+    const user = await register('07700000302', 'ban-me-device');
     expect((await v1('GET', '/me/bookings', user.token)).statusCode).toBe(200);
     expect((await admin('POST', `/users/${user.user.id}/ban`, { note: 'إساءة' })).statusCode).toBe(200);
     expect((await v1('GET', '/me/bookings', user.token)).statusCode).toBe(401);
@@ -255,7 +255,7 @@ describe('users and devices', () => {
 
   it('searches users by phone', async () => {
     const res = await admin('GET', '/users?q=7700000302');
-    expect(res.json().users.map((u: { phone: string }) => u.phone)).toEqual(['9647700000302']);
+    expect(res.json().users.map((u: { phone: string }) => u.phone)).toEqual(['07700000302']);
   });
 });
 

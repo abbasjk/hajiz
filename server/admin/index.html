@@ -224,7 +224,7 @@ function hhmm(t) {
   return `${hr % 12 || 12}:${String(m).padStart(2, '0')} ${hr < 12 ? 'ص' : 'م'}`;
 }
 
-const phone = (p) => h('span', { class: 'ltr' }, p ? '0' + String(p).replace(/^964/, '') : '—');
+const phone = (p) => h('span', { class: 'ltr' }, p ? (String(p).startsWith('964') ? '0' + String(p).slice(3) : String(p)) : '—');
 const price = (n) => n === null || n === undefined ? '—' : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' د.ع';
 
 const SHOP_STATUS = {
