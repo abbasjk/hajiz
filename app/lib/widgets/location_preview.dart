@@ -44,8 +44,17 @@ class LocationPreview extends StatelessWidget {
                       child: const Icon(Icons.location_on, size: 40, color: AppColors.primary),
                     ),
                   ]),
-                  const SimpleAttributionWidget(source: Text('OpenStreetMap')),
                 ],
+              ),
+            ),
+            // حقوق الخريطة مطلوبة؛ سطر صغير بدل شريط الحقوق الكامل الذي لا يتسع في خريطة صغيرة
+            PositionedDirectional(
+              end: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                color: AppColors.surface.withValues(alpha: 0.85),
+                child: const Text('© OpenStreetMap', textDirection: TextDirection.ltr, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
               ),
             ),
             Positioned.fill(
