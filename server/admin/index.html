@@ -33,7 +33,9 @@
   aside .spacer { flex: 1; }
   main { flex: 999 1 560px; min-width: 0; padding: 28px 32px; }
   @media (max-width: 700px) {
-    aside { flex-direction: row; flex-wrap: wrap; padding: 10px; }
+    .layout { align-content: flex-start; }
+    aside { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding: 8px; gap: 4px; }
+    aside button { flex: none; min-height: 40px; }
     aside .brand, aside .spacer { display: none; }
     main { padding: 18px 16px; }
   }
@@ -276,7 +278,7 @@ function render() {
   );
   const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView,
     users: state.detail ? userDetailView : usersView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
-  fn().then((content) => main.replaceChildren(...[].concat(content))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
+  fn().then((content) => main.replaceChildren(...[].concat(content).filter((x) => x !== null && x !== undefined && x !== false))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
 }
 
 // ------------------------------------------------------------------
