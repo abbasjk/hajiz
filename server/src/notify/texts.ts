@@ -18,6 +18,7 @@ export type NotificationType =
   | 'shop_rejected'
   | 'shop_suspended'
   | 'shop_reinstated'
+  | 'device_trusted'
   // للزبون
   | 'accepted'
   | 'rejected'
@@ -44,6 +45,7 @@ export const AUDIENCE: Record<NotificationType, 'customer' | 'shop'> = {
   shop_rejected: 'shop',
   shop_suspended: 'shop',
   shop_reinstated: 'shop',
+  device_trusted: 'customer',
   accepted: 'customer',
   rejected: 'customer',
   proposal: 'customer',
@@ -148,6 +150,8 @@ export function renderText(type: NotificationType, p: TextParams): { title: stri
       return { title: 'ألغى المحل حجزك', body: `${p.shop} ألغى موعد ${when}. نعتذر عن ذلك.` };
     case 'closure_proposal':
       return { title: 'المحل مغلق وقت موعدك', body: `${p.shop} أُغلق طارئاً. اختر أحد الأوقات البديلة خلال ${duration(p.minutes)}.` };
+    case 'device_trusted':
+      return { title: 'تم توثيق هاتفك', body: 'تستطيع الآن من هذا الهاتف رؤية كل حجوزاتك وإدارة محلك.' };
     case 'review_request':
       return { title: 'كيف كانت زيارتك؟', body: `قيّم ${p.shop} ليستفيد غيرك من تجربتك.` };
     case 'appointment_reminder':

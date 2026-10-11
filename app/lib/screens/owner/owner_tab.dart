@@ -11,6 +11,7 @@ import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
 import '../../widgets/refresh_on_push.dart';
+import '../../widgets/untrusted_device_card.dart';
 import '../notifications_screen.dart';
 import '../register_screen.dart';
 import 'manage_screens.dart';
@@ -80,19 +81,8 @@ class OwnerTabState extends State<OwnerTab> {
     if (error is ApiException && error.code == 'untrusted_device') {
       return Scaffold(
         appBar: AppBar(title: Text(l.yourShop)),
-        body: ListView(padding: const EdgeInsets.all(16), children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Icon(Icons.phonelink_lock_outlined, color: AppColors.warning, size: 32),
-                const SizedBox(height: 8),
-                Text(l.untrustedDeviceTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                Text(l.untrustedDeviceBody, style: const TextStyle(height: 1.6, color: AppColors.textMuted)),
-              ]),
-            ),
-          ),
+        body: ListView(padding: const EdgeInsets.all(16), children: const [
+          UntrustedDeviceCard(forShop: true),
         ]),
       );
     }

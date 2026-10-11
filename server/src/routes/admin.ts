@@ -118,6 +118,9 @@ export async function adminRoutes(app: FastifyInstance) {
                (SELECT count(*)::int FROM shops WHERE status = 'approved') AS "activeShops",
                (SELECT count(*)::int FROM area_requests WHERE status = 'pending') AS "pendingAreas",
                (SELECT count(*)::int FROM deletion_requests WHERE status = 'pending') AS "pendingDeletions",
+               (SELECT count(*)::int FROM devices d JOIN users u ON u.id = d.user_id
+                 WHERE d.trust_requested_at IS NOT NULL AND d.verified_by_call_at IS NULL
+                   AND u.deleted_at IS NULL AND u.banned_at IS NULL) AS "pendingTrust",
                (SELECT count(*)::int FROM users WHERE deleted_at IS NULL) AS users,
                (SELECT count(*)::int FROM bookings
                  WHERE (starts_at AT TIME ZONE 'Asia/Baghdad')::date = $1::date
@@ -433,12 +436,50 @@ export async function adminRoutes(app: FastifyInstance) {
         for (const [action, value] of [['trust', 'now()'], ['untrust', 'NULL']] as const) {
           secure.post(`/devices/:id/${action}`, async (request) => {
             const { id } = parse(idParams, request.params);
-            const { rowCount } = await app.pool.query(`UPDATE devices SET verified_by_call_at = ${value} WHERE id = $1`, [id]);
-            if (!rowCount) throw new AppError(404, 'not_found');
+            const { rows } = await app.pool.query<{ user_id: number }>(
+              `UPDATE devices SET verified_by_call_at = ${value}, trust_requested_at = NULL, trust_request_note = NULL
+               WHERE id = $1 RETURNING user_id`,
+              [id],
+            );
+            const device = rows[0];
+            if (!device) throw new AppError(404, 'not_found');
             await logAction(app.pool, adminId(request), action, 'device', id);
+            if (action === 'trust') await app.notifier.notify({ userId: device.user_id, type: 'device_trusted', params: {} });
             return { ok: true };
           });
         }
+
+        // طلبات توثيق الهواتف من التطبيق
+        secure.get('/trust-requests', async () => {
+          const { rows } = await app.pool.query(
+            `SELECT d.id, d.trust_requested_at AS "requestedAt", d.trust_request_note AS note,
+                    d.first_seen_at AS "firstSeenAt",
+                    u.id AS "userId", u.name, u.phone, u.created_at AS "userSince",
+                    (SELECT max(o.last_seen_at) FROM devices o
+                      WHERE o.user_id = u.id AND o.id <> d.id
+                        AND (o.verified_by_call_at IS NOT NULL OR o.id = (SELECT min(id) FROM devices WHERE user_id = u.id))) AS "trustedLastSeen",
+                    (SELECT json_build_object('id', s.id, 'name', s.name, 'status', s.status)
+                     FROM shops s WHERE s.owner_id = u.id AND s.closed_at IS NULL) AS shop
+             FROM devices d JOIN users u ON u.id = d.user_id
+             WHERE d.trust_requested_at IS NOT NULL AND d.verified_by_call_at IS NULL
+               AND u.deleted_at IS NULL AND u.banned_at IS NULL
+             ORDER BY d.trust_requested_at`,
+          );
+          return { requests: rows };
+        });
+
+        secure.post('/trust-requests/:id/dismiss', async (request) => {
+          const { id } = parse(idParams, request.params);
+          const { note } = parse(noteBody, request.body ?? {});
+          const { rowCount } = await app.pool.query(
+            `UPDATE devices SET trust_requested_at = NULL, trust_request_note = NULL
+             WHERE id = $1 AND trust_requested_at IS NOT NULL`,
+            [id],
+          );
+          if (!rowCount) throw new AppError(404, 'not_found');
+          await logAction(app.pool, adminId(request), 'dismiss', 'trust_request', id, note);
+          return { ok: true };
+        });
 
         // ------------------------------------------------------------
         // القوائم: أنواع النشاط، الأقضية، المناطق

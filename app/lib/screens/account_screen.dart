@@ -5,9 +5,11 @@ import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
 import '../util/links.dart';
+import '../widgets/untrusted_device_card.dart';
 import 'delete_account_screen.dart';
 import 'notifications_screen.dart';
 import 'owner/owner_tab.dart';
+import 'register_screen.dart';
 
 /// حسابي (وضع الزبون): بيانات الزبون، وبطاقة "هل تملك محلاً؟".
 /// صاحب المحل المقبول يبدّل من هنا إلى وضع المحل.
@@ -21,6 +23,10 @@ class AccountScreen extends StatefulWidget {
 class AccountScreenState extends State<AccountScreen> {
   OwnerShop? _shop;
 
+  /// null: لم يُعرف بعد (أو غير مسجّل)
+  bool? _trusted;
+  bool _trustRequested = false;
+
   @override
   void initState() {
     super.initState();
@@ -30,13 +36,48 @@ class AccountScreenState extends State<AccountScreen> {
   /// حالة المحل إن وُجد؛ الجهاز غير الموثوق أو انقطاع الاتصال لا يُظهر شيئاً هنا
   Future<void> refresh() async {
     final services = AppScope.of(context);
-    if (!services.session.isRegistered) return setState(() => _shop = null);
+    if (!services.session.isRegistered) {
+      return setState(() {
+        _shop = null;
+        _trusted = null;
+      });
+    }
+    try {
+      final me = await services.api.me();
+      if (mounted) {
+        setState(() {
+          _trusted = me.trusted;
+          _trustRequested = me.trustRequested;
+        });
+      }
+    } catch (_) {
+      // دون اتصال تبقى الحالة السابقة
+    }
     try {
       final state = await services.owner.shop();
       if (mounted) setState(() => _shop = state.shop);
     } catch (_) {
       if (mounted) setState(() {});
     }
+  }
+
+  /// الدخول دون حجز: بالاسم والرقم نفسيهما
+  Future<void> _signIn() async {
+    final l = AppLocalizations.of(context);
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => Scaffold(
+        appBar: AppBar(title: Text(l.signIn)),
+        body: ListView(padding: const EdgeInsets.all(16), children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: RegisterForm(onRegistered: () => Navigator.of(context).pop()),
+            ),
+          ),
+        ]),
+      ),
+    ));
+    if (mounted) refresh();
   }
 
   Future<void> _openShop() async {
@@ -64,6 +105,21 @@ class AccountScreenState extends State<AccountScreen> {
                   textDirection: user == null ? null : TextDirection.ltr, textAlign: TextAlign.right),
             ),
           ),
+          if (user == null) ...[
+            const SizedBox(height: 8),
+            Text(l.signInHint, style: const TextStyle(color: AppColors.textMuted, height: 1.6)),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              onPressed: _signIn,
+              icon: const Icon(Icons.login),
+              label: Text(l.signIn),
+            ),
+          ],
+          if (_trusted == false) ...[
+            const SizedBox(height: 16),
+            UntrustedDeviceCard(key: ValueKey(_trustRequested), requested: _trustRequested),
+          ],
           const SizedBox(height: 16),
           Card(
             child: Padding(
@@ -131,6 +187,7 @@ class AccountScreenState extends State<AccountScreen> {
               ),
             ),
             const SizedBox(height: 32),
+            if (_trusted != false)
             TextButton.icon(
               style: TextButton.styleFrom(foregroundColor: AppColors.danger),
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),

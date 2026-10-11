@@ -247,6 +247,7 @@ const VIEWS = [
   ['overview', 'نظرة عامة'],
   ['shops', 'مراجعة المحلات', 'pendingShops'],
   ['areas', 'طلبات المناطق', 'pendingAreas'],
+  ['trust', 'طلبات توثيق الهواتف', 'pendingTrust'],
   ['deletions', 'طلبات حذف الحساب', 'pendingDeletions'],
   ['users', 'المستخدمون'],
   ['reviews', 'التقييمات'],
@@ -280,7 +281,7 @@ function render() {
         h('button', { onclick: async () => { await api('/logout', { method: 'POST' }).catch(() => {}); setToken(null); render(); } }, 'تسجيل الخروج')),
       main),
   );
-  const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView, deletions: deletionsView,
+  const fn = { overview: overviewView, shops: state.detail ? shopDetailView : shopsView, areas: areasView, trust: trustView, deletions: deletionsView,
     users: state.detail ? userDetailView : usersView, reviews: reviewsView, catalog: catalogView, settings: settingsView, actions: actionsView }[state.view];
   fn().then((content) => main.replaceChildren(...[].concat(content).filter((x) => x !== null && x !== undefined && x !== false))).catch((e) => main.replaceChildren(h('div', { class: 'empty' }, e.message)));
 }
@@ -321,6 +322,7 @@ async function overviewView() {
       stat('محلات بانتظار المراجعة', s.pendingShops, 'shops'),
       stat('محلات معتمدة', s.activeShops),
       stat('طلبات مناطق جديدة', s.pendingAreas, 'areas'),
+      stat('طلبات توثيق هواتف', s.pendingTrust, 'trust'),
       stat('طلبات حذف حساب', s.pendingDeletions, 'deletions'),
       stat('المستخدمون', s.users, 'users'),
       stat('حجوزات اليوم', s.bookingsToday),
@@ -451,6 +453,41 @@ async function areasView() {
             await run(() => api(`/area-requests/${r.id}/reject`, { method: 'POST' }), 'رُفض الطلب');
             await refreshStats(); render();
           } }, 'رفض')))))))),
+  ];
+}
+
+// ------------------------------------------------------------------
+// طلبات توثيق الهواتف (من التطبيق)
+// ------------------------------------------------------------------
+
+async function trustView() {
+  const { requests } = await api('/trust-requests');
+  const intro = h('p', { class: 'muted' }, 'مستخدم سجّل برقمه من هاتف جديد (غيّر هاتفه أو أعاد تثبيت التطبيق) ويطلب توثيقه. لا يوجد رمز تحقق، فاتصل بالرقم وتأكد أن صاحبه هو من يحمل الهاتف الجديد قبل التوثيق. الهاتف الموثّق يرى كل الحجوزات ويدير المحل ويستطيع حذف الحساب.');
+  if (!requests.length) return [h('h1', {}, 'طلبات توثيق الهواتف'), intro, h('div', { class: 'card empty' }, 'لا توجد طلبات جديدة')];
+  return [
+    h('h1', {}, 'طلبات توثيق الهواتف'), intro,
+    ...requests.map((r) => h('div', { class: 'card', style: 'margin-bottom:12px' },
+      h('div', { class: 'row', style: 'justify-content:space-between' },
+        h('div', {}, h('strong', {}, r.name), ' · ', phone(r.phone)),
+        h('span', { class: 'small muted' }, fmtDate(r.requestedAt))),
+      r.note ? h('p', {}, 'ملاحظته: ', r.note) : null,
+      h('dl', {},
+        h('dt', {}, 'الحساب'), h('dd', {}, h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('users', r.userId); } }, 'صفحة المستخدم والأجهزة'), ` · منذ ${fmtDate(r.userSince)}`),
+        h('dt', {}, 'الهاتف الجديد'), h('dd', {}, `أول ظهور ${fmtDate(r.firstSeenAt)}`),
+        h('dt', {}, 'الهاتف الموثّق'), h('dd', {}, r.trustedLastSeen ? `آخر استخدام ${fmtDate(r.trustedLastSeen)}` : '—'),
+        r.shop ? [h('dt', {}, 'المحل'), h('dd', {}, r.shop.name, ' ', shopPill(r.shop.status))] : null),
+      h('div', { class: 'row', style: 'margin-top:10px' },
+        h('button', { class: 'btn primary', onclick: async () => {
+          if (await ask({ title: 'توثيق الهاتف الجديد؟', text: 'تأكدت بالاتصال أن صاحب الرقم هو من يحمل هذا الهاتف؟ يصله إشعار بالتوثيق.', okText: 'توثيق' }) === null) return;
+          await run(() => api(`/devices/${r.id}/trust`, { method: 'POST' }), 'وُثّق الهاتف');
+          await refreshStats(); render();
+        } }, 'توثيق'),
+        h('button', { class: 'btn', onclick: async () => {
+          const note = await ask({ title: 'تجاهل الطلب', text: 'مثلاً: لم يرد على الاتصال، أو صاحب الرقم لا يعرف هذا الهاتف. يستطيع إرسال طلب جديد لاحقاً.', field: 'السبب (للسجل فقط)', okText: 'تجاهل' });
+          if (note === null) return;
+          await run(() => api(`/trust-requests/${r.id}/dismiss`, { method: 'POST', body: note ? { note } : {} }), 'تم');
+          await refreshStats(); render();
+        } }, 'تجاهل')))),
   ];
 }
 
@@ -741,11 +778,11 @@ async function settingsView() {
 
 const ACTION_LABELS = {
   approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
-  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', delete_account: 'حذف حساب',
+  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', delete_account: 'حذف حساب', dismiss: 'تجاهل',
 };
 const TARGET_LABELS = {
   shop: 'محل', area_request: 'طلب منطقة', user: 'مستخدم', device: 'جهاز', business_type: 'نوع نشاط', business_types: 'نوع نشاط',
-  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق', review: 'تقييم', deletion_request: 'طلب حذف حساب',
+  districts: 'قضاء', areas: 'منطقة', area: 'منطقة', setting: 'إعداد', app_version: 'إصدار التطبيق', review: 'تقييم', deletion_request: 'طلب حذف حساب', trust_request: 'طلب توثيق هاتف',
 };
 
 async function actionsView() {

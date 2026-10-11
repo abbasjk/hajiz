@@ -88,6 +88,20 @@ export async function meRoutes(app: FastifyInstance) {
     return settingsView(userId);
   });
 
+  // طلب توثيق هذا الهاتف؛ يظهر في لوحة الإدارة، والإدارة تتصل بالرقم قبل التوثيق
+  app.post('/me/trust-request', async (request) => {
+    const { note } = parse(z.object({ note: z.string().trim().max(300).optional() }).default({}), request.body ?? {});
+    const auth = authOf(request);
+    if (auth.trusted) throw new AppError(409, 'already_trusted');
+    await app.pool.query(
+      `UPDATE devices SET trust_requested_at = coalesce(trust_requested_at, now()),
+                          trust_request_note = coalesce($2, trust_request_note)
+       WHERE id = $1`,
+      [auth.deviceId, note || null],
+    );
+    return { ok: true };
+  });
+
   // حذف الحساب من جهاز موثوق فقط؛ لا رمز تحقق في التسجيل، فالجهاز غير الموثوق قد يكون لشخص آخر أدخل الرقم
   const requireTrusted = (trusted: boolean) => {
     if (!trusted) throw new AppError(403, 'untrusted_device');

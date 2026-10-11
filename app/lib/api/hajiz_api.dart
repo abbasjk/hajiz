@@ -44,6 +44,15 @@ class HajizApi {
     return (token: json['token'] as String, user: RegisteredUser.fromJson(json['user'] as Map<String, dynamic>));
   }
 
+  /// حالة هذا الهاتف: موثوق، أو أرسل طلب توثيق
+  Future<({bool trusted, bool trustRequested})> me() async {
+    final json = await client.get('/me');
+    return (trusted: json['trustedDevice'] == true, trustRequested: json['trustRequested'] == true);
+  }
+
+  Future<void> requestTrust(String? note) =>
+      client.post('/me/trust-request', body: {if (note != null && note.isNotEmpty) 'note': note});
+
   Future<Booking> createBooking({
     required int shopId,
     required List<int> serviceIds,
