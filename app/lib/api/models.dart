@@ -71,6 +71,7 @@ class ShopSummary {
     this.coverPhoto,
     required this.committed,
     required this.instantBooking,
+    this.matchedService,
   });
 
   final int id;
@@ -85,6 +86,9 @@ class ShopSummary {
   final bool committed;
   final bool instantBooking;
 
+  /// الخدمة التي طابقت نص البحث (إن كان البحث باسم خدمة)
+  final Service? matchedService;
+
   factory ShopSummary.fromJson(Map<String, dynamic> j) => ShopSummary(
         id: j['id'] as int,
         name: j['name'] as String,
@@ -97,6 +101,7 @@ class ShopSummary {
         coverPhoto: j['coverPhoto'] as String?,
         committed: j['committed'] == true,
         instantBooking: j['instantBooking'] == true,
+        matchedService: j['matchedService'] == null ? null : Service.fromJson(j['matchedService'] as Map<String, dynamic>),
       );
 }
 

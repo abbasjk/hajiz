@@ -50,7 +50,18 @@ export async function shopRoutes(app: FastifyInstance) {
     if (f.businessTypeId) add('s.business_type_id = ?', f.businessTypeId);
     if (f.districtId) add('s.district_id = ?', f.districtId);
     if (f.areaId) add('s.area_id = ?', f.areaId);
-    if (f.q) add(`s.name ILIKE '%' || ? || '%'`, f.q.replace(/[%_\\]/g, (c) => `\\${c}`));
+    // البحث باسم المحل أو باسم إحدى خدماته، بعد توحيد الحروف من الطرفين
+    let matched = 'NULL::json';
+    if (f.q) {
+      params.push(f.q.replace(/[%_\\]/g, (c) => `\\${c}`));
+      const q = `'%' || ar_norm($${params.length}) || '%'`;
+      const serviceMatch = `sv.shop_id = s.id AND sv.active AND ar_norm(sv.name) LIKE ${q}`;
+      where.push(`(ar_norm(s.name) LIKE ${q} OR EXISTS (SELECT 1 FROM services sv WHERE ${serviceMatch}))`);
+      // الخدمة المطابقة تظهر في بطاقة المحل؛ الأقصر اسماً هي الأقرب لما كتبه الزبون
+      matched = `(SELECT json_build_object('id', sv.id, 'name', sv.name, 'durationMinutes', sv.duration_minutes,
+                                           'priceType', sv.price_type, 'price', sv.price)
+                  FROM services sv WHERE ${serviceMatch} ORDER BY length(sv.name), sv.id LIMIT 1)`;
+    }
 
     let distance = 'NULL::float';
     if (hasLocation) {
@@ -71,6 +82,7 @@ export async function shopRoutes(app: FastifyInstance) {
               ${distance} AS distance_km,
               (SELECT coalesce(url, '/photos/' || id) FROM shop_photos p WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1) AS "coverPhoto",
               ${COMMITTED_SQL} AS committed,
+              ${matched} AS "matchedService",
               (SELECT min(duration_minutes) FROM services sv WHERE sv.shop_id = s.id AND sv.active) AS min_duration
        FROM shops s
        LEFT JOIN business_types bt ON bt.id = s.business_type_id
@@ -86,7 +98,8 @@ export async function shopRoutes(app: FastifyInstance) {
       ...r,
       distanceKm: distance_km === null ? null : Math.round(distance_km * 10) / 10,
       nextAvailable: null as string | null,
-      _minDuration: min_duration as number | null,
+      // أقرب موعد يُحسب لمدة الخدمة المطابقة إن وُجدت، وإلا لأقصر خدمة
+      _minDuration: ((r.matchedService as { durationMinutes: number } | null)?.durationMinutes ?? min_duration) as number | null,
     }));
 
     if (f.sort === 'soonest') {

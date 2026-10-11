@@ -283,6 +283,11 @@ class ShopCard extends StatelessWidget {
                     Text(shop.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                     if (place.isNotEmpty)
                       Text(place, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                    if (shop.matchedService != null)
+                      Text(
+                        '${shop.matchedService!.name} · ${formatPrice(l, shop.matchedService!)}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primaryDark),
+                      ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
