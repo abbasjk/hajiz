@@ -92,7 +92,7 @@ describe('account deletion', () => {
 
     expect((await call('DELETE', '/v1/me', token)).statusCode).toBe(200);
     // المفتاح لم يعد يعمل
-    expect((await call('GET', '/v1/bookings', token)).statusCode).toBe(401);
+    expect((await call('GET', '/v1/me/bookings', token)).statusCode).toBe(401);
 
     const cancelled = (await call('GET', `/v1/owner/bookings/${upcoming}`, owner)).json().booking;
     expect(cancelled).toMatchObject({ status: 'cancelled_by_customer', cancelReason: 'account_deleted' });
@@ -116,7 +116,7 @@ describe('account deletion', () => {
     // الرقم نفسه يسجل من جديد كحساب جديد بلا حجوزات قديمة
     const again = await register('07700000803', 'مرتضى');
     expect(again.user.id).not.toBe(user.id);
-    expect((await call('GET', '/v1/bookings', again.token)).json().bookings).toHaveLength(0);
+    expect((await call('GET', '/v1/me/bookings', again.token)).json().bookings).toHaveLength(0);
   });
 
   it('deletes a shop owner: closes the shop for good and tells their customers', async () => {

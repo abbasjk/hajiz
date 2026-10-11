@@ -40,6 +40,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Future<void> _delete() async {
     final services = AppScope.of(context);
     final l = AppLocalizations.of(context);
+    final nav = Navigator.of(context);
+    final messenger = services.messengerKey.currentState;
     setState(() => _busy = true);
     try {
       await services.api.deleteAccount();
@@ -48,8 +50,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       setState(() => _busy = false);
       return showError(context, e);
     }
-    final nav = Navigator.of(context);
-    final messenger = services.messengerKey.currentState;
     await services.forgetAccount();
     nav.popUntil((r) => r.isFirst);
     messenger?.showSnackBar(SnackBar(content: Text(l.accountDeleted)));
