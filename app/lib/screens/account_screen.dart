@@ -4,6 +4,7 @@ import '../api/owner_models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
+import '../util/links.dart';
 import 'delete_account_screen.dart';
 import 'notifications_screen.dart';
 import 'owner/owner_tab.dart';
@@ -107,6 +108,15 @@ class AccountScreenState extends State<AccountScreen> {
                     }),
                   ),
               ]),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
+              title: Text(l.privacyPolicy, style: const TextStyle(fontWeight: FontWeight.w600)),
+              trailing: const Icon(Icons.open_in_new, size: 20),
+              onTap: openPrivacyPolicy,
             ),
           ),
           if (services.session.isRegistered) ...[

@@ -14,7 +14,7 @@ import { LogSender, type PushSender } from './notify/sender.js';
 import { bookingEvent, type BookingEvent } from './notify/events.js';
 import { meRoutes } from './routes/me.js';
 import { adminRoutes } from './routes/admin.js';
-import { deletePageRoutes } from './routes/delete-page.js';
+import { publicPageRoutes } from './routes/public-pages.js';
 
 export interface AppOptions {
   pool: Pool;
@@ -33,7 +33,15 @@ declare module 'fastify' {
 }
 
 export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions): Promise<FastifyInstance> {
-  const app = Fastify({ logger: { level: logLevel } });
+  // السجلات لا تحفظ عناوين الزوار ولا ما بعد علامة الاستفهام في الرابط (فيه الموقع ونص البحث)
+  const app = Fastify({
+    logger: {
+      level: logLevel,
+      serializers: {
+        req: (req: { method: string; url: string }) => ({ method: req.method, url: req.url.split('?')[0] }),
+      },
+    },
+  });
   app.decorate('pool', pool);
   const notifier = new Notifier(pool, sender ?? new LogSender(app.log), app.log);
   app.decorate('notifier', notifier);
@@ -65,8 +73,8 @@ export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions):
   await app.register(photoRoutes);
   // لوحة الإدارة خارج /v1: صفحة في المتصفح لا تحمل ترويسات إصدار التطبيق
   await app.register(adminRoutes);
-  // صفحة طلب حذف الحساب من المتصفح
-  await app.register(deletePageRoutes);
+  // صفحات عامة: سياسة الخصوصية وطلب حذف الحساب
+  await app.register(publicPageRoutes);
   // كل مسارات التطبيق تحت /v1 وتمر بفحص الإصدار
   await app.register(
     async (v1) => {

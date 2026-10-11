@@ -7,7 +7,23 @@ import { LoginLimiter } from '../admin/auth.js';
 import { AppError } from '../lib/errors.js';
 import { normalizeIraqiPhone } from '../lib/phone.js';
 
-const PAGE_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/delete-account.html');
+const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
+const DELETE_PAGE = path.join(PUBLIC_DIR, 'delete-account.html');
+const PRIVACY_PAGE = path.join(PUBLIC_DIR, 'privacy.html');
+
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+const EMAIL = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
+
+/** طريقة التواصل في صفحة الخصوصية: البريد من الإعدادات إن ضُبط */
+function contactHtml(email: unknown): string {
+  if (typeof email === 'string' && EMAIL.test(email.trim())) {
+    const e = escapeHtml(email.trim());
+    return `راسلنا على البريد: <a href="mailto:${e}" dir="ltr">${e}</a>`;
+  }
+  return 'راسلنا من خلال <a href="/delete-account">صفحة طلب حذف الحساب</a> واكتب طلبك في خانة الملاحظة.';
+}
 
 const requestBody = z.object({
   phone: z.string().max(30),
@@ -29,16 +45,29 @@ function clientIp(request: FastifyRequest): string {
 }
 
 /**
- * صفحة عامة لطلب حذف الحساب دون فتح التطبيق (يطلبها متجر التطبيقات).
+ * الصفحات العامة: سياسة الخصوصية، وطلب حذف الحساب.
+ * صفحة طلب الحذف دون فتح التطبيق (يطلبها متجر التطبيقات).
  * الرد واحد دائماً سواء وُجد الحساب أم لا، فلا تكشف الصفحة من لديه حساب.
  */
-export async function deletePageRoutes(app: FastifyInstance) {
+export async function publicPageRoutes(app: FastifyInstance) {
   // خمسة طلبات في الساعة لكل عنوان، ومئة للجميع، حتى لا تُغرق القائمة
   const perIp = new LoginLimiter(5, 60 * 60_000);
   const global = new LoginLimiter(100, 60 * 60_000);
 
+  app.get('/privacy', async (_request, reply) => {
+    const [html, { rows }] = await Promise.all([
+      readFile(PRIVACY_PAGE, 'utf8'),
+      app.pool.query(`SELECT value FROM settings WHERE key = 'contact_email'`),
+    ]);
+    return reply
+      .header('content-type', 'text/html; charset=utf-8')
+      .header('cache-control', 'no-cache')
+      .header('x-frame-options', 'DENY')
+      .send(html.replace('{{CONTACT}}', contactHtml(rows[0]?.value)));
+  });
+
   app.get('/delete-account', async (_request, reply) => {
-    const html = await readFile(PAGE_PATH, 'utf8');
+    const html = await readFile(DELETE_PAGE, 'utf8');
     return reply
       .header('content-type', 'text/html; charset=utf-8')
       .header('cache-control', 'no-cache')

@@ -628,5 +628,7 @@
   "deletedCustomer": "حساب محذوف",
   "reasonAccountDeleted": "حذف الزبون حسابه",
   "reasonShopClosed": "أُغلق المحل نهائياً",
-  "errUntrustedDevice": "هذا الإجراء متاح فقط من الهاتف الذي سجّلت به رقمك أول مرة."
+  "errUntrustedDevice": "هذا الإجراء متاح فقط من الهاتف الذي سجّلت به رقمك أول مرة.",
+  "privacyPolicy": "سياسة الخصوصية",
+  "registerPrivacyNote": "بالمتابعة توافق على سياسة الخصوصية."
 }

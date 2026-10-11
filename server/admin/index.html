@@ -690,6 +690,7 @@ const SETTING_LABELS = {
   final_deadline_reminder_minutes: 'التذكير الأخير قبل انتهاء المهلة (دقيقة)',
   reminder_before_appointment_minutes: 'تذكير الزبون قبل الموعد (دقيقة)',
   review_window_days: 'مدة إتاحة التقييم بعد الموعد (يوم)',
+  contact_email: 'بريد التواصل (يظهر في صفحة سياسة الخصوصية)',
   no_show_penalty: 'عقوبة عدم الحضور (العدد خلال الأيام)',
   shop_commitment_badge: 'شارة المحل الملتزم',
   shop_deadline_modes: 'مهل رد المحل حسب قرب الموعد (دقيقة)',
@@ -700,14 +701,17 @@ const SETTING_LABELS = {
 async function settingsView() {
   const [{ settings }, { versions }] = await Promise.all([api('/settings'), api('/app-versions')]);
   const rows = settings.map((s) => {
-    const simple = typeof s.value === 'number';
-    const input = simple
+    const isText = typeof s.value === 'string';
+    const simple = typeof s.value === 'number' || isText;
+    const input = isText
+      ? h('input', { type: 'text', value: s.value, class: 'ltr', style: 'width:280px;max-width:100%', disabled: !s.editable })
+      : simple
       ? h('input', { type: 'text', inputmode: 'numeric', value: s.value, style: 'width:120px', disabled: !s.editable })
       : h('textarea', { rows: Math.min(10, JSON.stringify(s.value, null, 2).split('\n').length), class: 'ltr', style: 'width:100%;font-family:monospace;font-size:13px', disabled: !s.editable });
     if (!simple) input.value = JSON.stringify(s.value, null, 2);
     const save = h('button', { class: 'btn primary', disabled: !s.editable, onclick: async () => {
       let value;
-      try { value = simple ? Number(input.value) : JSON.parse(input.value); } catch (_) { return toast('صيغة القيمة غير صحيحة', true); }
+      try { value = isText ? input.value.trim() : simple ? Number(input.value) : JSON.parse(input.value); } catch (_) { return toast('صيغة القيمة غير صحيحة', true); }
       await run(() => api('/settings/' + encodeURIComponent(s.key), { method: 'PUT', body: { value } }), 'حُفظ الإعداد ويُطبّق فوراً');
     } }, 'حفظ');
     return h('div', { class: 'card', style: 'margin-bottom:10px' },

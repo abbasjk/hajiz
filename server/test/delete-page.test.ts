@@ -93,3 +93,25 @@ describe('account deletion page', () => {
     expect((await admin('GET', '/stats')).json().pendingDeletions).toBe(0);
   });
 });
+
+describe('privacy page', () => {
+  const page = async () => (await app.inject({ method: 'GET', url: '/privacy' })).body;
+
+  it('points to the deletion page until a contact email is set', async () => {
+    const html = await page();
+    expect(html).toContain('سياسة الخصوصية');
+    expect(html).not.toContain('{{CONTACT}}');
+    expect(html).toContain('href="/delete-account"');
+    expect(html).not.toContain('mailto:');
+  });
+
+  it('shows the contact email from settings, and never injects markup', async () => {
+    await pool.query(`UPDATE settings SET value = '"help@example.com"' WHERE key = 'contact_email'`);
+    expect(await page()).toContain('href="mailto:help@example.com"');
+
+    await pool.query(`UPDATE settings SET value = $1 WHERE key = 'contact_email'`, [JSON.stringify('<script>x</script>@a.b')]);
+    const html = await page();
+    expect(html).not.toContain('<script>x');
+    expect(html).not.toContain('mailto:');
+  });
+});

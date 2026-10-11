@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../theme/colors.dart';
+import '../util/links.dart';
 import '../util/phone.dart';
 import '../widgets/common.dart';
 
@@ -70,6 +71,10 @@ class _RegisterFormState extends State<RegisterForm> {
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           onPressed: _busy ? null : _submit,
           child: Text(l.continueLabel),
+        ),
+        TextButton(
+          onPressed: openPrivacyPolicy,
+          child: Text(l.registerPrivacyNote, style: const TextStyle(fontSize: 13)),
         ),
       ]),
     );
