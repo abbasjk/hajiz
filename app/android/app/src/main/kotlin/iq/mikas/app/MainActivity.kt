@@ -1,4 +1,4 @@
-package iq.hajiz.hajiz
+package iq.mikas.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
