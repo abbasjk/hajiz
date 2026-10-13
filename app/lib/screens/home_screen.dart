@@ -532,7 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final items = <(int?, String, Widget)>[
       if (config.serviceCategories.isNotEmpty)
         for (final c in config.serviceCategories)
-          if (!_hasAudiences || c.isFor(_audience)) (c.id, c.name, ServiceIcon(c.icon, size: 36))
+          if (!_hasAudiences || c.isFor(_audience)) (c.id, c.name, ServiceIcon(c.icon, size: 44))
       else
         for (final t in config.businessTypes) (t.id, t.name, BusinessIcon(t.icon, size: 28, color: AppColors.primary)),
       (null, l.allTypes, const BusinessIcon('all', size: 28, color: AppColors.primary)),
@@ -1136,7 +1136,7 @@ class _TypeTile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                SizedBox(height: 36, child: Center(child: icon)),
+                SizedBox(height: 44, child: Center(child: icon)),
                 const SizedBox(height: 6),
                 Text(
                   name,

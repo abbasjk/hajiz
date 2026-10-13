@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// أيقونة نوع الخدمة من الأيقونات المرسومة للتطبيق (بنفسجي مع تعبئة برتقالية فاتحة)
+/// أيقونة نوع الخدمة: رسمة بيضاء داخل دائرة بنفسجية بلمسة برتقالية، على طريقة شعار التطبيق
 class ServiceIcon extends StatelessWidget {
   const ServiceIcon(this.icon, {super.key, this.size = 32});
   final String icon;
