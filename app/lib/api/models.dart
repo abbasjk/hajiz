@@ -23,11 +23,14 @@ class BusinessType extends NamedItem {
 
 /// نوع خدمة في رئيسية الزبون (حلاقة الشعر، تهذيب اللحية...)؛ الأيقونة اسم ملف من أيقونات التطبيق
 class ServiceCategory extends NamedItem {
-  const ServiceCategory(super.id, super.name, this.icon);
+  const ServiceCategory(super.id, super.name, this.icon, [this.photo]);
   final String icon;
 
+  /// صورة حقيقية من الإدارة تظهر بدل الأيقونة (مسار على الخادم)
+  final String? photo;
+
   factory ServiceCategory.fromJson(Map<String, dynamic> j) =>
-      ServiceCategory(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'haircut');
+      ServiceCategory(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'haircut', j['photo'] as String?);
 }
 
 class Area extends NamedItem {

@@ -467,6 +467,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool get _byCategory => _config?.serviceCategories.isNotEmpty ?? false;
 
   Widget _typesGrid(AppLocalizations l, ServerConfig config) {
+    final client = AppScope.of(context).client;
+    final photos = {
+      for (final c in config.serviceCategories)
+        if (c.photo != null) c.id: client.absoluteUrl(c.photo!),
+    };
     final items = <(int?, String, Widget)>[
       if (config.serviceCategories.isNotEmpty)
         for (final c in config.serviceCategories) (c.id, c.name, ServiceIcon(c.icon, size: 36))
@@ -491,6 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _TypeTile(
                 name: name,
                 icon: icon,
+                photo: photos[id],
                 selected: _typeId == id,
                 onTap: () => _set(() {
                   _typeId = _typeId == id ? null : id;
@@ -1041,14 +1047,18 @@ class ShopCard extends StatelessWidget {
 
 /// خانة نوع العمل في شبكة "ماذا تحتاج؟": المختارة بحد بنفسجي وخلفية فاتحة، والباقي بيضاء بظل
 class _TypeTile extends StatelessWidget {
-  const _TypeTile({required this.name, required this.icon, required this.selected, required this.onTap});
+  const _TypeTile({required this.name, required this.icon, required this.selected, required this.onTap, this.photo});
   final String name;
   final Widget icon;
+
+  /// صورة حقيقية للنوع إن رفعتها الإدارة: تملأ المربع والاسم فوقها
+  final String? photo;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    if (photo != null) return _photoTile();
     return Semantics(
       button: true,
       selected: selected,
@@ -1087,6 +1097,47 @@ class _TypeTile extends StatelessWidget {
       ),
     );
   }
+
+  Widget _photoTile() => Semantics(
+        button: true,
+        selected: selected,
+        label: name,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? AppColors.accent : Colors.transparent, width: 2.5),
+            boxShadow: AppShadows.card,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Stack(fit: StackFit.expand, children: [
+              Image.network(photo!, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: AppColors.primarySoft)),
+              // تدرج داكن أسفل الصورة ليُقرأ الاسم فوقها
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x00000000), Color(0x00000000), Color(0xB3000000)],
+                  ),
+                ),
+              ),
+              PositionedDirectional(
+                start: 8,
+                end: 8,
+                bottom: 6,
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+              ),
+              Material(color: Colors.transparent, child: InkWell(onTap: onTap)),
+            ]),
+          ),
+        ),
+      );
 }
 
 /// خيار في نوافذ المنطقة والترتيب: المختار بحد بنفسجي وعلامة صح
