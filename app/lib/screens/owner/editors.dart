@@ -59,7 +59,10 @@ class DetailsEditorState extends StepEditorState<DetailsEditor> {
   late final _name = TextEditingController(text: widget.shop?.name);
   late final _description = TextEditingController(text: widget.shop?.description);
   late final _phone = TextEditingController(text: widget.shop?.phone);
-  late int? _typeId = widget.shop?.businessTypeId;
+  // التطبيق للحلاقة: إن كان هناك نوع عمل واحد يُختار تلقائياً ولا يظهر السؤال
+  late int? _typeId = widget.shop?.businessTypeId ??
+      (widget.config.businessTypes.length == 1 ? widget.config.businessTypes.first.id : null);
+  bool get _oneType => widget.config.businessTypes.length == 1;
 
   @override
   void didChangeDependencies() {
@@ -105,14 +108,16 @@ class DetailsEditorState extends StepEditorState<DetailsEditor> {
             maxLength: 60,
             validator: (v) => (v ?? '').trim().length < 2 ? l.fieldRequired : null,
           ),
-          sectionLabel(l.businessTypeLabel),
-          DropdownButtonFormField<int>(
-            initialValue: _typeId,
-            isExpanded: true,
-            items: [for (final t in widget.config.businessTypes) DropdownMenuItem(value: t.id, child: Text(t.name))],
-            onChanged: (v) => setState(() => _typeId = v),
-            validator: (v) => v == null ? l.fieldRequired : null,
-          ),
+          if (!_oneType) ...[
+            sectionLabel(l.businessTypeLabel),
+            DropdownButtonFormField<int>(
+              initialValue: _typeId,
+              isExpanded: true,
+              items: [for (final t in widget.config.businessTypes) DropdownMenuItem(value: t.id, child: Text(t.name))],
+              onChanged: (v) => setState(() => _typeId = v),
+              validator: (v) => v == null ? l.fieldRequired : null,
+            ),
+          ],
           sectionLabel(l.shopPhoneLabel),
           TextFormField(
             controller: _phone,
