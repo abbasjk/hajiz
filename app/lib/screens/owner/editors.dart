@@ -13,6 +13,7 @@ import '../../state/app_scope.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
+import '../../widgets/service_icon.dart';
 import '../../widgets/base_map.dart';
 
 /// محرر خطوة من بيانات المحل: يحفظ ما فيه عند الطلب ويعيد true إذا نجح.
@@ -453,7 +454,16 @@ class ServicesEditorState extends StepEditorState<ServicesEditor> {
   }
 
   Future<void> _edit([OwnerService? service]) async {
-    final result = await showDialog<Map<String, Object?>>(context: context, builder: (_) => _ServiceDialog(service: service));
+    // أنواع الخدمات من إعدادات الخادم المحفوظة؛ دون اتصال يُفتح الحوار بلا اختيار نوع
+    var categories = const <ServiceCategory>[];
+    try {
+      categories = (await AppScope.of(context).config()).serviceCategories;
+    } catch (_) {}
+    if (!mounted) return;
+    final result = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (_) => _ServiceDialog(service: service, categories: categories),
+    );
     if (result == null || !mounted) return;
     final owner = AppScope.of(context).owner;
     final state = await runSave(
@@ -493,7 +503,8 @@ class ServicesEditorState extends StepEditorState<ServicesEditor> {
 }
 
 class _ServiceDialog extends StatefulWidget {
-  const _ServiceDialog({this.service});
+  const _ServiceDialog({this.service, this.categories = const []});
+  final List<ServiceCategory> categories;
   final OwnerService? service;
 
   @override
@@ -507,6 +518,7 @@ class _ServiceDialogState extends State<_ServiceDialog> {
   late final _price = TextEditingController(text: widget.service?.price?.toString() ?? '');
   late PriceType _type = widget.service?.priceType ?? PriceType.fixed;
   late bool _active = widget.service?.active ?? true;
+  late int? _category = widget.service?.categoryId;
 
   @override
   void dispose() {
@@ -530,6 +542,24 @@ class _ServiceDialogState extends State<_ServiceDialog> {
               decoration: InputDecoration(labelText: l.serviceName),
               validator: (v) => (v ?? '').trim().isEmpty ? l.fieldRequired : null,
             ),
+            if (widget.categories.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              // النوع يحدد في أي مربع من الرئيسية يظهر المحل
+              DropdownButtonFormField<int>(
+                initialValue: widget.categories.any((c) => c.id == _category) ? _category : null,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l.serviceCategoryLabel, helperText: l.serviceCategoryHint),
+                items: [
+                  for (final c in widget.categories)
+                    DropdownMenuItem(
+                      value: c.id,
+                      child: Row(children: [ServiceIcon(c.icon, size: 24), const SizedBox(width: 10), Text(c.name)]),
+                    ),
+                ],
+                validator: (v) => v == null ? l.fieldRequired : null,
+                onChanged: (v) => setState(() => _category = v),
+              ),
+            ],
             const SizedBox(height: 12),
             TextFormField(
               controller: _duration,
@@ -585,6 +615,7 @@ class _ServiceDialogState extends State<_ServiceDialog> {
               },
               'price': _type == PriceType.afterInspection ? null : int.parse(_price.text),
               'active': _active,
+              if (_category != null) 'categoryId': _category,
             });
           },
           child: Text(l.saveLabel),

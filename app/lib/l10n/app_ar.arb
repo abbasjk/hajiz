@@ -745,5 +745,7 @@
   "errCodeExpired": "انتهت صلاحية الرمز. اطلب رمزاً جديداً.",
   "errCodeTooSoon": "انتظر دقيقة قبل طلب رمز جديد.",
   "errTooManyCodes": "طلبت رموزاً كثيرة. حاول بعد ساعة.",
-  "errCodeSendFailed": "تعذر إرسال الرمز الآن. حاول بعد قليل."
+  "errCodeSendFailed": "تعذر إرسال الرمز الآن. حاول بعد قليل.",
+  "serviceCategoryLabel": "نوع الخدمة",
+  "serviceCategoryHint": "يظهر محلك في هذا القسم من رئيسية الزبون."
 }

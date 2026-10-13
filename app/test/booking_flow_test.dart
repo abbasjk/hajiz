@@ -56,6 +56,10 @@ class FakeServer {
           'max_pending_requests_per_customer': 2,
         },
         'businessTypes': [{'id': 1, 'name': 'حلاقة رجالية'}],
+        'serviceCategories': [
+          {'id': 1, 'name': 'حلاقة الشعر', 'icon': 'haircut'},
+          {'id': 3, 'name': 'صبغ الشعر', 'icon': 'dye'},
+        ],
         'districts': [{'id': 1, 'name': 'البصرة'}],
         'areas': [],
       };
@@ -181,6 +185,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('ألغيته'), findsWidgets);
     expect(server.requests.where((r) => r.url.path == '/v1/bookings/5/cancel'), hasLength(1));
+  });
+
+  testWidgets('home shows service categories and filters shops by the one tapped', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final (server, _) = await startApp(tester);
+    expect(find.text('حلاقة الشعر'), findsOneWidget);
+
+    await tester.tap(find.text('صبغ الشعر'));
+    await tester.pumpAndSettle();
+    final request = server.requests.lastWhere((r) => r.url.path == '/v1/shops');
+    expect(request.url.queryParameters['serviceCategoryId'], '3');
+    expect(request.url.queryParameters.containsKey('businessTypeId'), isFalse);
   });
 
   testWidgets('signs in with a code when the server asks for one', (tester) async {

@@ -13,6 +13,7 @@ import '../theme/colors.dart';
 import '../util/format.dart';
 import '../widgets/business_icon.dart';
 import '../widgets/common.dart';
+import '../widgets/service_icon.dart';
 import 'booking_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'shop_screen.dart';
@@ -99,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _error = null);
     try {
       final shops = await AppScope.of(context).api.shops(
-            businessTypeId: _typeId,
+            // مع أنواع الخدمات تُصفّى المحلات بالخدمة؛ ومع خادم قديم بنوع المحل
+            businessTypeId: _byCategory ? null : _typeId,
+            serviceCategoryId: _byCategory ? _typeId : null,
             districtId: _districtId,
             areaId: _areaId,
             query: _query,
@@ -461,10 +464,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// "ماذا تحتاج؟": شبكة أنواع العمل بأيقوناتها، ثلاثة في الصف، و"الكل" في آخرها
+  bool get _byCategory => _config?.serviceCategories.isNotEmpty ?? false;
+
   Widget _typesGrid(AppLocalizations l, ServerConfig config) {
-    final items = <(int?, String, String)>[
-      for (final t in config.businessTypes) (t.id, t.name, t.icon),
-      (null, l.allTypes, 'all'),
+    final items = <(int?, String, Widget)>[
+      if (config.serviceCategories.isNotEmpty)
+        for (final c in config.serviceCategories) (c.id, c.name, ServiceIcon(c.icon, size: 36))
+      else
+        for (final t in config.businessTypes) (t.id, t.name, BusinessIcon(t.icon, size: 28, color: AppColors.primary)),
+      (null, l.allTypes, const BusinessIcon('all', size: 28, color: AppColors.primary)),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _sectionTitle(l.whatDoYouNeed),
@@ -1035,7 +1043,7 @@ class ShopCard extends StatelessWidget {
 class _TypeTile extends StatelessWidget {
   const _TypeTile({required this.name, required this.icon, required this.selected, required this.onTap});
   final String name;
-  final String icon;
+  final Widget icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -1059,8 +1067,8 @@ class _TypeTile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                BusinessIcon(icon, size: 28, color: AppColors.primary),
-                const SizedBox(height: 8),
+                SizedBox(height: 36, child: Center(child: icon)),
+                const SizedBox(height: 6),
                 Text(
                   name,
                   maxLines: 1,

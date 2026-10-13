@@ -30,9 +30,11 @@ class OwnerService extends Service {
     required super.priceType,
     super.price,
     required this.active,
+    this.categoryId,
   });
 
   final bool active;
+  final int? categoryId;
 
   factory OwnerService.fromJson(Map<String, dynamic> j) {
     final s = Service.fromJson(j);
@@ -43,6 +45,7 @@ class OwnerService extends Service {
       priceType: s.priceType,
       price: s.price,
       active: j['active'] != false,
+      categoryId: j['categoryId'] as int?,
     );
   }
 }

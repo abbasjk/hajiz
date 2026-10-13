@@ -10,6 +10,7 @@ class HajizApi {
 
   Future<List<ShopSummary>> shops({
     int? businessTypeId,
+    int? serviceCategoryId,
     int? districtId,
     int? areaId,
     String? query,
@@ -21,6 +22,7 @@ class HajizApi {
     final json = await client.get('/shops', query: {
       if (limit != null) 'limit': '$limit',
       if (businessTypeId != null) 'businessTypeId': '$businessTypeId',
+      if (serviceCategoryId != null) 'serviceCategoryId': '$serviceCategoryId',
       if (districtId != null) 'districtId': '$districtId',
       if (areaId != null) 'areaId': '$areaId',
       if (query != null && query.trim().isNotEmpty) 'q': query.trim(),

@@ -21,6 +21,15 @@ class BusinessType extends NamedItem {
       BusinessType(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'store');
 }
 
+/// نوع خدمة في رئيسية الزبون (حلاقة الشعر، تهذيب اللحية...)؛ الأيقونة اسم ملف من أيقونات التطبيق
+class ServiceCategory extends NamedItem {
+  const ServiceCategory(super.id, super.name, this.icon);
+  final String icon;
+
+  factory ServiceCategory.fromJson(Map<String, dynamic> j) =>
+      ServiceCategory(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'haircut');
+}
+
 class Area extends NamedItem {
   const Area(super.id, super.name, this.districtId);
   final int districtId;
@@ -47,6 +56,7 @@ class ServerConfig {
     required this.shopDeadlineModes,
     required this.maxPending,
     this.phoneVerification = false,
+    this.serviceCategories = const [],
   });
 
   final List<BusinessType> businessTypes;
@@ -58,6 +68,9 @@ class ServerConfig {
   /// التسجيل يحتاج رمز تحقق يصل إلى الرقم
   final bool phoneVerification;
 
+  /// أنواع الخدمات الظاهرة في الرئيسية؛ فارغة مع خادم قديم
+  final List<ServiceCategory> serviceCategories;
+
   factory ServerConfig.fromJson(Map<String, dynamic> j) {
     final settings = j['settings'] as Map<String, dynamic>;
     final modes = settings['shop_deadline_modes'] as Map<String, dynamic>;
@@ -68,6 +81,7 @@ class ServerConfig {
       shopDeadlineModes: modes.map((k, v) => MapEntry(k, DeadlineTable.fromJson(v))),
       maxPending: (settings['max_pending_requests_per_customer'] as num).toInt(),
       phoneVerification: j['phoneVerification'] == true,
+      serviceCategories: [for (final c in j['serviceCategories'] as List? ?? []) ServiceCategory.fromJson(c)],
     );
   }
 }

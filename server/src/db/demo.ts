@@ -42,7 +42,7 @@ export async function seedDemoShop(pool: Pool): Promise<boolean> {
     }
     await tx.query(
       `INSERT INTO services (shop_id, name, duration_minutes, price_type, price, category_id)
-       SELECT $1, v.name, v.minutes, v.price_type, v.price, (SELECT id FROM service_categories WHERE icon = v.icon)
+       SELECT $1, v.name, v.minutes, v.price_type::price_type, v.price, (SELECT id FROM service_categories WHERE icon = v.icon)
        FROM (VALUES ('حلاقة شعر', 30, 'fixed', 10000, 'haircut'),
                     ('تهذيب لحية', 15, 'fixed', 5000, 'beard'),
                     ('حلاقة أطفال', 20, 'fixed', 7000, 'kids'),
