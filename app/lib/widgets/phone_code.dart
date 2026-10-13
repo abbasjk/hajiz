@@ -128,7 +128,7 @@ class _PhoneCodeScreenState extends State<PhoneCodeScreen> {
         const SizedBox(height: 18),
         Text(
           // الرقم يُقرأ من اليسار لليمين داخل الجملة العربية
-          l.codeSentTo('⁦${widget.phone}⁩'),
+          l.codeSentTo('\u2066${widget.phone}\u2069'),
           textAlign: TextAlign.center,
           style: AppText.body.copyWith(height: 1.7, color: AppColors.text),
         ),

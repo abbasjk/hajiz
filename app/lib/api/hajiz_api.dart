@@ -50,7 +50,7 @@ class HajizApi {
       'name': name,
       'phone': phone,
       'deviceIdentifier': deviceId,
-      if (code != null) 'code': code,
+      'code': ?code,
     });
     return (token: json['token'] as String, user: RegisteredUser.fromJson(json['user'] as Map<String, dynamic>));
   }
