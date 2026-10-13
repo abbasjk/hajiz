@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "791744671868",
+    "project_id": "mikas-4babb",
+    "storage_bucket": "mikas-4babb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:791744671868:android:4da8cb91a97ae2d56599f9",
+        "android_client_info": {
+          "package_name": "iq.mikas.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6KJoE2RsmJdTJKjawZjksYwEeaxXNjoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
