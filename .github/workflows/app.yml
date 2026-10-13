@@ -25,7 +25,12 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze
+      # ملاحظات المحلل تظهر على التشغيل نفسه (السجل الكامل لا يُقرأ من خارج الموقع)
+      - run: |
+          if flutter analyze > analyze.txt 2>&1; then exit 0; fi
+          cat analyze.txt
+          grep -E '(error|warning|info) •' analyze.txt | head -20 | while IFS= read -r line; do echo "::error::$line"; done
+          exit 1
       # أخطاء الاختبارات تظهر كملاحظات على التشغيل نفسه (السجل الكامل لا يُقرأ من خارج الموقع)
       - run: flutter test --reporter expanded --file-reporter json:test-results.json
       - if: failure()
