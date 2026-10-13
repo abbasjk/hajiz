@@ -9,7 +9,7 @@ export async function configRoutes(app: FastifyInstance) {
   app.get('/config', async () => {
     const [settings, businessTypes, districts, areas, versions] = await Promise.all([
       app.pool.query<{ key: string; value: unknown }>('SELECT key, value FROM settings ORDER BY key'),
-      app.pool.query('SELECT id, name FROM business_types WHERE active ORDER BY sort_order, id'),
+      app.pool.query('SELECT id, name, icon FROM business_types WHERE active ORDER BY sort_order, id'),
       app.pool.query('SELECT id, name FROM districts WHERE active ORDER BY sort_order, id'),
       app.pool.query(
         `SELECT id, district_id AS "districtId", name FROM areas

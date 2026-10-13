@@ -672,5 +672,18 @@
   "searchResultsCount": "{n, plural, =0{لا نتائج} =1{نتيجة واحدة} =2{نتيجتان} few{{n} نتائج} other{{n} نتيجة}}",
   "@searchResultsCount": {"placeholders": {"n": {"type": "int"}}},
   "sortByLabel": "الترتيب",
-  "nearYou": "قرب موقعك"
+  "nearYou": "قرب موقعك",
+  "notificationsSignIn": "سجّل برقمك من «حسابي» لتصلك إشعارات حجوزاتك هنا.",
+  "whatDoYouNeed": "ماذا تحتاج؟",
+  "browsingIn": "تتصفح المحلات في",
+  "change": "تغيير",
+  "nearMe": "قرب موقعي",
+  "nearMeHint": "المحلات مرتبة من الأقرب إليك",
+  "whereToSearch": "أين تبحث؟",
+  "orChooseArea": "أو اختر القضاء والمنطقة",
+  "allOfDistrict": "كل {district}",
+  "@allOfDistrict": {"placeholders": {"district": {"type": "String"}}},
+  "showShops": "عرض المحلات",
+  "sortTitle": "ترتيب المحلات",
+  "locationNeeded": "اسمح للتطبيق بمعرفة موقعك لترتيب المحلات من الأقرب."
 }

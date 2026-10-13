@@ -12,6 +12,15 @@ class NamedItem {
   factory NamedItem.fromJson(Map<String, dynamic> j) => NamedItem(j['id'] as int, j['name'] as String);
 }
 
+/// نوع العمل وأيقونته في الرئيسية (تختارها الإدارة)
+class BusinessType extends NamedItem {
+  const BusinessType(super.id, super.name, [this.icon = 'store']);
+  final String icon;
+
+  factory BusinessType.fromJson(Map<String, dynamic> j) =>
+      BusinessType(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'store');
+}
+
 class Area extends NamedItem {
   const Area(super.id, super.name, this.districtId);
   final int districtId;
@@ -39,7 +48,7 @@ class ServerConfig {
     required this.maxPending,
   });
 
-  final List<NamedItem> businessTypes;
+  final List<BusinessType> businessTypes;
   final List<NamedItem> districts;
   final List<Area> areas;
   final Map<String, DeadlineTable> shopDeadlineModes;
@@ -49,7 +58,7 @@ class ServerConfig {
     final settings = j['settings'] as Map<String, dynamic>;
     final modes = settings['shop_deadline_modes'] as Map<String, dynamic>;
     return ServerConfig(
-      businessTypes: [for (final t in j['businessTypes'] as List) NamedItem.fromJson(t)],
+      businessTypes: [for (final t in j['businessTypes'] as List) BusinessType.fromJson(t)],
       districts: [for (final d in j['districts'] as List) NamedItem.fromJson(d)],
       areas: [for (final a in j['areas'] as List) Area.fromJson(a)],
       shopDeadlineModes: modes.map((k, v) => MapEntry(k, DeadlineTable.fromJson(v))),

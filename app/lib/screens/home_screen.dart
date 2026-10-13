@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -10,6 +11,7 @@ import '../state/app_scope.dart';
 import '../theme/app_theme.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
+import '../widgets/business_icon.dart';
 import '../widgets/common.dart';
 import 'booking_detail_screen.dart';
 import 'notifications_screen.dart';
@@ -49,7 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final _search = TextEditingController();
 
   /// أقسام الرئيسية أم قائمة نتائج
-  bool get _filtering => _query.trim().isNotEmpty || _typeId != null || _districtId != null || _areaId != null;
+  /// المنطقة سياق للتصفح لا تصفية: الأقسام تبقى، وتتحول إلى نتائج عند البحث أو اختيار نوع
+  bool get _filtering => _query.trim().isNotEmpty || _typeId != null;
 
   @override
   void initState() {
@@ -140,116 +143,156 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ============================================================
-  // التصفية: نوع العمل، القضاء والمنطقة، الترتيب
+  // اختيار المنطقة والترتيب
   // ============================================================
 
-  Future<void> _openFilters() async {
+  /// نافذة "أين تبحث؟": قرب موقعي، أو قضاء ومنطقة
+  Future<void> _openArea() async {
     final l = AppLocalizations.of(context);
     final config = _config!;
-    var typeId = _typeId;
     var districtId = _districtId;
     var areaId = _areaId;
-    var sort = _sort;
-    final apply = await showModalBottomSheet<bool>(
+    var expanded = _districtId ?? config.districts.firstOrNull?.id;
+    final result = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheet) {
-          final areas = config.areas.where((a) => a.districtId == districtId).toList();
+          final nearMe = districtId == null && areaId == null;
           return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Row(children: [
-                  Expanded(child: Text(l.filtersTitle, style: AppText.headline)),
-                  TextButton(
-                    onPressed: () => setSheet(() {
-                      typeId = null;
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Text(l.whereToSearch, style: AppText.headline),
+                  const SizedBox(height: 14),
+                  _AreaOption(
+                    selected: nearMe,
+                    icon: Icons.my_location,
+                    title: l.nearMe,
+                    subtitle: l.nearMeHint,
+                    onTap: () => setSheet(() {
                       districtId = null;
                       areaId = null;
                     }),
-                    child: Text(l.clearFilters),
                   ),
-                ]),
-                const SizedBox(height: 12),
-                Text(l.businessTypeLabel, style: AppText.title),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 8, children: [
-                  for (final (id, name) in [(null, l.allTypes), for (final t in config.businessTypes) (t.id, t.name)])
-                    ChoiceChip(
-                      label: Text(name),
-                      selected: typeId == id,
-                      side: BorderSide(color: typeId == id ? AppColors.primary : AppColors.border),
-                      onSelected: (_) => setSheet(() => typeId = id),
+                  const SizedBox(height: 16),
+                  Text(l.orChooseArea, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(children: [
+                      for (final (i, d) in config.districts.indexed) ...[
+                        if (i > 0) const Divider(),
+                        InkWell(
+                          onTap: () => setSheet(() => expanded = expanded == d.id ? null : d.id),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            child: Row(children: [
+                              Expanded(
+                                child: Text(d.name,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: districtId == d.id || expanded == d.id ? FontWeight.w700 : FontWeight.w400,
+                                    )),
+                              ),
+                              Icon(expanded == d.id ? Icons.expand_less : Icons.expand_more, color: AppColors.textMuted),
+                            ]),
+                          ),
+                        ),
+                        if (expanded == d.id)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Wrap(spacing: 8, runSpacing: 8, children: [
+                                for (final (id, name) in <(int?, String)>[
+                                  (null, l.allOfDistrict(d.name)),
+                                  for (final a in config.areas.where((a) => a.districtId == d.id)) (a.id, a.name),
+                                ])
+                                  ChoiceChip(
+                                    label: Text(name),
+                                    selected: districtId == d.id && areaId == id,
+                                    side: BorderSide(color: districtId == d.id && areaId == id ? AppColors.primary : AppColors.border),
+                                    onSelected: (_) => setSheet(() {
+                                      districtId = d.id;
+                                      areaId = id;
+                                    }),
+                                  ),
+                              ]),
+                            ),
+                          ),
+                      ],
+                    ]),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton(onPressed: () => Navigator.pop(context, 'apply'), child: Text(l.showShops)),
                 ]),
-                const SizedBox(height: 16),
-                Text(l.districtLabel, style: AppText.title),
-                const SizedBox(height: 8),
-                _dropdown<int?>(
-                  value: districtId,
-                  items: {null: l.allDistricts, for (final d in config.districts) d.id: d.name},
-                  onChanged: (v) => setSheet(() {
-                    districtId = v;
-                    areaId = null;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                Text(l.areaLabel, style: AppText.title),
-                const SizedBox(height: 8),
-                _dropdown<int?>(
-                  key: ValueKey(districtId),
-                  value: areaId,
-                  items: {null: l.allAreas, for (final a in areas) a.id: a.name},
-                  onChanged: areas.isEmpty ? null : (v) => setSheet(() => areaId = v),
-                ),
-                const SizedBox(height: 16),
-                Text(l.sortByLabel, style: AppText.title),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  showSelectedIcon: false,
-                  segments: [
-                    if (_position != null) ButtonSegment(value: 'distance', label: Text(l.sortDistance)),
-                    ButtonSegment(value: 'soonest', label: Text(l.sortSoonest)),
-                    ButtonSegment(value: 'name', label: Text(l.sortName)),
-                  ],
-                  selected: {sort},
-                  onSelectionChanged: (s) => setSheet(() => sort = s.first),
-                ),
-                if (_locationDenied) ...[
-                  const SizedBox(height: 8),
-                  Text(l.locationDenied, style: AppText.caption),
-                ],
-                const SizedBox(height: 20),
-                FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l.showResults)),
-              ]),
+              ),
             ),
           );
         },
       ),
     );
-    if (apply != true) return;
+    if (result != 'apply') return;
+    final nearMe = districtId == null && areaId == null;
     _set(() {
-      _typeId = typeId;
       _districtId = districtId;
       _areaId = areaId;
-      if (sort != _sort) _sortChosen = true;
-      _sort = sort;
       _showAll = false;
+      if (nearMe && _position != null && !_sortChosen) _sort = 'distance';
     });
+    if (nearMe && _position == null) {
+      await _locate();
+      if (_position == null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.locationNeeded)));
+      }
+    }
   }
 
-  Widget _dropdown<T>({Key? key, required T value, required Map<T, String> items, ValueChanged<T?>? onChanged}) {
-    return DropdownButtonFormField<T>(
-      key: key,
-      initialValue: value,
-      isExpanded: true,
-      items: [
-        for (final e in items.entries) DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis)),
-      ],
-      onChanged: onChanged,
+  /// نافذة الترتيب: الأقرب، أقرب موعد، الاسم
+  Future<void> _openSort() async {
+    final l = AppLocalizations.of(context);
+    final options = [
+      if (_position != null) ('distance', l.sortDistance, Icons.near_me_outlined),
+      ('soonest', l.sortSoonest, Icons.schedule),
+      ('name', l.sortName, Icons.sort_by_alpha),
+    ];
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(l.sortTitle, style: AppText.headline),
+            const SizedBox(height: 12),
+            for (final (value, label, icon) in options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _AreaOption(
+                  selected: _sort == value,
+                  icon: icon,
+                  title: label,
+                  onTap: () => Navigator.pop(context, value),
+                ),
+              ),
+            if (_locationDenied) Text(l.locationDenied, style: AppText.caption),
+          ]),
+        ),
+      ),
     );
+    if (chosen == null || chosen == _sort) return;
+    _set(() {
+      _sort = chosen;
+      _sortChosen = true;
+    });
   }
 
   // ============================================================
@@ -271,10 +314,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.view_list_outlined),
               label: Text(l.showList),
             ),
-      body: SafeArea(
-        bottom: false,
+      // الرأس بنفسجي حتى أعلى الشاشة، فأيقونات شريط الحالة بيضاء
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
         child: config == null
-            ? LoadState(error: _error, onRetry: _start)
+            ? SafeArea(child: LoadState(error: _error, onRetry: _start))
             : _mapView
             ? Column(
                 children: [
@@ -300,41 +344,79 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// الموقع والإشعارات، ثم الترحيب، ثم البحث وزر التصفية
+  /// الرأس البنفسجي: الترحيب والجرس، ثم بطاقة المنطقة، ثم البحث وزر الترتيب.
+  /// على الخريطة يبقى البحث فقط.
   Widget _header(AppLocalizations l, ServerConfig config) {
     final user = AppScope.of(context).session.user;
-    final place = config.areas.where((a) => a.id == _areaId).firstOrNull?.name ??
-        config.districts.where((d) => d.id == _districtId).firstOrNull?.name ??
-        (_position != null ? l.nearYou : l.allAreas);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          InkWell(
-            onTap: _openFilters,
-            borderRadius: BorderRadius.circular(AppRadius.base),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.location_on, size: 18, color: AppColors.locationPin),
-                const SizedBox(width: 4),
-                Text(place, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.text)),
-                const Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.primaryBright),
+    final district = config.districts.where((d) => d.id == _districtId).firstOrNull;
+    final area = config.areas.where((a) => a.id == _areaId).firstOrNull;
+    final place = area != null && district != null
+        ? '${district.name} · ${area.name}'
+        : district != null
+            ? l.allOfDistrict(district.name)
+            : (_position != null ? l.nearMe : l.allAreas);
+    return Container(
+      padding: EdgeInsets.fromLTRB(18, MediaQuery.paddingOf(context).top + 14, 18, 20),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (!_mapView) ...[
+          Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (user != null) ...[
+                  Text(l.hello, style: const TextStyle(fontSize: 13, color: AppColors.primaryLight)),
+                  Text(user.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                ] else
+                  Text(l.welcomeGuest, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
               ]),
             ),
+            const NotificationsBell(audience: 'customer', onDark: true),
+          ]),
+          const SizedBox(height: 14),
+          // بطاقة المنطقة: شفافة فوق البنفسجي، وزر "تغيير" يفتح نافذة اختيار المنطقة
+          Material(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: _openArea,
+              child: SizedBox(
+                height: 56,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: Row(children: [
+                    const CircleAvatar(
+                      radius: 17,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.location_on_outlined, size: 20, color: AppColors.locationPin),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(l.browsingIn, style: const TextStyle(fontSize: 12, color: AppColors.primaryLight)),
+                        Text(place,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                      ]),
+                    ),
+                    Container(
+                      height: 30,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+                      child: Text(l.change, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
           ),
-          const Spacer(),
-          const NotificationsBell(audience: 'customer'),
-        ]),
-        if (!_mapView) ...[
-          const SizedBox(height: 8),
-          if (user != null) ...[
-            Text(l.hello, style: const TextStyle(fontSize: 13, color: AppColors.text)),
-            Text(user.name, style: AppText.headline),
-          ] else
-            Text(l.welcomeGuest, style: AppText.headline),
+          const SizedBox(height: 14),
         ],
-        const SizedBox(height: 16),
         Row(children: [
           Expanded(
             child: SizedBox(
@@ -350,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: InputDecoration(
                   hintText: l.searchHint,
                   hintStyle: const TextStyle(fontSize: 14, color: AppColors.primaryMuted),
-                  fillColor: AppColors.searchFill,
+                  fillColor: Colors.white,
                   contentPadding: EdgeInsets.zero,
                   prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
                 ),
@@ -358,32 +440,58 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // زر التصفية: مربع بنفسجي 44، ونقطة برتقالية إن كانت هناك تصفية مفعّلة
+          // زر الترتيب: برتقالي ليبرز فوق البنفسجي
           SizedBox(
             width: 44,
             height: 44,
             child: Material(
-              color: AppColors.primary,
+              color: AppColors.accent,
               borderRadius: BorderRadius.circular(AppRadius.base),
               child: InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.base),
-                onTap: _openFilters,
-                child: Stack(alignment: Alignment.center, children: [
-                  Icon(Icons.tune, color: Colors.white, semanticLabel: l.filtersTitle),
-                  if (_typeId != null || _districtId != null || _areaId != null)
-                    const PositionedDirectional(
-                      top: 8,
-                      end: 8,
-                      child: CircleAvatar(radius: 4, backgroundColor: AppColors.accent),
-                    ),
-                ]),
+                onTap: _openSort,
+                child: Icon(Icons.tune, color: Colors.white, semanticLabel: l.sortTitle),
               ),
             ),
           ),
         ]),
-        const SizedBox(height: 8),
       ]),
     );
+  }
+
+  /// "ماذا تحتاج؟": شبكة أنواع العمل بأيقوناتها، ثلاثة في الصف، و"الكل" في آخرها
+  Widget _typesGrid(AppLocalizations l, ServerConfig config) {
+    final items = <(int?, String, String)>[
+      for (final t in config.businessTypes) (t.id, t.name, t.icon),
+      (null, l.allTypes, 'all'),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _sectionTitle(l.whatDoYouNeed),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.2,
+          children: [
+            for (final (id, name, icon) in items)
+              _TypeTile(
+                name: name,
+                icon: icon,
+                selected: _typeId == id,
+                onTap: () => _set(() {
+                  _typeId = _typeId == id ? null : id;
+                  _showAll = false;
+                }),
+              ),
+          ],
+        ),
+      ),
+    ]);
   }
 
   List<Widget> _content(AppLocalizations l) {
@@ -391,8 +499,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (shops == null || (_error != null && shops.isEmpty)) {
       return [Padding(padding: const EdgeInsets.only(top: 80), child: LoadState(error: _error, onRetry: _load))];
     }
-    if (_filtering) return _results(l, shops);
+    final grid = _typesGrid(l, _config!);
+    if (_filtering) return [grid, ..._results(l, shops)];
     return [
+      grid,
       if (_upcoming != null) _upcomingCard(l, _upcoming!),
       ..._nearest(l, shops),
       ..._picked(l, shops),
@@ -916,6 +1026,103 @@ class ShopCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(padding: const EdgeInsets.all(12), child: ProviderRow(shop: shop)),
+    );
+  }
+}
+
+/// خانة نوع العمل في شبكة "ماذا تحتاج؟": المختارة بحد بنفسجي وخلفية فاتحة، والباقي بيضاء بظل
+class _TypeTile extends StatelessWidget {
+  const _TypeTile({required this.name, required this.icon, required this.selected, required this.onTap});
+  final String name;
+  final String icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Container(
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primarySoft : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: selected ? Border.all(color: AppColors.primary, width: 1.5) : null,
+          boxShadow: selected ? null : AppShadows.card,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                BusinessIcon(icon, size: 28, color: AppColors.primary),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    color: selected ? AppColors.primary : AppColors.text,
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// خيار في نوافذ المنطقة والترتيب: المختار بحد بنفسجي وعلامة صح
+class _AreaOption extends StatelessWidget {
+  const _AreaOption({required this.selected, required this.icon, required this.title, this.subtitle, required this.onTap});
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primarySoft : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: selected ? AppColors.primary : AppColors.border, width: selected ? 1.5 : 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(children: [
+              Icon(icon, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? AppColors.primary : AppColors.text,
+                      )),
+                  if (subtitle != null) Text(subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                ]),
+              ),
+              if (selected) const Icon(Icons.check, color: AppColors.primary),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -27,6 +27,8 @@ const approveChecks = z.object({
 });
 const CHECKS_NOTE = 'تحقق: اتصال برقم المحل، مطابقة الموقع، الصور حقيقية';
 const nameText = z.string().trim().min(2).max(60);
+/** أيقونات أنواع العمل التي يعرفها التطبيق */
+const iconName = z.enum(['store', 'scissors', 'sparkles', 'stethoscope', 'tooth', 'car', 'wrench', 'spa', 'face', 'pets', 'fitness', 'camera']);
 
 // صفحة اللوحة: ملف واحد بجانب مجلد المصدر (يعمل من src أثناء التطوير ومن dist بعد البناء)
 const PAGE_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../admin/index.html');
@@ -527,7 +529,7 @@ export async function adminRoutes(app: FastifyInstance) {
         secure.get('/catalog', async () => {
           const [types, districts, areas] = await Promise.all([
             app.pool.query(
-              `SELECT bt.id, bt.name, bt.sort_order AS "sortOrder", bt.active,
+              `SELECT bt.id, bt.name, bt.icon, bt.sort_order AS "sortOrder", bt.active,
                       (SELECT count(*)::int FROM shops WHERE business_type_id = bt.id) AS shops
                FROM business_types bt ORDER BY bt.sort_order, bt.id`,
             ),
@@ -547,19 +549,25 @@ export async function adminRoutes(app: FastifyInstance) {
         };
 
         secure.post('/business-types', async (request) => {
-          const { name } = parse(z.object({ name: nameText }), request.body);
+          const { name, icon } = parse(z.object({ name: nameText, icon: iconName.optional() }), request.body);
           const { rows } = await app.pool
             .query(
-              `INSERT INTO business_types (name, sort_order)
-               VALUES ($1, (SELECT coalesce(max(sort_order), 0) + 1 FROM business_types)) RETURNING id`,
-              [name],
+              `INSERT INTO business_types (name, icon, sort_order)
+               VALUES ($1, $2, (SELECT coalesce(max(sort_order), 0) + 1 FROM business_types)) RETURNING id`,
+              [name, icon ?? 'store'],
             )
             .catch(uniqueName);
           await logAction(app.pool, adminId(request), 'create', 'business_type', rows[0].id, name);
           return { id: rows[0].id };
         });
 
-        const editBody = z.object({ name: nameText.optional(), active: z.boolean().optional(), sortOrder: z.number().int().min(0).optional() });
+        const editBody = z.object({
+          name: nameText.optional(),
+          active: z.boolean().optional(),
+          sortOrder: z.number().int().min(0).optional(),
+          // لأنواع العمل فقط
+          icon: iconName.optional(),
+        });
 
         for (const table of ['business_types', 'districts', 'areas'] as const) {
           const target = table === 'business_types' ? 'business-types' : table;
@@ -569,8 +577,9 @@ export async function adminRoutes(app: FastifyInstance) {
             const { rowCount } = await app.pool
               .query(
                 `UPDATE ${table} SET name = coalesce($2, name), active = coalesce($3, active), sort_order = coalesce($4, sort_order)
+                 ${table === 'business_types' ? ', icon = coalesce($5, icon)' : ''}
                  WHERE id = $1`,
-                [id, body.name ?? null, body.active ?? null, body.sortOrder ?? null],
+                [id, body.name ?? null, body.active ?? null, body.sortOrder ?? null, ...(table === 'business_types' ? [body.icon ?? null] : [])],
               )
               .catch(uniqueName);
             if (!rowCount) throw new AppError(404, 'not_found');

@@ -186,6 +186,17 @@ describe('shop review', () => {
     expect(similar.find((x: { id: number }) => x.id === a.shopId)).toMatchObject({ nearby: true, samePhone: false });
   });
 
+  it('sets the icon a business type shows on the customer home', async () => {
+    const types = (await v1('GET', '/config')).json().businessTypes;
+    const barber = types.find((t: { name: string }) => t.name === 'حلاقة رجالية');
+    expect(barber.icon).toBe('scissors');
+    expect((await admin('PATCH', `/business-types/${barber.id}`, { icon: 'rocket' })).statusCode).toBe(400);
+    expect((await admin('PATCH', `/business-types/${barber.id}`, { icon: 'spa' })).statusCode).toBe(200);
+    const after = (await v1('GET', '/config')).json().businessTypes.find((t: { id: number }) => t.id === barber.id);
+    expect(after.icon).toBe('spa');
+    await admin('PATCH', `/business-types/${barber.id}`, { icon: 'scissors' });
+  });
+
   it('features an approved shop on the customer home', async () => {
     const shop = await submittedShop('07700000113');
     expect((await admin('POST', `/shops/${shop.shopId}/feature`, {})).statusCode).toBe(409); // ليس معتمداً بعد

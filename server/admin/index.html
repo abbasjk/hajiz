@@ -694,9 +694,17 @@ async function catalogView() {
     await run(() => api(`/${path}/${item.id}`, { method: 'PATCH', body: { name } }), 'حُفظ');
     render();
   } }, 'تعديل');
+  // أيقونة نوع العمل كما تظهر في رئيسية التطبيق
+  const ICONS = { store: 'محل عام', scissors: 'مقص', sparkles: 'تجميل', stethoscope: 'طبيب', tooth: 'أسنان', car: 'سيارات', wrench: 'صيانة', spa: 'سبا', face: 'بشرة', pets: 'حيوانات أليفة', fitness: 'رياضة', camera: 'تصوير' };
+  const iconPicker = (item) => {
+    const sel = h('select', { 'aria-label': 'الأيقونة', onchange: async () => {
+      await run(() => api(`/business-types/${item.id}`, { method: 'PATCH', body: { icon: sel.value } }), 'حُفظت الأيقونة');
+    } }, Object.entries(ICONS).map(([k, v]) => h('option', { value: k, selected: k === item.icon }, 'أيقونة: ' + v)));
+    return sel;
+  };
   const itemRow = (path, item, extra) => h('div', { class: 'row', style: 'justify-content:space-between;padding:6px 0;border-top:1px solid #eeece7;' + (item.active ? '' : 'opacity:.55') },
     h('span', {}, item.name, extra ? h('span', { class: 'muted small' }, ' · ' + extra) : null, item.active ? '' : ' (مخفي)'),
-    h('div', { class: 'row' }, rename(path, item), toggle(path, item)));
+    h('div', { class: 'row' }, path === 'business-types' ? iconPicker(item) : null, rename(path, item), toggle(path, item)));
 
   const typeName = h('input', { type: 'text', placeholder: 'نوع نشاط جديد', maxlength: 60 });
   const districtSel = h('select', {}, c.districts.map((d) => h('option', { value: d.id }, d.name)));

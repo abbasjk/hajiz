@@ -14,10 +14,12 @@ import '../widgets/refresh_on_push.dart';
 import 'booking_detail_screen.dart';
 import 'owner/owner_booking_screen.dart';
 
-/// جرس الإشعارات مع عدد غير المقروء؛ audience: 'customer' أو 'shop'
+/// جرس الإشعارات مع عدد غير المقروء؛ audience: 'customer' أو 'shop'.
+/// onDark: دائرة شفافة وأيقونة بيضاء فوق الرأس البنفسجي.
 class NotificationsBell extends StatefulWidget {
-  const NotificationsBell({super.key, required this.audience});
+  const NotificationsBell({super.key, required this.audience, this.onDark = false});
   final String audience;
+  final bool onDark;
 
   @override
   State<NotificationsBell> createState() => _NotificationsBellState();
@@ -39,17 +41,31 @@ class _NotificationsBellState extends State<NotificationsBell> with RefreshOnPus
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final services = AppScope.of(context);
-    if (!services.session.isRegistered) return const SizedBox.shrink();
+    // يظهر دائماً؛ من لم يسجّل يُدعى للتسجيل بدل فتح قائمة فارغة
     return ValueListenableBuilder<int>(
       valueListenable: services.unread[widget.audience]!,
       builder: (context, count, _) => IconButton(
         tooltip: l.notificationsTitle,
+        style: widget.onDark
+            ? IconButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                foregroundColor: Colors.white,
+                fixedSize: const Size(44, 44),
+              )
+            : null,
         icon: Badge(
           isLabelVisible: count > 0,
+          backgroundColor: AppColors.accent,
           label: Text(count > 99 ? '99+' : '$count'),
           child: const Icon(Icons.notifications_outlined),
         ),
         onPressed: () async {
+          if (!services.session.isRegistered) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(l.notificationsSignIn)));
+            return;
+          }
           await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsScreen(audience: widget.audience)));
           services.refreshUnread(widget.audience);
         },
