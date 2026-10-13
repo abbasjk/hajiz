@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appName": "صالون",
+  "appName": "سيزر",
   "tabHome": "الرئيسية",
   "tabMyBookings": "حجوزاتي",
   "offlineBanner": "لا يوجد اتصال",
@@ -652,7 +652,7 @@
   "@appVersionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}},
   "missingPhotos": "صورة لواجهة المحل",
   "hello": "مرحباً،",
-  "welcomeGuest": "أهلاً بك في صالون",
+  "welcomeGuest": "أهلاً بك في سيزر",
   "upcomingAppointment": "موعدك القادم",
   "withShop": "مع {shop}",
   "@withShop": {"placeholders": {"shop": {"type": "String"}}},

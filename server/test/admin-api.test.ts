@@ -93,7 +93,7 @@ describe('admin login', () => {
     const res = await app.inject({ method: 'GET', url: '/admin' });
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('text/html');
-    expect(res.body).toContain('لوحة إدارة صالون');
+    expect(res.body).toContain('لوحة إدارة سيزر');
   });
 
   it('rejects wrong passwords and requests without a session', async () => {

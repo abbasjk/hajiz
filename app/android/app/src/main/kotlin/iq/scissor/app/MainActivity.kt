@@ -1,4 +1,4 @@
-package iq.mikas.app
+package iq.scissor.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
