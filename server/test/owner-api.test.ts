@@ -4,7 +4,7 @@ import { buildApp } from '../src/app.js';
 import { addDays, toLocalDate } from '../src/booking/time.js';
 import type { Pool } from '../src/db/pool.js';
 import { validatePeriods } from '../src/owner/periods.js';
-import { appHeaders, freshDatabase } from './helpers.js';
+import { appHeaders, freshDatabase, TINY_PNG } from './helpers.js';
 
 let pool: Pool;
 let app: FastifyInstance;
@@ -106,7 +106,7 @@ describe('shop application', () => {
   it('cannot be submitted until address, location, services and hours are set', async () => {
     const res = await call('POST', '/v1/owner/shop/submit', token);
     expect(res.json().error).toEqual({
-      code: 'incomplete_shop', missing: ['businessType', 'address', 'location', 'services', 'hours'],
+      code: 'incomplete_shop', missing: ['businessType', 'address', 'location', 'photos', 'services', 'hours'],
     });
   });
 
@@ -118,6 +118,9 @@ describe('shop application', () => {
     const bad = await call('POST', '/v1/owner/services', token, { name: 'فحص', durationMinutes: 30, priceType: 'after_inspection', price: 5000 });
     expect(bad.json().error.code).toBe('invalid_service');
     await call('PUT', '/v1/owner/hours', token, { periods: everyDay });
+    // صورة الواجهة إلزامية
+    expect((await call('POST', '/v1/owner/shop/submit', token)).json().error.missing).toEqual(['photos']);
+    await call('POST', '/v1/owner/photos', token, { contentType: 'image/png', data: TINY_PNG });
     const res = await call('POST', '/v1/owner/shop/submit', token);
     expect(res.json()).toMatchObject({ shop: { status: 'under_review' }, missing: [] });
   });

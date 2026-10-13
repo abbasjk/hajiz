@@ -13,3 +13,12 @@ export async function freshDatabase(): Promise<Pool> {
 }
 
 export const appHeaders = { 'x-app-platform': 'android', 'x-app-version': '0.1.0' };
+
+/** صورة صغيرة صالحة لاختبارات رفع صور المحل */
+export const TINY_PNG = Buffer.from(
+  '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a5d80000000049454e44ae426082',
+  'hex',
+).toString('base64');
+
+/** نقاط التحقق التي تطلبها الموافقة على محل */
+export const APPROVE_CHECKS = { checks: { called: true, location: true, photos: true } };

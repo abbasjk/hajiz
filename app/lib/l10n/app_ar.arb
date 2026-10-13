@@ -343,7 +343,7 @@
   "iAmAtShop": "أنا في المحل الآن",
   "locationFailed": "تعذّر تحديد موقعك. حرّك الخريطة يدوياً.",
   "fieldRequired": "هذا الحقل مطلوب",
-  "photosHint": "أضف صوراً واضحة للمحل من الداخل والخارج. هذه الخطوة اختيارية.",
+  "photosHint": "أضف صورة واحدة على الأقل لواجهة المحل من الخارج، ليتعرّف عليه الزبون حين يصل وتتأكد الإدارة من وجوده. ويمكنك إضافة صور من الداخل.",
   "addPhoto": "إضافة صورة",
   "fromCamera": "الكاميرا",
   "fromGallery": "المعرض",
@@ -649,5 +649,6 @@
   "appVersionLabel": "النسخة {version}",
   "@appVersionLabel": {"placeholders": {"version": {"type": "String"}}},
   "appVersionBuildLabel": "النسخة {version} · البناء {build}",
-  "@appVersionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}}
+  "@appVersionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}},
+  "missingPhotos": "صورة لواجهة المحل"
 }

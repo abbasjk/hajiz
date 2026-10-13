@@ -5,7 +5,7 @@ import { bootstrapAdmin } from '../src/admin/bootstrap.js';
 import { buildApp } from '../src/app.js';
 import type { Pool } from '../src/db/pool.js';
 import { sameShape } from '../src/routes/admin.js';
-import { appHeaders, freshDatabase } from './helpers.js';
+import { APPROVE_CHECKS, appHeaders, freshDatabase, TINY_PNG } from './helpers.js';
 
 let pool: Pool;
 let app: FastifyInstance;
@@ -61,6 +61,7 @@ async function submittedShop(phone: string) {
   await v1('PUT', '/owner/hours', owner.token, {
     periods: [0, 1, 2, 3, 4, 5, 6].map((d) => ({ dayOfWeek: d, from: '09:00', to: '21:00' })),
   });
+  await v1('POST', '/owner/photos', owner.token, { contentType: 'image/png', data: TINY_PNG });
   const submit = await v1('POST', '/owner/shop/submit', owner.token);
   expect(submit.statusCode).toBe(200);
   const shop = (await v1('GET', '/owner/shop', owner.token)).json().shop;
@@ -163,9 +164,31 @@ describe('shop review', () => {
     expect((await admin('GET', `/shops/${shop.shopId}`)).json().status).toBe('under_review');
   });
 
+  it('will not approve until the three review checks are confirmed', async () => {
+    const shop = await submittedShop('07700000110');
+    const res = await admin('POST', `/shops/${shop.shopId}/approve`, { checks: { called: true, location: true } });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('checks_required');
+    expect((await admin('GET', `/shops/${shop.shopId}`)).json().status).toBe('under_review');
+
+    expect((await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS)).statusCode).toBe(200);
+    const detail = (await admin('GET', `/shops/${shop.shopId}`)).json();
+    expect(detail.reviewChecks).toEqual({ called: true, location: true, photos: true });
+    expect(detail.history[0].note).toContain('اتصال');
+  });
+
+  it('flags shops with the same phone, the same name, or almost the same spot', async () => {
+    const a = await submittedShop('07700000111');
+    const b = await submittedShop('07700000112');
+    // الثاني في المكان نفسه تقريباً (نحو عشرة أمتار)
+    await pool.query('UPDATE shops SET latitude = 30.5001, longitude = 47.8001 WHERE id = $1', [b.shopId]);
+    const similar = (await admin('GET', `/shops/${b.shopId}`)).json().similar;
+    expect(similar.find((x: { id: number }) => x.id === a.shopId)).toMatchObject({ nearby: true, samePhone: false });
+  });
+
   it('approves: the shop becomes visible to customers and the owner is notified', async () => {
     const shop = await submittedShop('07700000104');
-    const res = await admin('POST', `/shops/${shop.shopId}/approve`, {});
+    const res = await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS);
     expect(res.statusCode).toBe(200);
     expect(res.json().status).toBe('approved');
     expect(res.json().reviewNote).toBeNull();
@@ -175,14 +198,14 @@ describe('shop review', () => {
     expect(visible).toContain(shop.shopId);
 
     // لا يمكن الموافقة مرتين
-    const again = await admin('POST', `/shops/${shop.shopId}/approve`, {});
+    const again = await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS);
     expect(again.statusCode).toBe(409);
     expect(again.json().error.code).toBe('invalid_transition');
   });
 
   it('suspends and reinstates, hiding the shop meanwhile', async () => {
     const shop = await submittedShop('07700000105');
-    await admin('POST', `/shops/${shop.shopId}/approve`, {});
+    await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS);
     expect((await admin('POST', `/shops/${shop.shopId}/suspend`, {})).statusCode).toBe(400);
 
     const suspended = await admin('POST', `/shops/${shop.shopId}/suspend`, { note: 'شكاوى متكررة' });
@@ -198,7 +221,7 @@ describe('shop review', () => {
 
   it('returns 404 for unknown shops', async () => {
     expect((await admin('GET', '/shops/999999')).statusCode).toBe(404);
-    expect((await admin('POST', '/shops/999999/approve', {})).statusCode).toBe(404);
+    expect((await admin('POST', '/shops/999999/approve', APPROVE_CHECKS)).statusCode).toBe(404);
   });
 });
 

@@ -124,6 +124,7 @@ const ERRORS = {
   unauthorized: 'انتهت الجلسة، سجّل الدخول مجدداً',
   invalid_transition: 'لا يمكن تنفيذ هذا الإجراء في الحالة الحالية، حدّث الصفحة',
   shop_closed: 'صاحب المحل حذف حسابه، والمحل مغلق نهائياً',
+  checks_required: 'أكّد نقاط التحقق الثلاث قبل الموافقة',
   account_not_found: 'لا يوجد حساب بهذا الرقم، ارفض الطلب',
   note_required: 'اكتب السبب، يصل لصاحب المحل',
   name_exists: 'الاسم موجود مسبقاً',
@@ -362,19 +363,39 @@ async function shopsView() {
 
 async function shopDetailView() {
   const s = await api('/shops/' + state.detail);
-  const act = async (action, opts) => {
+  const act = async (action, opts, extra) => {
     let note;
     if (opts) {
       note = await ask(opts);
       if (note === null) return;
     }
-    await run(() => api(`/shops/${s.id}/${action}`, { method: 'POST', body: note ? { note } : {} }), opts && opts.done || 'تم');
+    await run(() => api(`/shops/${s.id}/${action}`, { method: 'POST', body: { ...(note ? { note } : {}), ...(extra || {}) } }), opts && opts.done || 'تم');
     await refreshStats();
     render();
   };
+  // قائمة التحقق: زر الموافقة لا يعمل قبل تأكيد النقاط الثلاث
+  const CHECKS = [
+    ['called', 'اتصلت برقم المحل ورد صاحبه، وأكد أنه صاحب المحل أو يعمل فيه'],
+    ['location', 'الدبوس على الخريطة يطابق المنطقة وأقرب نقطة دالة'],
+    ['photos', 'الصور حقيقية للمحل نفسه، وفيها واجهته'],
+  ];
+  const approveBtn = h('button', { class: 'btn primary', disabled: true, onclick: () => act('approve',
+    { title: 'الموافقة على المحل؟', text: 'سيظهر للزبائن فوراً ويصل إشعار لصاحبه.', okText: 'موافقة', done: 'تمت الموافقة' },
+    { checks: { called: true, location: true, photos: true } }) }, 'موافقة');
+  const boxes = CHECKS.map(([key]) => h('input', { type: 'checkbox', id: 'chk-' + key, onchange: () => { approveBtn.disabled = !boxes.every((b) => b.checked); } }));
+  const checklist = s.status === 'under_review' && !s.closedAt ? h('div', { class: 'card', style: 'margin-bottom:14px' },
+    h('h2', {}, 'قبل الموافقة'),
+    h('p', { class: 'muted small' }, 'لا يوجد ما يثبت تلقائياً أن صاحب الطلب يملك المحل. تحقق من النقاط الثلاث، فتُحفظ في سجل المراجعة.'),
+    CHECKS.map(([key, label], i) => h('label', { for: 'chk-' + key, style: 'display:flex;gap:8px;align-items:flex-start;margin:6px 0;cursor:pointer' }, boxes[i], h('span', {}, label)))) : null;
+  const similarCard = s.similar && s.similar.length ? h('div', { class: 'card', style: 'margin-bottom:14px;background:var(--warn-bg)' },
+    h('h2', {}, 'محلات مشابهة'),
+    h('p', { class: 'small' }, 'قد يكون تسجيلاً مكرراً أو انتحالاً لمحل معروف. محلان متجاوران في سوق واحد أمر طبيعي، فتأكد في الاتصال.'),
+    s.similar.map((x) => h('div', { class: 'row', style: 'gap:8px;margin:4px 0' },
+      h('a', { href: '#', onclick: (e) => { e.preventDefault(); go('shops', x.id); } }, x.name), shopPill(x.status),
+      h('span', { class: 'small muted' }, [x.samePhone ? 'الرقم نفسه' : null, x.sameName ? 'الاسم نفسه' : null, x.nearby ? 'في المكان نفسه تقريباً' : null].filter(Boolean).join('، '))))) : null;
   const actions = {
     under_review: [
-      h('button', { class: 'btn primary', onclick: () => act('approve', { title: 'الموافقة على المحل؟', text: 'سيظهر للزبائن فوراً ويصل إشعار لصاحبه.', okText: 'موافقة', done: 'تمت الموافقة' }) }, 'موافقة'),
+      approveBtn,
       h('button', { class: 'btn danger', onclick: () => act('reject', { title: 'رفض الطلب', field: 'ما الذي يجب تعديله؟ (يصل لصاحب المحل)', required: true, okText: 'رفض', danger: true, done: 'رُفض الطلب' }) }, 'رفض مع ملاحظة'),
     ],
     approved: [h('button', { class: 'btn danger', onclick: () => act('suspend', { title: 'إيقاف المحل', text: s.upcomingBookings ? `لدى المحل ${s.upcomingBookings} حجز قادم. الإيقاف يخفي المحل عن الزبائن، والحجوزات القائمة تبقى كما هي.` : 'سيختفي المحل عن الزبائن.', field: 'السبب (يصل لصاحب المحل)', required: true, okText: 'إيقاف', danger: true, done: 'أُوقف المحل' }) }, 'إيقاف المحل')],
@@ -394,6 +415,8 @@ async function shopDetailView() {
       h('div', {}, h('h1', { style: 'margin:0' }, s.name), shopPill(s.status)),
       h('div', { class: 'row' }, actions)),
     s.closedAt ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'مغلق نهائياً: '), `حذف صاحبه حسابه في ${fmtDate(s.closedAt)}، ولا يمكن إعادة تفعيله.`) : null,
+    similarCard,
+    checklist,
     s.reviewNote ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'ملاحظة الإدارة: '), s.reviewNote) : null,
     h('div', { class: 'grid2' },
       h('div', { class: 'card' }, h('h2', {}, 'البيانات'), h('dl', {},

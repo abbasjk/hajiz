@@ -159,6 +159,7 @@ export async function missingForReview(db: Queryable, shopId: number): Promise<s
   const { rows } = await db.query(
     `SELECT s.name, s.business_type_id, s.district_id, s.area_id, s.latitude,
             (SELECT count(*)::int FROM services WHERE shop_id = s.id AND active) AS services,
+            (SELECT count(*)::int FROM shop_photos WHERE shop_id = s.id) AS photos,
             (SELECT count(*)::int FROM weekly_periods wp JOIN schedules sc ON sc.id = wp.schedule_id WHERE sc.shop_id = s.id) AS periods
      FROM shops s WHERE s.id = $1`,
     [shopId],
@@ -168,6 +169,8 @@ export async function missingForReview(db: Queryable, shopId: number): Promise<s
   if (!s.business_type_id) missing.push('businessType');
   if (!s.district_id || !s.area_id) missing.push('address');
   if (s.latitude === null) missing.push('location');
+  // صورة لواجهة المحل على الأقل: تثبت وجوده، ويتعرف عليه الزبون حين يصل
+  if (s.photos === 0) missing.push('photos');
   if (s.services === 0) missing.push('services');
   if (s.periods === 0) missing.push('hours');
   return missing;

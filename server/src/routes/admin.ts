@@ -21,6 +21,11 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 
 const idParams = z.object({ id: z.coerce.number().int().positive() });
 const noteBody = z.object({ note: z.string().trim().max(300).optional() }).default({});
+/** الموافقة على محل تتطلب أن تؤكد الإدارة ثلاث نقاط تحقق */
+const approveChecks = z.object({
+  checks: z.object({ called: z.literal(true), location: z.literal(true), photos: z.literal(true) }),
+});
+const CHECKS_NOTE = 'تحقق: اتصال برقم المحل، مطابقة الموقع، الصور حقيقية';
 const nameText = z.string().trim().min(2).max(60);
 
 // صفحة اللوحة: ملف واحد بجانب مجلد المصدر (يعمل من src أثناء التطوير ومن dist بعد البناء)
@@ -168,7 +173,7 @@ export async function adminRoutes(app: FastifyInstance) {
             `SELECT s.id, s.name, s.status, s.description, s.phone, s.street, s.landmark, s.latitude, s.longitude,
                     s.review_note AS "reviewNote", s.submitted_at AS "submittedAt", s.reviewed_at AS "reviewedAt",
                     s.instant_booking AS "instantBooking", s.deadline_mode AS "deadlineMode", s.created_at AS "createdAt",
-                    s.closed_at AS "closedAt",
+                    s.closed_at AS "closedAt", s.review_checks AS "reviewChecks",
                     u.id AS "ownerId", u.phone AS "ownerPhone", u.name AS "ownerName",
                     bt.name AS "businessType", d.name AS district, a.name AS area,
                     rv.username AS "reviewedBy",
@@ -185,7 +190,7 @@ export async function adminRoutes(app: FastifyInstance) {
           );
           const shop = rows[0];
           if (!shop) throw new AppError(404, 'not_found');
-          const [services, hours, photos, history, upcoming] = await Promise.all([
+          const [services, hours, photos, history, upcoming, similar] = await Promise.all([
             db.query(
               `SELECT id, name, duration_minutes AS "durationMinutes", price_type AS "priceType", price, active
                FROM services WHERE shop_id = $1 ORDER BY id`,
@@ -208,6 +213,23 @@ export async function adminRoutes(app: FastifyInstance) {
                  AND status IN ('pending_shop', 'pending_customer', 'confirmed') AND starts_at > now()`,
               [id],
             ),
+            // محلات مشابهة: الرقم نفسه، أو الاسم نفسه، أو على بعد نحو خمسين متراً.
+            // تنبيه للمراجعة فقط: محلان متجاوران في سوق واحد أمر طبيعي
+            db.query(
+              `SELECT o.id, o.name, o.status,
+                      (o.phone IS NOT NULL AND o.phone = s.phone) AS "samePhone",
+                      (ar_norm(o.name) = ar_norm(s.name)) AS "sameName",
+                      (o.latitude IS NOT NULL AND s.latitude IS NOT NULL
+                       AND abs(o.latitude - s.latitude) < 0.0005 AND abs(o.longitude - s.longitude) < 0.0006) AS nearby
+               FROM shops s JOIN shops o ON o.id <> s.id
+               WHERE s.id = $1 AND o.closed_at IS NULL AND o.status <> 'draft'
+                 AND ((o.phone IS NOT NULL AND o.phone = s.phone)
+                      OR ar_norm(o.name) = ar_norm(s.name)
+                      OR (o.latitude IS NOT NULL AND s.latitude IS NOT NULL
+                          AND abs(o.latitude - s.latitude) < 0.0005 AND abs(o.longitude - s.longitude) < 0.0006))
+               ORDER BY o.id LIMIT 10`,
+              [id],
+            ),
           ]);
           const { scheduleId: _scheduleId, ...rest } = shop;
           return {
@@ -217,6 +239,7 @@ export async function adminRoutes(app: FastifyInstance) {
             photos: photos.rows.map((p) => p.url as string),
             history: history.rows,
             upcomingBookings: upcoming.rows[0]?.n ?? 0,
+            similar: similar.rows,
           };
         };
 
@@ -227,6 +250,8 @@ export async function adminRoutes(app: FastifyInstance) {
             const { id } = parse(idParams, request.params);
             const { note } = parse(noteBody, request.body ?? {});
             if (rule.noteRequired && !note) throw new AppError(400, 'note_required');
+            const approving = action === 'approve';
+            if (approving && !approveChecks.safeParse(request.body ?? {}).success) throw new AppError(400, 'checks_required');
             const changed = await withTransaction(app.pool, async (tx) => {
               const { rows } = await tx.query<{ status: string; owner_id: number; name: string; closed_at: Date | null }>(
                 'SELECT status, owner_id, name, closed_at FROM shops WHERE id = $1 FOR UPDATE',
@@ -240,11 +265,12 @@ export async function adminRoutes(app: FastifyInstance) {
                 throw new AppError(409, 'invalid_transition', { status: shop.status });
               }
               await tx.query(
-                `UPDATE shops SET status = $2::shop_status, review_note = $3, reviewed_at = now(), reviewed_by = $4, updated_at = now()
+                `UPDATE shops SET status = $2::shop_status, review_note = $3, reviewed_at = now(), reviewed_by = $4, updated_at = now(),
+                                  review_checks = CASE WHEN $5 THEN jsonb_build_object('called', true, 'location', true, 'photos', true) ELSE review_checks END
                  WHERE id = $1`,
-                [id, rule.to, rule.noteRequired ? note : null, adminId(request)],
+                [id, rule.to, rule.noteRequired ? note : null, adminId(request), approving],
               );
-              await logAction(tx, adminId(request), action, 'shop', id, note);
+              await logAction(tx, adminId(request), action, 'shop', id, approving ? CHECKS_NOTE : note);
               return shop;
             });
             await app.notifier.notify({ userId: changed.owner_id, type: rule.notice, params: { shop: changed.name, note } });

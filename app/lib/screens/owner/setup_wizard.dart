@@ -12,6 +12,7 @@ String missingLabel(AppLocalizations l, String code) => switch (code) {
       'businessType' => l.missingBusinessType,
       'address' => l.missingAddress,
       'location' => l.missingLocation,
+      'photos' => l.missingPhotos,
       'services' => l.missingServices,
       'hours' => l.missingHours,
       _ => code,
