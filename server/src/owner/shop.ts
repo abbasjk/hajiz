@@ -364,8 +364,8 @@ export async function updateBookingSettings(pool: Pool, ownerId: number, input: 
 // الصور وطلبات المناطق
 // ============================================================
 
-const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_PHOTO_BYTES = 1_500_000;
+export const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+export const MAX_PHOTO_BYTES = 1_500_000;
 
 export async function addPhoto(pool: Pool, ownerId: number, contentType: string, base64: string) {
   if (!PHOTO_TYPES.has(contentType)) throw new AppError(400, 'invalid_photo');

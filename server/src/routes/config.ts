@@ -19,7 +19,11 @@ export async function configRoutes(app: FastifyInstance) {
         `SELECT platform, min_version AS "minVersion", latest_version AS "latestVersion"
          FROM app_versions ORDER BY platform`,
       ),
-      app.pool.query('SELECT id, name, icon FROM service_categories WHERE active ORDER BY sort_order, id'),
+      app.pool.query(
+        `SELECT id, name, icon, CASE WHEN photo IS NOT NULL
+                THEN '/category-photos/' || id || '?v=' || extract(epoch FROM photo_updated_at)::bigint END AS photo
+         FROM service_categories WHERE active ORDER BY sort_order, id`,
+      ),
     ]);
     return {
       serverTime: new Date().toISOString(),

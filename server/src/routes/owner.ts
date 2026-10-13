@@ -250,6 +250,21 @@ export async function ownerRoutes(app: FastifyInstance) {
 
 /** صور المحلات؛ خارج /v1 لأن الصور تُطلب مباشرة دون ترويسات الإصدار. */
 export async function photoRoutes(app: FastifyInstance) {
+  // صور أنواع الخدمات في رئيسية الزبون
+  app.get('/category-photos/:id', async (request, reply) => {
+    const { id: categoryId } = parse(idParams, request.params);
+    const { rows } = await app.pool.query(
+      'SELECT photo, photo_type FROM service_categories WHERE id = $1 AND photo IS NOT NULL',
+      [categoryId],
+    );
+    if (!rows[0]) throw new AppError(404, 'not_found');
+    // الرابط يحمل وقت آخر تغيير، فيُحفظ طويلاً دون خوف من صورة قديمة
+    return reply
+      .header('content-type', rows[0].photo_type)
+      .header('cache-control', 'public, max-age=2592000, immutable')
+      .send(rows[0].photo);
+  });
+
   app.get('/photos/:id', async (request, reply) => {
     const { id: photoId } = parse(idParams, request.params);
     const { rows } = await app.pool.query(

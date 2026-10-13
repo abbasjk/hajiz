@@ -6,7 +6,7 @@ import { buildApp } from '../src/app.js';
 import { hashToken } from '../src/auth/tokens.js';
 import type { Pool } from '../src/db/pool.js';
 import { createShop, type ShopFixture } from './fixtures.js';
-import { appHeaders, freshDatabase } from './helpers.js';
+import { appHeaders, freshDatabase, TINY_PNG } from './helpers.js';
 
 let pool: Pool;
 let app: FastifyInstance;
@@ -21,8 +21,8 @@ function call(method: 'GET' | 'POST' | 'PUT' | 'PATCH', url: string, token?: str
   return app.inject({ method, url, headers, payload: body as object | undefined });
 }
 
-function admin(method: 'GET' | 'POST' | 'PATCH', url: string, body?: unknown) {
-  return app.inject({ method, url: `/admin/api${url}`, headers: { authorization: `Bearer ${adminToken}` }, payload: (body ?? {}) as object });
+function admin(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, body?: unknown) {
+  return app.inject({ method, url: `/admin/api${url}`, headers: { authorization: `Bearer ${adminToken}` }, payload: body as object | undefined });
 }
 
 const categoryId = async (icon: string) =>
@@ -112,5 +112,22 @@ describe('service categories', () => {
     expect(config.serviceCategories.some((c: { id: number }) => c.id === id)).toBe(false);
     const catalog = (await admin('GET', '/catalog')).json();
     expect(catalog.serviceCategories.find((c: { id: number }) => c.id === id)).toMatchObject({ active: false, services: 0 });
+  });
+
+  it('shows an uploaded photo for a category instead of its icon, and removes it', async () => {
+    const id = await categoryId('beard');
+    expect((await admin('POST', `/service-categories/${id}/photo`, { contentType: 'image/gif', data: TINY_PNG })).statusCode).toBe(400);
+    expect((await admin('POST', `/service-categories/${id}/photo`, { contentType: 'image/png', data: TINY_PNG })).statusCode).toBe(200);
+
+    const photo = (await call('GET', '/v1/config')).json().serviceCategories.find((c: { id: number }) => c.id === id).photo;
+    expect(photo).toMatch(new RegExp(`^/category-photos/${id}\\?v=\\d+$`));
+    const image = await app.inject({ method: 'GET', url: photo });
+    expect(image.statusCode).toBe(200);
+    expect(image.headers['content-type']).toBe('image/png');
+
+    expect((await admin('DELETE', `/service-categories/${id}/photo`)).statusCode).toBe(200);
+    const after = (await call('GET', '/v1/config')).json().serviceCategories.find((c: { id: number }) => c.id === id);
+    expect(after.photo).toBeNull();
+    expect((await app.inject({ method: 'GET', url: `/category-photos/${id}` })).statusCode).toBe(404);
   });
 });

@@ -710,9 +710,33 @@ async function catalogView() {
     } }, Object.entries(CATEGORY_ICONS).map(([k, v]) => h('option', { value: k, selected: k === item.icon }, 'أيقونة: ' + v)));
     return sel;
   };
+  // صورة نوع الخدمة: تظهر في مربع الرئيسية بدل الأيقونة
+  const categoryPhoto = (item) => {
+    const input = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', style: 'display:none', onchange: async () => {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 1500000) return toast('الصورة أكبر من 1.5 ميغابايت؛ صغّرها ثم أعد المحاولة', true);
+      const data = await new Promise((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1]);
+        r.readAsDataURL(file);
+      });
+      await run(() => api(`/service-categories/${item.id}/photo`, { method: 'POST', body: { contentType: file.type, data } }), 'رُفعت الصورة');
+      render();
+    } });
+    return [
+      item.photo ? h('img', { src: item.photo, alt: '', style: 'width:56px;height:42px;object-fit:cover;border-radius:6px' }) : null,
+      input,
+      h('button', { class: 'btn', onclick: () => input.click() }, item.photo ? 'تغيير الصورة' : 'رفع صورة'),
+      item.photo ? h('button', { class: 'btn danger', onclick: async () => {
+        await run(() => api(`/service-categories/${item.id}/photo`, { method: 'DELETE' }), 'حُذفت الصورة');
+        render();
+      } }, 'حذف الصورة') : null,
+    ];
+  };
   const itemRow = (path, item, extra) => h('div', { class: 'row', style: 'justify-content:space-between;padding:6px 0;border-top:1px solid #eeece7;' + (item.active ? '' : 'opacity:.55') },
     h('span', {}, item.name, extra ? h('span', { class: 'muted small' }, ' · ' + extra) : null, item.active ? '' : ' (مخفي)'),
-    h('div', { class: 'row' }, path === 'business-types' ? iconPicker(item) : path === 'service-categories' ? categoryPicker(item) : null, rename(path, item), toggle(path, item)));
+    h('div', { class: 'row' }, ...(path === 'service-categories' ? categoryPhoto(item) : []), path === 'business-types' ? iconPicker(item) : path === 'service-categories' ? categoryPicker(item) : null, rename(path, item), toggle(path, item)));
 
   const typeName = h('input', { type: 'text', placeholder: 'نوع نشاط جديد', maxlength: 60 });
   const districtSel = h('select', {}, c.districts.map((d) => h('option', { value: d.id }, d.name)));
@@ -734,7 +758,7 @@ async function catalogView() {
   return [
     h('h1', {}, 'القوائم'),
     h('div', { class: 'card', style: 'margin-bottom:14px' }, h('h2', {}, 'أنواع الخدمات'),
-      h('p', { class: 'muted small' }, 'تظهر مربعات في رئيسية التطبيق، ويختار صاحب المحل نوع كل خدمة. النوع المخفي يختفي من الرئيسية.'),
+      h('p', { class: 'muted small' }, 'تظهر مربعات في رئيسية التطبيق، ويختار صاحب المحل نوع كل خدمة. النوع المخفي يختفي من الرئيسية. الصورة إن وُجدت تظهر بدل الأيقونة؛ يُفضّل أن تكون عرضية وأقل من 1.5 ميغابايت.'),
       (c.serviceCategories || []).map((t) => itemRow('service-categories', t, `${t.services} خدمة`)),
       h('form', { class: 'row', style: 'margin-top:10px', onsubmit: async (e) => {
         e.preventDefault();
@@ -829,6 +853,7 @@ async function settingsView() {
 // ------------------------------------------------------------------
 
 const ACTION_LABELS = {
+  photo: 'رفع صورة', remove_photo: 'حذف صورة',
   approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
   trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', feature: 'تمييز في الرئيسية', unfeature: 'إلغاء التمييز', delete_account: 'حذف حساب', dismiss: 'تجاهل',
 };

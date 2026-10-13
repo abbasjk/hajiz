@@ -12,6 +12,7 @@ import { compareVersions, isValidVersion } from '../lib/version.js';
 import type { NotificationType } from '../notify/texts.js';
 import { RATING_SQL } from '../booking/reviews.js';
 import { deleteAccountAndNotify } from '../account/delete.js';
+import { MAX_PHOTO_BYTES, PHOTO_TYPES } from '../owner/shop.js';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const r = schema.safeParse(value);
@@ -542,6 +543,8 @@ export async function adminRoutes(app: FastifyInstance) {
             ),
             app.pool.query(
               `SELECT c.id, c.name, c.icon, c.sort_order AS "sortOrder", c.active,
+                      CASE WHEN c.photo IS NOT NULL
+                        THEN '/category-photos/' || c.id || '?v=' || extract(epoch FROM c.photo_updated_at)::bigint END AS photo,
                       (SELECT count(*)::int FROM services WHERE category_id = c.id AND active) AS services
                FROM service_categories c ORDER BY c.sort_order, c.id`,
             ),
@@ -578,6 +581,32 @@ export async function adminRoutes(app: FastifyInstance) {
             .catch(uniqueName);
           await logAction(app.pool, adminId(request), 'create', 'service_category', rows[0].id, name);
           return { id: rows[0].id };
+        });
+
+        secure.post('/service-categories/:id/photo', { bodyLimit: 3 * 1024 * 1024 }, async (request) => {
+          const { id } = parse(idParams, request.params);
+          const body = parse(z.object({ contentType: z.string(), data: z.string().min(1) }), request.body);
+          if (!PHOTO_TYPES.has(body.contentType)) throw new AppError(400, 'invalid_photo');
+          const data = Buffer.from(body.data, 'base64');
+          if (data.length === 0 || data.length > MAX_PHOTO_BYTES) throw new AppError(400, 'invalid_photo');
+          const { rowCount } = await app.pool.query(
+            'UPDATE service_categories SET photo = $2, photo_type = $3, photo_updated_at = now() WHERE id = $1',
+            [id, data, body.contentType],
+          );
+          if (!rowCount) throw new AppError(404, 'not_found');
+          await logAction(app.pool, adminId(request), 'photo', 'service_categories', id);
+          return { ok: true };
+        });
+
+        secure.delete('/service-categories/:id/photo', async (request) => {
+          const { id } = parse(idParams, request.params);
+          const { rowCount } = await app.pool.query(
+            'UPDATE service_categories SET photo = NULL, photo_type = NULL, photo_updated_at = NULL WHERE id = $1',
+            [id],
+          );
+          if (!rowCount) throw new AppError(404, 'not_found');
+          await logAction(app.pool, adminId(request), 'remove_photo', 'service_categories', id);
+          return { ok: true };
         });
 
         secure.patch('/service-categories/:id', async (request) => {
