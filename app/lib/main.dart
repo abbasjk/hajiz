@@ -6,6 +6,7 @@ import 'l10n/app_localizations.dart';
 import 'screens/booking_detail_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/my_bookings_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/owner/owner_booking_screen.dart';
 import 'screens/owner/shop_mode.dart';
@@ -19,12 +20,18 @@ import 'widgets/common.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final session = await Session.load();
-  runApp(HajizApp(services: AppServices(client: ApiClient(), session: session, push: FirebasePushService())));
+  runApp(HajizApp(
+    services: AppServices(client: ApiClient(), session: session, push: FirebasePushService()),
+    onboarding: !session.onboarded,
+  ));
 }
 
 class HajizApp extends StatelessWidget {
-  const HajizApp({super.key, required this.services});
+  const HajizApp({super.key, required this.services, this.onboarding = false});
   final AppServices services;
+
+  /// أول فتح للتطبيق: شاشات التعريف قبل الرئيسية
+  final bool onboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +58,15 @@ class HajizApp extends StatelessWidget {
               ? const UpdateRequiredScreen()
               : OfflineBanner(offline: services.client.offline, child: child!),
         ),
-        home: const AppShell(),
+        home: AppShell(onboarding: onboarding),
       ),
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.onboarding = false});
+  final bool onboarding;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -66,6 +74,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   bool _ready = false;
+  late bool _onboarding = widget.onboarding;
   late AppServices _services;
 
   @override
@@ -122,6 +131,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     if (!_ready) return const Scaffold();
     final services = AppScope.of(context);
+    if (_onboarding) {
+      return OnboardingScreen(onDone: () {
+        services.session.markOnboarded();
+        setState(() => _onboarding = false);
+      });
+    }
     return ValueListenableBuilder<int>(
       valueListenable: services.accountEpoch,
       builder: (context, epoch, _) => ValueListenableBuilder<AppMode>(

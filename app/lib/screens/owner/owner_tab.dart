@@ -425,44 +425,81 @@ class DayBookingsList extends StatelessWidget {
   final List<OwnerBooking> bookings;
   final ValueChanged<OwnerBooking> onOpen;
 
+  /// لون كل حالة: الحافة الجانبية والخلفية الفاتحة، كما في تقويم التصميم
+  static (Color, Color) colors(BookingStatus s) => switch (s) {
+        BookingStatus.pendingShop || BookingStatus.pendingCustomer => (AppColors.accent, const Color(0xFFFEF0E2)),
+        BookingStatus.confirmed => (AppColors.primary, AppColors.primarySoft),
+        BookingStatus.completed => (const Color(0xFF27AE60), const Color(0xFFDDF3E6)),
+        BookingStatus.noShow => (AppColors.textMuted, AppColors.fill),
+        _ => (AppColors.danger, AppColors.dangerSoft),
+      };
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final now = AppScope.of(context).client.serverNow;
     final next = bookings.where((b) => b.status == BookingStatus.confirmed && b.endsAt.isAfter(now)).firstOrNull;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: [
-        for (final b in bookings) ...[
-          if (b != bookings.first) const Divider(height: 1),
-          Material(
-            color: b == next ? AppColors.primarySoft : Colors.transparent,
-            child: InkWell(
-              onTap: () => onOpen(b),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(children: [
-                  SizedBox(
-                    width: 76,
-                    child: Text(formatTime(l, b.startsAt),
-                        style: TextStyle(fontWeight: FontWeight.w700, color: b.endsAt.isBefore(now) ? AppColors.textDisabled : AppColors.text)),
-                  ),
+    return Column(children: [
+      for (final b in bookings)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              SizedBox(
+                width: 72,
+                child: Column(children: [
+                  Text(formatTime(l, b.startsAt),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: b.endsAt.isBefore(now) ? AppColors.textDisabled : AppColors.text,
+                      )),
+                  const SizedBox(height: 6),
                   Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(customerName(l, b.customer), style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text(b.services.map((s) => s.name).join('، '), style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                    ]),
+                    child: Container(width: 3, decoration: BoxDecoration(
+                      color: colors(b.status).$1.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    )),
                   ),
-                  if (b == next)
-                    Text(l.upcomingLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark))
-                  else
-                    StatusChip(status: b.status, owner: true),
                 ]),
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Material(
+                  color: colors(b.status).$2,
+                  borderRadius: BorderRadius.circular(AppRadius.base),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => onOpen(b),
+                    child: Container(
+                      decoration: BoxDecoration(border: BorderDirectional(start: BorderSide(color: colors(b.status).$1, width: 5))),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          Expanded(
+                            child: Text(customerName(l, b.customer),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+                          ),
+                          if (b == next)
+                            Text(l.upcomingLabel,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary))
+                          else
+                            StatusChip(status: b.status, owner: true),
+                        ]),
+                        const SizedBox(height: 4),
+                        Text(b.services.map((s) => s.name).join('، '), style: AppText.body),
+                        if (b.services.isNotEmpty)
+                          Text(formatTotal(l, b.services), style: AppText.body),
+                        if (b.note != null)
+                          Text('«${b.note!}»', maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
           ),
-        ],
-      ]),
-    );
+        ),
+    ]);
   }
 }

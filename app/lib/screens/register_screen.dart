@@ -48,7 +48,7 @@ class _RegisterFormState extends State<RegisterForm> {
     return Form(
       key: _form,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(l.registerTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        Text(l.registerTitle, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.primary)),
         const SizedBox(height: 6),
         Text(l.registerBody, style: const TextStyle(color: AppColors.textMuted, height: 1.6)),
         const SizedBox(height: 16),
@@ -68,7 +68,7 @@ class _RegisterFormState extends State<RegisterForm> {
         ),
         const SizedBox(height: 16),
         FilledButton(
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size.fromHeight(54)),
           onPressed: _busy ? null : _submit,
           child: Text(l.continueLabel),
         ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../api/models.dart';
 import '../api/owner_models.dart';
@@ -341,3 +342,15 @@ class BookingStages extends StatelessWidget {
 
   Widget _line(bool done) => Container(height: 6, color: done ? AppColors.accent : AppColors.primarySoft);
 }
+
+/// رأس بنفسجي لشاشات التبويبات الرئيسية، كما في التصميم
+AppBar brandAppBar(String title, {List<Widget>? actions, bool automaticallyImplyLeading = true, PreferredSizeWidget? bottom}) =>
+    AppBar(
+      title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      automaticallyImplyLeading: automaticallyImplyLeading,
+      actions: actions,
+      bottom: bottom,
+    );

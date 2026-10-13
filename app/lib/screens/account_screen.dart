@@ -68,16 +68,46 @@ class AccountScreenState extends State<AccountScreen> {
   Future<void> _signIn() async {
     final l = AppLocalizations.of(context);
     await Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => Scaffold(
-        appBar: AppBar(title: Text(l.signIn)),
-        body: ListView(padding: const EdgeInsets.all(16), children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: RegisterForm(onRegistered: () => Navigator.of(context).pop()),
+      // شاشة الدخول كما في التصميم: أعلى برتقالي، ثم ورقة بيضاء فيها النموذج
+      builder: (context) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: AppColors.accent,
+          body: Column(children: [
+            SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: 190,
+                child: Stack(children: [
+                  const PositionedDirectional(top: 4, start: 4, child: BackButton(color: Colors.white)),
+                  Center(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.2)),
+                        child: const Icon(Icons.event_available_rounded, size: 52, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(l.signIn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ]),
+                  ),
+                ]),
+              ),
             ),
-          ),
-        ]),
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+                ),
+                child: ListView(padding: const EdgeInsets.fromLTRB(20, 28, 20, 24), children: [
+                  RegisterForm(onRegistered: () => Navigator.of(context).pop()),
+                ]),
+              ),
+            ),
+          ]),
+        ),
       ),
     ));
     if (mounted) refresh();

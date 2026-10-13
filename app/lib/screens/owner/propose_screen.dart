@@ -23,30 +23,38 @@ class DayStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    // أيام على شكل كبسولات عمودية كما في تقويم التصميم
     return SizedBox(
-      height: 64,
+      height: 84,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         itemCount: dates.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
           final on = i == selected;
           return SizedBox(
             width: 56,
             child: Material(
-              color: on ? AppColors.primary : AppColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: on ? BorderSide.none : const BorderSide(color: AppColors.border),
-              ),
+              color: on ? AppColors.primary : AppColors.primarySoft,
+              elevation: on ? 3 : 0,
+              shadowColor: AppColors.primary.withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(28),
                 onTap: () => onSelected(i),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(dayName(l, localDayOfWeek(dates[i])), style: TextStyle(fontSize: 11, color: on ? Colors.white : AppColors.textMuted)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(dayName(l, localDayOfWeek(dates[i])),
+                          style: TextStyle(fontSize: 12, color: on ? Colors.white : AppColors.primaryMuted)),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text('${toBaghdad(dates[i]).day}',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: on ? Colors.white : AppColors.text)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: on ? Colors.white : AppColors.primary)),
                 ]),
               ),
             ),

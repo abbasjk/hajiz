@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../api/owner_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../state/app_scope.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../util/reasons.dart';
@@ -120,76 +121,113 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
   Widget _body(AppLocalizations l, OwnerBooking b) {
     final client = AppScope.of(context).client;
     final c = b.customer;
+    final now = client.serverNow;
+    final inProgress = b.status == BookingStatus.confirmed && !now.isBefore(b.startsAt) && now.isBefore(b.endsAt);
+    final progress = inProgress
+        ? now.difference(b.startsAt).inSeconds / b.endsAt.difference(b.startsAt).inSeconds.clamp(1, 1 << 30)
+        : null;
     return ListView(padding: const EdgeInsets.all(16), children: [
-      if (b.status == BookingStatus.pendingShop && b.responseDeadline != null)
-        Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(color: AppColors.warningSoft, borderRadius: BorderRadius.circular(12)),
-          child: Row(children: [
-            const Icon(Icons.timer_outlined, color: AppColors.warning),
-            const SizedBox(width: 12),
-            Expanded(child: Text(l.autoCancelIn, style: const TextStyle(fontSize: 13, color: AppColors.warning))),
-            Countdown(
-              until: b.responseDeadline!,
-              now: () => client.serverNow,
-              onDone: _load,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.warning),
-            ),
-          ]),
-        ),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [
-              const CircleAvatar(backgroundColor: AppColors.disabledFill, child: Icon(Icons.person_outline, color: AppColors.textMuted)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(customerName(l, c), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  if (c.phone != null)
-                    Text(c.phone!, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 13, color: AppColors.textMuted))
-                  else
-                    Text(l.phoneHidden, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                ]),
+      // بطاقة الموعد البنفسجية كما في "الخدمة بدأت" في التصميم
+      Container(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+        decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppRadius.hero)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+            child: Text(statusLabel(l, b.status, owner: true),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
+          const SizedBox(height: 12),
+          Text('${formatTime(l, b.startsAt)} – ${formatTime(l, b.endsAt)}',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text('${formatDayLong(l, b.startsAt)} · ${l.minutes(b.durationMinutes)}',
+              style: const TextStyle(fontSize: 14, color: AppColors.onPrimaryMuted)),
+          if (progress != null) ...[
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.accent,
               ),
-              StatusChip(status: b.status, owner: true),
+            ),
+          ],
+          if (b.status == BookingStatus.pendingShop && b.responseDeadline != null) ...[
+            const SizedBox(height: 14),
+            Row(children: [
+              const Icon(Icons.timer_outlined, color: AppColors.accent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: Text(l.autoCancelIn, style: const TextStyle(fontSize: 13, color: Colors.white))),
+              Countdown(
+                until: b.responseDeadline!,
+                now: () => client.serverNow,
+                onDone: _load,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.accent),
+              ),
             ]),
+          ],
+        ]),
+      ),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.base),
+          boxShadow: AppShadows.card,
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+              child: const Icon(Icons.person_outline, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(customerName(l, c), style: AppText.headline),
+                if (c.phone != null)
+                  Text(c.phone!, textDirection: TextDirection.ltr, style: AppText.body)
+                else
+                  Text(l.phoneHidden, style: AppText.caption),
+              ]),
+            ),
             if (c.phone != null) ...[
-              const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: OutlinedButton.icon(onPressed: () => callPhone(c.phone!), icon: const Icon(Icons.call_outlined), label: Text(l.call))),
-                const SizedBox(width: 8),
-                Expanded(child: OutlinedButton.icon(onPressed: () => openWhatsApp(c.phone!), icon: const Icon(Icons.chat_outlined), label: Text(l.whatsapp))),
-              ]),
-            ],
-            if (c.stats != null) ...[
-              const SizedBox(height: 12),
-              Row(children: [
-                _stat(c.stats!.attended, l.statAttended, highlight: true),
-                const SizedBox(width: 8),
-                _stat(c.stats!.lateCancels, l.statLateCancel),
-                const SizedBox(width: 8),
-                _stat(c.stats!.noShows, l.statNoShow),
-              ]),
+              _circleAction(Icons.call, l.call, () => callPhone(c.phone!)),
+              const SizedBox(width: 8),
+              _circleAction(Icons.chat, l.whatsapp, () => openWhatsApp(c.phone!)),
             ],
           ]),
-        ),
+          if (c.stats != null) ...[
+            const SizedBox(height: 14),
+            Row(children: [
+              _stat(c.stats!.attended, l.statAttended, highlight: true),
+              const SizedBox(width: 8),
+              _stat(c.stats!.lateCancels, l.statLateCancel),
+              const SizedBox(width: 8),
+              _stat(c.stats!.noShows, l.statNoShow),
+            ]),
+          ],
+        ]),
       ),
       if (c.newDevice) ...[
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.disabledFill,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.borderStrong),
+            color: AppColors.warningSoft,
+            borderRadius: BorderRadius.circular(AppRadius.base),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(l.newDeviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(l.newDeviceTitle, style: AppText.title),
             const SizedBox(height: 4),
-            Text(l.newDeviceBody, style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.6)),
+            Text(l.newDeviceBody, style: AppText.body.copyWith(height: 1.6)),
             const SizedBox(height: 10),
             OutlinedButton(
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, side: const BorderSide(color: AppColors.primary)),
@@ -199,35 +237,63 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
           ]),
         ),
       ],
-      const SizedBox(height: 12),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            _row(l.reviewAppointment, formatAppointment(l, b.startsAt)),
-            _row(l.reviewServices, b.services.map((s) => s.name).join('، ')),
-            _row(l.reviewDuration, l.minutes(b.durationMinutes)),
-            if (b.note != null) ...[
-              const Divider(height: 20),
-              Text(l.customerNote, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-              const SizedBox(height: 4),
-              Text(b.note!),
-            ],
-            if (b.cancelReason != null) ...[
-              const Divider(height: 20),
-              Text(l.reasonLabel(reasonText(l, b.cancelReason!)), style: const TextStyle(color: AppColors.danger)),
-            ],
-            if (b.status == BookingStatus.pendingCustomer) ...[
-              const Divider(height: 20),
-              Text(l.awaitingCustomer, style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              for (final t in b.proposedTimes) Text('• ${formatAppointment(l, t)}'),
-            ],
+      const SizedBox(height: 20),
+      _sectionTitle(Icons.content_cut, l.reviewServices),
+      for (final s in b.services)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(s.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text)),
+                Text(l.minutes(s.durationMinutes), style: AppText.body),
+              ]),
+            ),
+            Text(formatPrice(l, s), style: const TextStyle(fontSize: 15, color: AppColors.inkMuted)),
           ]),
         ),
-      ),
+      if (b.note != null) ...[
+        const SizedBox(height: 10),
+        _sectionTitle(Icons.sticky_note_2_outlined, l.customerNote),
+        Text(b.note!, style: const TextStyle(fontSize: 15, height: 1.6)),
+      ],
+      if (b.cancelReason != null) ...[
+        const SizedBox(height: 16),
+        Text(l.reasonLabel(reasonText(l, b.cancelReason!)), style: const TextStyle(color: AppColors.danger)),
+      ],
+      if (b.status == BookingStatus.pendingCustomer) ...[
+        const SizedBox(height: 16),
+        _sectionTitle(Icons.schedule, l.awaitingCustomer),
+        for (final t in b.proposedTimes)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text('• ${formatAppointment(l, t)}', style: const TextStyle(fontSize: 15)),
+          ),
+      ],
     ]);
   }
+
+  Widget _sectionTitle(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          Icon(icon, size: 20, color: AppColors.text),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: AppText.headline)),
+        ]),
+      );
+
+  Widget _circleAction(IconData icon, String label, VoidCallback onTap) => Tooltip(
+        message: label,
+        child: Material(
+          color: AppColors.primarySoft,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(width: 42, height: 42, child: Icon(icon, color: AppColors.primary, size: 20)),
+          ),
+        ),
+      );
 
   Widget _stat(int n, String label, {bool highlight = false}) => Expanded(
         child: Container(
@@ -241,15 +307,6 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
             Text(label, style: TextStyle(fontSize: 12, color: highlight ? AppColors.primaryDark : AppColors.textMuted)),
           ]),
         ),
-      );
-
-  Widget _row(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(color: AppColors.textMuted)),
-          const SizedBox(width: 16),
-          Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w600))),
-        ]),
       );
 
   Widget? _actions(AppLocalizations l, OwnerBooking b) {

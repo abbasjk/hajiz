@@ -125,13 +125,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.calendarTitle)),
+      appBar: brandAppBar(l.calendarTitle),
       body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_day == 0 ? l.today : dayName(l, localDayOfWeek(_dates[_day])),
+                style: const TextStyle(fontSize: 14, color: AppColors.textMuted)),
+            Text(formatDayLong(l, _dates[_day]), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          ]),
+        ),
         DayStrip(dates: _dates, selected: _day, onSelected: (i) {
           setState(() => _day = i);
           _load();
         }),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
         Expanded(
           child: _bookings == null
               ? LoadState(error: _error, onRetry: _load)
@@ -181,7 +189,7 @@ class _ServicesScreenState extends State<ServicesScreen> with _ReturnsShop {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return returning(Scaffold(
-      appBar: AppBar(title: Text(l.servicesTitle), automaticallyImplyLeading: !widget.embedded),
+      appBar: brandAppBar(l.servicesTitle, automaticallyImplyLeading: !widget.embedded),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         ServicesEditor(shop: _shop, onSaved: (s) => setState(() {
           report(s);
@@ -554,7 +562,7 @@ class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
     final l = AppLocalizations.of(context);
     String hours(int h) => formatDuration(l, h * 60);
     return returning(Scaffold(
-      appBar: AppBar(title: Text(l.settingsTitle), automaticallyImplyLeading: !widget.embedded),
+      appBar: brandAppBar(l.settingsTitle, automaticallyImplyLeading: !widget.embedded),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Card(
           child: ListTile(

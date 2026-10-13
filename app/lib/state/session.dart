@@ -33,6 +33,10 @@ class Session {
   bool get isRegistered => token != null;
 
   /// آخر وضع استُخدم: 'customer' أو 'shop'، يفتح التطبيق عليه
+  /// شاشات التعريف تظهر مرة واحدة عند أول فتح
+  bool get onboarded => _prefs.getBool('onboarded') ?? false;
+  Future<void> markOnboarded() => _prefs.setBool('onboarded', true);
+
   String get appMode => _prefs.getString('appMode') ?? 'customer';
   Future<void> saveAppMode(String mode) => _prefs.setString('appMode', mode);
 

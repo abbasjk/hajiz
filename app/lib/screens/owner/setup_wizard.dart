@@ -88,30 +88,48 @@ class _SetupWizardState extends State<SetupWizard> {
         ),
         body: Column(children: [
           if (!widget.editOnly)
+            // خطوات مرقمة متصلة بخط يتقدم، بأسلوب مراحل الحجز
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
               child: Row(children: [
-                for (var i = 0; i < 5; i++) ...[
-                  if (i > 0) const SizedBox(width: 6),
+                for (var i = 0; i < 5; i++)
                   Expanded(
                     child: Column(children: [
-                      Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: i <= _step ? AppColors.primary : AppColors.track,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                      SizedBox(
+                        height: 30,
+                        child: Stack(alignment: Alignment.center, children: [
+                          Row(children: [
+                            Expanded(child: Container(height: 3, color: i == 0 ? Colors.transparent : (i <= _step ? AppColors.accent : AppColors.primarySoft))),
+                            Expanded(child: Container(height: 3, color: i == 4 ? Colors.transparent : (i < _step ? AppColors.accent : AppColors.primarySoft))),
+                          ]),
+                          Container(
+                            width: 30,
+                            height: 30,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: i < _step ? AppColors.accent : (i == _step ? AppColors.primary : AppColors.primarySoft),
+                            ),
+                            child: i < _step
+                                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                : Text('${i + 1}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: i == _step ? Colors.white : AppColors.primaryMuted,
+                                    )),
+                          ),
+                        ]),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(labels[i],
                           style: TextStyle(
                             fontSize: 11,
                             color: i <= _step ? AppColors.primary : AppColors.textMuted,
-                            fontWeight: i == _step ? FontWeight.w600 : FontWeight.w400,
+                            fontWeight: i == _step ? FontWeight.w700 : FontWeight.w400,
                           )),
                     ]),
                   ),
-                ],
               ]),
             ),
           Expanded(
@@ -146,19 +164,36 @@ class _SetupWizardState extends State<SetupWizard> {
 
   Widget _review(AppLocalizations l) {
     final missing = _state.missing;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    const all = ['businessType', 'address', 'location', 'photos', 'services', 'hours'];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(_state.shop?.name ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const Icon(Icons.storefront, color: Colors.white, size: 30),
           const SizedBox(height: 8),
-          if (missing.isEmpty)
-            Text(l.readyToSubmit, style: const TextStyle(height: 1.6))
-          else
-            Text(l.missingItems(missing.map((m) => missingLabel(l, m)).join('، ')),
-                style: const TextStyle(color: AppColors.danger, height: 1.6)),
+          Text(_state.shop?.name ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+          const SizedBox(height: 6),
+          Text(missing.isEmpty ? l.readyToSubmit : l.missingItems(missing.map((m) => missingLabel(l, m)).join('، ')),
+              style: const TextStyle(color: AppColors.onPrimaryMuted, height: 1.6)),
         ]),
       ),
-    );
+      const SizedBox(height: 16),
+      // قائمة تحقق: ما اكتمل وما ينقص
+      for (final code in all)
+        Container(
+          height: 52,
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
+          child: Row(children: [
+            Icon(missing.contains(code) ? Icons.radio_button_unchecked : Icons.check_circle,
+                color: missing.contains(code) ? AppColors.danger : const Color(0xFF27AE60), size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(missingLabel(l, code),
+                  style: TextStyle(fontSize: 15, color: missing.contains(code) ? AppColors.danger : AppColors.text)),
+            ),
+          ]),
+        ),
+    ]);
   }
 }

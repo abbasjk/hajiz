@@ -722,5 +722,14 @@
   "statPending": "بانتظار ردك",
   "statToday": "مواعيد اليوم",
   "statRemaining": "متبقية اليوم",
-  "statServices": "خدمة معروضة"
+  "statServices": "خدمة معروضة",
+  "onboardTitle1": "احجز موعدك بسهولة",
+  "onboardBody1": "اختر المحل والخدمة والوقت المناسب لك، دون اتصال ولا انتظار.",
+  "onboardTitle2": "المحل يؤكد لك",
+  "onboardBody2": "يصل طلبك إلى صاحب المحل فيوافق أو يقترح وقتاً آخر، ويصلك إشعار بالرد.",
+  "onboardTitle3": "هل تملك محلاً؟",
+  "onboardBody3": "افتح محلك في حجز، ونظّم مواعيد زبائنك من هاتفك.",
+  "onboardSkip": "تخطَّ",
+  "onboardStart": "ابدأ الآن",
+  "signInWelcome": "أهلاً بك"
 }
