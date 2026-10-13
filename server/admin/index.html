@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>لوحة إدارة مقص</title>
+<title>لوحة إدارة مكص</title>
 <style>
   :root {
     --bg: #f6f5f2; --card: #fff; --border: #e3e1db; --border-strong: #d4d1c9;
@@ -278,7 +278,7 @@ function render() {
   const main = h('main', {}, h('div', { class: 'empty' }, 'جارٍ التحميل…'));
   root.replaceChildren(
     h('div', { class: 'layout' },
-      h('aside', {}, h('div', { class: 'brand' }, 'لوحة إدارة مقص'), nav, h('div', { class: 'spacer' }),
+      h('aside', {}, h('div', { class: 'brand' }, 'لوحة إدارة مكص'), nav, h('div', { class: 'spacer' }),
         h('button', { onclick: async () => { await api('/logout', { method: 'POST' }).catch(() => {}); setToken(null); render(); } }, 'تسجيل الخروج')),
       main),
   );
@@ -304,7 +304,7 @@ function loginView() {
       await refreshStats();
       render();
     } catch (_) { btn.disabled = false; }
-  } }, h('h1', {}, 'لوحة إدارة مقص'), h('label', {}, 'اسم المستخدم', user), h('label', {}, 'كلمة المرور', pass), btn);
+  } }, h('h1', {}, 'لوحة إدارة مكص'), h('label', {}, 'اسم المستخدم', user), h('label', {}, 'كلمة المرور', pass), btn);
   return h('div', { class: 'login' }, form);
 }
 
