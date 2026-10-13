@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../api/api_client.dart';
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
+import '../theme/app_theme.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
 import '../util/reasons.dart';
 import '../widgets/common.dart';
 import '../widgets/location_preview.dart';
 import '../widgets/refresh_on_push.dart';
+import 'home_screen.dart' show ShopImage;
 import 'shop_screen.dart';
 
 /// تفاصيل الحجز، والرد على تعديل المحل، والإلغاء.
@@ -124,114 +127,234 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
 
   Widget _body(AppLocalizations l, Booking b) {
     final client = AppScope.of(context).client;
+    final stage = switch (b.status) {
+      BookingStatus.pendingShop || BookingStatus.pendingCustomer => 1,
+      BookingStatus.confirmed => 2,
+      BookingStatus.completed => 3,
+      _ => null,
+    };
     final waiting = b.status.isPending && b.responseDeadline != null;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        if (waiting)
+        if (stage != null) BookingStages(current: stage) else _endedBanner(l, b),
+        const SizedBox(height: 20),
+        _shopCard(l, b),
+        if (waiting || b.status == BookingStatus.confirmed) ...[
+          const SizedBox(height: 16),
           Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(color: AppColors.warningSoft, borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(AppRadius.base)),
             child: Row(
               children: [
-                const Icon(Icons.timer_outlined, color: AppColors.warning),
-                const SizedBox(width: 12),
+                Icon(waiting ? Icons.timer : Icons.schedule, color: AppColors.primary, size: 22),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(b.status == BookingStatus.pendingShop ? l.shopRespondsIn : l.deadlineIn,
-                      style: const TextStyle(fontSize: 13, color: AppColors.warning)),
+                  child: Text(
+                    waiting ? (b.status == BookingStatus.pendingShop ? l.shopRespondsIn : l.deadlineIn) : l.appointmentLength,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text),
+                  ),
                 ),
-                Countdown(
-                  until: b.responseDeadline!,
-                  now: () => client.serverNow,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.warning),
-                  onDone: _load,
-                ),
+                if (waiting)
+                  Countdown(
+                    until: b.responseDeadline!,
+                    now: () => client.serverNow,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.inkMuted),
+                    onDone: _load,
+                  )
+                else
+                  Text(l.minutes(b.durationMinutes), style: const TextStyle(fontSize: 16, color: AppColors.inkMuted)),
               ],
             ),
           ),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(child: Text(b.shop.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
-                  StatusChip(status: b.status),
-                ]),
-                const SizedBox(height: 8),
-                Text(
-                  b.status == BookingStatus.pendingCustomer
-                      ? '${l.originalRequest} ${formatAppointment(l, b.startsAt)}'
-                      : formatAppointment(l, b.startsAt),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    decoration: b.status == BookingStatus.pendingCustomer ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text('${b.services.map((s) => s.name).join('، ')} · ${l.minutes(b.durationMinutes)}',
-                    style: const TextStyle(color: AppColors.textMuted)),
-                if (b.services.isNotEmpty) Text(formatTotal(l, b.services), style: const TextStyle(color: AppColors.textMuted)),
-                if (b.note != null) ...[
-                  const SizedBox(height: 8),
-                  Text(l.yourNote(b.note!), style: const TextStyle(fontSize: 13)),
-                ],
-                if (b.cancelReason != null) ...[
-                  const SizedBox(height: 8),
-                  Text(l.reasonLabel(reasonText(l, b.cancelReason!)), style: const TextStyle(fontSize: 13, color: AppColors.danger)),
-                ],
-                if (b.status == BookingStatus.expired) ...[
-                  const SizedBox(height: 8),
-                  Text(l.expiredHint, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-                ],
-                const SizedBox(height: 12),
-                Wrap(spacing: 8, runSpacing: 8, children: [
-                  if (b.shop.phone != null) ...[
-                    OutlinedButton.icon(onPressed: () => callPhone(b.shop.phone!), icon: const Icon(Icons.call_outlined), label: Text(l.call)),
-                    OutlinedButton.icon(onPressed: () => openWhatsApp(b.shop.phone!), icon: const Icon(Icons.chat_outlined), label: Text(l.whatsapp)),
-                  ],
-                  // للحجوزات الحالية تظهر الخريطة والاتجاهات أسفل البطاقة
-                  if (b.shop.latitude != null && b.shop.longitude != null &&
-                      b.status != BookingStatus.confirmed && b.status != BookingStatus.pendingShop)
-                    OutlinedButton.icon(
-                      onPressed: () => openInMaps(b.shop.latitude!, b.shop.longitude!, b.shop.name),
-                      icon: const Icon(Icons.map_outlined),
-                      label: Text(l.openInMaps),
-                    ),
-                ]),
-              ],
-            ),
+        ],
+        const SizedBox(height: 24),
+        _sectionTitle(Icons.calendar_month, l.reviewAppointment),
+        Text(
+          b.status == BookingStatus.pendingCustomer
+              ? '${l.originalRequest} ${formatAppointment(l, b.startsAt)}'
+              : formatAppointment(l, b.startsAt),
+          style: TextStyle(
+            fontSize: 16,
+            color: AppColors.textMuted,
+            decoration: b.status == BookingStatus.pendingCustomer ? TextDecoration.lineThrough : null,
           ),
         ),
         if (b.status == BookingStatus.pendingCustomer) ..._proposal(l, b),
+        const SizedBox(height: 24),
+        _sectionTitle(Icons.content_cut, l.reviewServices),
+        for (final s in b.services)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text)),
+                      Text(l.minutes(s.durationMinutes), style: AppText.body),
+                    ],
+                  ),
+                ),
+                Text(formatPrice(l, s), style: const TextStyle(fontSize: 16, color: AppColors.inkMuted)),
+              ],
+            ),
+          ),
+        if (b.services.length > 1)
+          Row(children: [
+            Expanded(child: Text(l.reviewTotal, style: AppText.title)),
+            Text(formatTotal(l, b.services), style: AppText.title),
+          ]),
+        if (b.note != null) ...[
+          const SizedBox(height: 16),
+          Text(l.yourNote(b.note!), style: AppText.body.copyWith(height: 1.6)),
+        ],
         // يوم الموعد هو وقت الحاجة للطريق
         if ((b.status == BookingStatus.confirmed || b.status == BookingStatus.pendingShop) &&
             b.shop.latitude != null && b.shop.longitude != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          _sectionTitle(Icons.location_on, l.shopLocation),
           LocationPreview(latitude: b.shop.latitude!, longitude: b.shop.longitude!, label: b.shop.name),
         ],
-        if (b.review != null)
-          Card(
-            margin: const EdgeInsets.only(top: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l.yourReview, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  StarRow(stars: b.review!.stars, size: 20),
-                  if (b.review!.comment != null) ...[
-                    const SizedBox(height: 8),
-                    Text(b.review!.comment!, style: const TextStyle(height: 1.6)),
-                  ],
-                ],
-              ),
+        if (b.review != null) ...[
+          const SizedBox(height: 24),
+          _sectionTitle(Icons.star_rounded, l.yourReview),
+          Row(children: [
+            StarRow(stars: b.review!.stars, size: 18),
+            const SizedBox(width: 6),
+            Text('(${b.review!.stars}.0)', style: const TextStyle(fontSize: 14, color: AppColors.primary)),
+          ]),
+          if (b.review!.comment != null) ...[
+            const SizedBox(height: 6),
+            Text(b.review!.comment!, style: AppText.body.copyWith(height: 1.6)),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _sectionTitle(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          Icon(icon, size: 22, color: AppColors.text),
+          const SizedBox(width: 8),
+          Text(text, style: AppText.headline),
+        ]),
+      );
+
+  /// الحجز انتهى دون إتمام: مرفوض، ملغى، انتهت مهلته، أو لم يحضر
+  Widget _endedBanner(AppLocalizations l, Booking b) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: AppColors.dangerSoft, borderRadius: BorderRadius.circular(AppRadius.base)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.event_busy, color: AppColors.danger, size: 22),
+              const SizedBox(width: 8),
+              Text(statusLabel(l, b.status), style: AppText.title.copyWith(color: AppColors.danger)),
+            ]),
+            if (b.cancelReason != null) ...[
+              const SizedBox(height: 6),
+              Text(l.reasonLabel(reasonText(l, b.cancelReason!)), style: const TextStyle(fontSize: 14, color: AppColors.danger)),
+            ],
+            if (b.status == BookingStatus.expired) ...[
+              const SizedBox(height: 6),
+              Text(l.expiredHint, style: AppText.body),
+            ],
+          ],
+        ),
+      );
+
+  /// بطاقة المحل: الصورة والاسم والمنطقة، ثم الخريطة والاتصال وزر الإلغاء
+  Widget _shopCard(AppLocalizations l, Booking b) {
+    final client = AppScope.of(context).client;
+    final shop = b.shop;
+    final place = [shop.district, shop.area].whereType<String>().where((s) => s.isNotEmpty).join('، ');
+    final now = client.serverNow;
+    final cancellable = (b.status == BookingStatus.pendingShop || b.status == BookingStatus.confirmed) && b.startsAt.isAfter(now);
+    final actions = <(IconData, String, VoidCallback)>[
+      if (shop.latitude != null && shop.longitude != null)
+        (Icons.map_outlined, l.mapsShort, () => openInMaps(shop.latitude!, shop.longitude!, shop.name)),
+      if (shop.phone != null) ...[
+        (Icons.call_outlined, l.call, () => callPhone(shop.phone!)),
+        (Icons.chat_outlined, l.whatsapp, () => openWhatsApp(shop.phone!)),
+      ],
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.base),
+        boxShadow: AppShadows.card,
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ShopScreen(shopId: shop.id))),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.base),
+                  child: SizedBox(
+                    width: 78,
+                    height: 78,
+                    child: ShopImage(url: shop.coverPhoto == null ? null : client.absoluteUrl(shop.coverPhoto!)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(shop.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.headline),
+                      if (place.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(children: [
+                          const Icon(Icons.location_on, size: 16, color: AppColors.primaryMuted),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text(place, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body)),
+                        ]),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-      ],
+          if (actions.isNotEmpty || cancellable) ...[
+            const Divider(height: 28, color: AppColors.border),
+            Row(
+              children: [
+                for (final (icon, label, onTap) in actions)
+                  InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(AppRadius.base),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(icon, color: AppColors.primary, size: 24),
+                        const SizedBox(height: 4),
+                        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.primary)),
+                      ]),
+                    ),
+                  ),
+                const Spacer(),
+                if (cancellable)
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 42),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                    ),
+                    onPressed: _busy ? null : () => _cancel(b),
+                    child: Text(l.cancelBooking),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -287,11 +410,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
   Future<void> _rate(Booking b) async {
     final l = AppLocalizations.of(context);
     final api = AppScope.of(context).api;
-    final result = await showModalBottomSheet<(int, String?)>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => const _RateSheet(),
+    final result = await Navigator.of(context).push<(int, String?)>(
+      MaterialPageRoute(builder: (_) => _RateScreen(booking: b)),
     );
     if (result == null || !mounted) return;
     final before = _booking;
@@ -303,7 +423,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
 
   Widget? _actions(AppLocalizations l, Booking b) {
     final api = AppScope.of(context).api;
-    final now = AppScope.of(context).client.serverNow;
     if (b.canReview) {
       return BottomActionBar(
         child: FilledButton.icon(
@@ -335,33 +454,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
         ),
       );
     }
-    final cancellable = (b.status == BookingStatus.pendingShop || b.status == BookingStatus.confirmed) && b.startsAt.isAfter(now);
-    if (!cancellable) return null;
-    return BottomActionBar(
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.danger,
-          side: const BorderSide(color: AppColors.danger),
-          minimumSize: const Size.fromHeight(48),
-        ),
-        onPressed: _busy ? null : () => _cancel(b),
-        child: Text(l.cancelBooking),
-      ),
-    );
+    // الإلغاء في بطاقة المحل
+    return null;
   }
 }
 
-/// نافذة التقييم: نجوم إجبارية وتعليق اختياري
-class _RateSheet extends StatefulWidget {
-  const _RateSheet();
+/// شاشة التقييم كما في التصميم: رأس بنفسجي ببطاقة المحل، نجوم، تعليق، وعبارات جاهزة
+class _RateScreen extends StatefulWidget {
+  const _RateScreen({required this.booking});
+  final Booking booking;
 
   @override
-  State<_RateSheet> createState() => _RateSheetState();
+  State<_RateScreen> createState() => _RateScreenState();
 }
 
-class _RateSheetState extends State<_RateSheet> {
+class _RateScreenState extends State<_RateScreen> {
   int _stars = 0;
   final _comment = TextEditingController();
+  final List<String> _tags = [];
 
   @override
   void dispose() {
@@ -369,46 +479,199 @@ class _RateSheetState extends State<_RateSheet> {
     super.dispose();
   }
 
+  void _submit() {
+    final text = [..._tags, _comment.text.trim()].where((s) => s.isNotEmpty).join('، ');
+    Navigator.pop(context, (_stars, text.isEmpty ? null : text));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final labels = [l.rateLabel1, l.rateLabel2, l.rateLabel3, l.rateLabel4, l.rateLabel5];
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final suggestions = [l.rateTag1, l.rateTag2, l.rateTag3, l.rateTag4, l.rateTag5, l.rateTag6, l.rateTag7, l.rateTag8];
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.primary,
+        body: Column(
           children: [
-            Text(l.rateTitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
-            Center(child: StarRow(stars: _stars, size: 40, onChanged: (v) => setState(() => _stars = v))),
+            _header(l),
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+                ),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+                  children: [
+                    Text(l.rateTitle, style: AppText.headline),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        for (var i = 1; i <= 5; i++)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 8),
+                            child: Semantics(
+                              button: true,
+                              label: labels[i - 1],
+                              child: GestureDetector(
+                                onTap: () => setState(() => _stars = i),
+                                child: Icon(Icons.star_rounded,
+                                    size: 46, color: i <= _stars ? AppColors.accent : AppColors.border),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 6),
+                        if (_stars > 0) Text('($_stars.0)', style: const TextStyle(fontSize: 16, color: AppColors.text)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(_stars == 0 ? l.rateChooseStars : labels[_stars - 1],
+                        style: TextStyle(fontSize: 14, color: _stars == 0 ? AppColors.textMuted : AppColors.text)),
+                    const SizedBox(height: 22),
+                    Text(l.yourReview, style: AppText.headline),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.base),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_tags.isNotEmpty)
+                            Wrap(spacing: 8, runSpacing: 8, children: [
+                              for (final t in _tags)
+                                InputChip(
+                                  label: Text(t, style: const TextStyle(fontSize: 14, color: AppColors.primary)),
+                                  backgroundColor: AppColors.surface,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppRadius.base),
+                                    side: const BorderSide(color: AppColors.primaryMuted),
+                                  ),
+                                  onDeleted: () => setState(() => _tags.remove(t)),
+                                ),
+                            ]),
+                          TextField(
+                            controller: _comment,
+                            maxLength: 400,
+                            minLines: 4,
+                            maxLines: 6,
+                            decoration: InputDecoration(
+                              hintText: l.rateCommentHint,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              filled: false,
+                              contentPadding: const EdgeInsets.only(top: 8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        for (final t in suggestions)
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              if (!_tags.remove(t)) _tags.add(t);
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _tags.contains(t) ? AppColors.primaryLight.withValues(alpha: 0.6) : null,
+                                borderRadius: BorderRadius.circular(AppRadius.base),
+                                border: Border.all(color: _tags.contains(t) ? AppColors.primary : Colors.transparent),
+                              ),
+                              child: Text(t,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: _tags.contains(t) ? AppColors.primary : AppColors.textDisabled,
+                                  )),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(l.rateFirstNameHint, style: AppText.caption),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: BottomActionBar(
+          child: FilledButton(onPressed: _stars == 0 ? null : _submit, child: Text(l.rateSubmit)),
+        ),
+      ),
+    );
+  }
+
+  Widget _header(AppLocalizations l) {
+    final shop = widget.booking.shop;
+    final client = AppScope.of(context).client;
+    final place = [shop.district, shop.area].whereType<String>().where((s) => s.isNotEmpty).join('، ');
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const BackButton(color: Colors.white),
             const SizedBox(height: 8),
-            Text(
-              _stars == 0 ? l.rateChooseStars : labels[_stars - 1],
-              textAlign: TextAlign.center,
-              style: TextStyle(color: _stars == 0 ? AppColors.textMuted : AppColors.text, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _comment,
-              maxLength: 500,
-              minLines: 2,
-              maxLines: 5,
-              decoration: InputDecoration(hintText: l.rateCommentHint),
-            ),
-            Text(l.rateFirstNameHint, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-            const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-              onPressed: _stars == 0
-                  ? null
-                  : () {
-                      final text = _comment.text.trim();
-                      Navigator.pop(context, (_stars, text.isEmpty ? null : text));
-                    },
-              child: Text(l.rateSubmit),
+            Container(
+              margin: const EdgeInsetsDirectional.only(start: 8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.base),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.base),
+                    child: SizedBox(
+                      width: 78,
+                      height: 78,
+                      child: ShopImage(url: shop.coverPhoto == null ? null : client.absoluteUrl(shop.coverPhoto!)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(shop.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.headline.copyWith(color: Colors.white)),
+                        const SizedBox(height: 6),
+                        Text(formatAppointment(l, widget.booking.startsAt),
+                            style: const TextStyle(fontSize: 14, color: Colors.white)),
+                        if (place.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(place,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14, color: Colors.white)),
+                            ),
+                          ]),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

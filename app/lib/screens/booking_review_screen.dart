@@ -104,7 +104,6 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 16),
           children: [
-            const BookingSteps(current: 3),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(

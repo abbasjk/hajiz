@@ -17,7 +17,11 @@ const COLUMNS = `b.id, b.status, b.starts_at AS "startsAt", b.ends_at AS "endsAt
   b.cancelled_by AS "cancelledBy", b.cancelled_late AS "cancelledLate", b.created_at AS "createdAt",
   json_build_object('id', s.id, 'name', s.name, 'phone', s.phone,
                     'latitude', s.latitude, 'longitude', s.longitude,
-                    'freeCancelHours', s.free_cancel_hours) AS shop,
+                    'freeCancelHours', s.free_cancel_hours,
+                    'district', (SELECT name FROM districts WHERE id = s.district_id),
+                    'area', (SELECT name FROM areas WHERE id = s.area_id),
+                    'coverPhoto', (SELECT coalesce(url, '/photos/' || id) FROM shop_photos p
+                                   WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1)) AS shop,
   (SELECT coalesce(json_agg(json_build_object('name', bs.service_name, 'durationMinutes', bs.duration_minutes,
                                               'priceType', bs.price_type, 'price', bs.price) ORDER BY bs.id), '[]')
    FROM booking_services bs WHERE bs.booking_id = b.id) AS services,

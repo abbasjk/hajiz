@@ -315,13 +315,17 @@ class ProposedTime {
 }
 
 class BookingShop {
-  const BookingShop(this.id, this.name, this.phone, this.latitude, this.longitude, this.freeCancelHours);
+  const BookingShop(this.id, this.name, this.phone, this.latitude, this.longitude, this.freeCancelHours,
+      {this.district, this.area, this.coverPhoto});
   final int id;
   final String name;
   final String? phone;
   final double? latitude;
   final double? longitude;
   final int freeCancelHours;
+  final String? district;
+  final String? area;
+  final String? coverPhoto;
 
   factory BookingShop.fromJson(Map<String, dynamic> j) => BookingShop(
         j['id'] as int,
@@ -330,6 +334,9 @@ class BookingShop {
         _double(j['latitude']),
         _double(j['longitude']),
         j['freeCancelHours'] as int? ?? 2,
+        district: j['district'] as String?,
+        area: j['area'] as String?,
+        coverPhoto: j['coverPhoto'] as String?,
       );
 }
 

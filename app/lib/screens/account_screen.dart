@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../api/owner_models.dart';
 import '../config.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
+import '../theme/app_theme.dart';
 import '../theme/colors.dart';
 import '../util/links.dart';
 import '../widgets/untrusted_device_card.dart';
@@ -91,119 +93,180 @@ class AccountScreenState extends State<AccountScreen> {
     final l = AppLocalizations.of(context);
     final services = AppScope.of(context);
     final user = services.session.user;
-    final shop = _shop;
-    return Scaffold(
-      appBar: AppBar(title: Text(l.tabAccount)),
-      body: RefreshIndicator(
-        onRefresh: refresh,
-        child: ListView(padding: const EdgeInsets.all(16), children: [
-          Card(
-            child: ListTile(
-              leading: const CircleAvatar(backgroundColor: AppColors.primarySoft, child: Icon(Icons.person_outline, color: AppColors.primary)),
-              title: Text(user?.name ?? l.tabAccount, style: const TextStyle(fontWeight: FontWeight.w600)),
-              // الرقم يُقرأ من اليسار لليمين لكنه يُحاذى مع بقية النص
-              subtitle: Text(user?.phone ?? l.notRegisteredAccount,
-                  textDirection: user == null ? null : TextDirection.ltr, textAlign: TextAlign.right),
-            ),
-          ),
-          if (user == null) ...[
-            const SizedBox(height: 8),
-            Text(l.signInHint, style: const TextStyle(color: AppColors.textMuted, height: 1.6)),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-              onPressed: _signIn,
-              icon: const Icon(Icons.login),
-              label: Text(l.signIn),
-            ),
-          ],
-          if (_trusted == false) ...[
-            const SizedBox(height: 16),
-            UntrustedDeviceCard(key: ValueKey(_trustRequested), requested: _trustRequested),
-          ],
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Row(children: [
-                  const Icon(Icons.storefront_outlined, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(shop == null ? l.haveShopTitle : shop.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-                Text(
-                  switch (shop?.status) {
-                    null => l.haveShopBody,
-                    ShopStatus.approved => l.shopApprovedTitle,
-                    ShopStatus.draft => l.shopStatusDraft,
-                    ShopStatus.underReview => l.underReviewTitle,
-                    ShopStatus.rejected => l.rejectedTitle,
-                    ShopStatus.suspended => l.suspendedTitle,
-                  },
-                  style: const TextStyle(color: AppColors.textMuted, height: 1.6),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.primary,
+        body: Column(
+          children: [
+            _header(l, user?.name, user?.phone),
+            Expanded(
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
                 ),
-                const SizedBox(height: 12),
-                if (shop?.status == ShopStatus.approved)
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                    onPressed: () => services.switchMode(AppMode.shop),
-                    icon: const Icon(Icons.swap_horiz),
-                    label: Text(l.switchToShop),
-                  )
-                else
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                    onPressed: _openShop,
-                    child: Text(switch (shop?.status) {
-                      null => l.startApplication,
-                      ShopStatus.draft => l.continueApplication,
-                      _ => l.openShopDetails,
-                    }),
-                  ),
-              ]),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
-              title: Text(l.privacyPolicy, style: const TextStyle(fontWeight: FontWeight.w600)),
-              trailing: const Icon(Icons.open_in_new, size: 20),
-              onTap: openPrivacyPolicy,
-            ),
-          ),
-          if (services.session.isRegistered) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.notifications_outlined, color: AppColors.primary),
-                title: Text(l.notificationSettingsTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
+                child: RefreshIndicator(
+                  onRefresh: refresh,
+                  child: ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 24), children: [
+                    if (user == null) ...[
+                      Text(l.signInHint, style: AppText.body.copyWith(height: 1.6)),
+                      const SizedBox(height: 10),
+                      FilledButton.icon(onPressed: _signIn, icon: const Icon(Icons.login), label: Text(l.signIn)),
+                      const SizedBox(height: 16),
+                    ],
+                    _shopCard(l, services),
+                    if (_trusted == false) ...[
+                      const SizedBox(height: 16),
+                      UntrustedDeviceCard(key: ValueKey(_trustRequested), requested: _trustRequested),
+                    ],
+                    const SizedBox(height: 8),
+                    if (services.session.isRegistered)
+                      _row(l.notificationSettingsTitle, Icons.notifications_outlined, () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()))),
+                    _row(l.privacyPolicy, Icons.privacy_tip_outlined, openPrivacyPolicy, external: true),
+                    if (services.session.isRegistered && _trusted != false)
+                      _row(l.deleteAccount, Icons.delete_outline,
+                          () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
+                          danger: true),
+                    const SizedBox(height: 24),
+                    Text(
+                      buildNumber.isEmpty ? l.appVersionLabel(appVersion) : l.appVersionBuildLabel(appVersion, buildNumber),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                  ]),
+                ),
               ),
             ),
-            const SizedBox(height: 32),
-            if (_trusted != false)
-            TextButton.icon(
-              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
-              icon: const Icon(Icons.delete_outline),
-              label: Text(l.deleteAccount),
-            ),
           ],
-          const SizedBox(height: 24),
-          Text(
-            buildNumber.isEmpty ? l.appVersionLabel(appVersion) : l.appVersionBuildLabel(appVersion, buildNumber),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-          ),
-        ]),
+        ),
       ),
     );
   }
+
+  /// الرأس البنفسجي: الصورة الرمزية والاسم والرقم
+  Widget _header(AppLocalizations l, String? name, String? phone) => SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                child: const Icon(Icons.person_outline, color: Colors.white, size: 34),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name ?? l.tabAccount,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(phone == null ? Icons.info_outline : Icons.call, size: 18, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        // الرقم يُقرأ من اليسار لليمين لكنه يُحاذى مع بقية النص
+                        child: Text(phone ?? l.notRegisteredAccount,
+                            textDirection: phone == null ? null : TextDirection.ltr,
+                            style: const TextStyle(fontSize: 15, color: Colors.white)),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  /// المحل: صاحب المحل المقبول يرى زر التبديل البرتقالي كما في التصميم، وغيره يرى حالة طلبه
+  Widget _shopCard(AppLocalizations l, AppServices services) {
+    final shop = _shop;
+    if (shop?.status == ShopStatus.approved) {
+      return Material(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => services.switchMode(AppMode.shop),
+          child: SizedBox(
+            height: 60,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(children: [
+                Expanded(
+                  child: Text(l.switchToShop,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+                const Icon(Icons.swap_vert, color: Colors.white, size: 28),
+              ]),
+            ),
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent, width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          const Icon(Icons.storefront_outlined, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Expanded(child: Text(shop == null ? l.haveShopTitle : shop.name, style: AppText.title)),
+        ]),
+        const SizedBox(height: 8),
+        Text(
+          switch (shop?.status) {
+            null => l.haveShopBody,
+            ShopStatus.approved => l.shopApprovedTitle,
+            ShopStatus.draft => l.shopStatusDraft,
+            ShopStatus.underReview => l.underReviewTitle,
+            ShopStatus.rejected => l.rejectedTitle,
+            ShopStatus.suspended => l.suspendedTitle,
+          },
+          style: AppText.body.copyWith(height: 1.6),
+        ),
+        const SizedBox(height: 12),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size.fromHeight(48)),
+          onPressed: _openShop,
+          child: Text(switch (shop?.status) {
+            null => l.startApplication,
+            ShopStatus.draft => l.continueApplication,
+            _ => l.openShopDetails,
+          }),
+        ),
+      ]),
+    );
+  }
+
+  Widget _row(String title, IconData icon, VoidCallback onTap, {bool danger = false, bool external = false}) => InkWell(
+        onTap: onTap,
+        child: Container(
+          height: 60,
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(children: [
+            Icon(icon, color: danger ? AppColors.danger : AppColors.primary, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(title,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: danger ? AppColors.danger : AppColors.primary)),
+            ),
+            Icon(external ? Icons.open_in_new : Icons.chevron_right, size: 20, color: AppColors.primaryMuted),
+          ]),
+        ),
+      );
 }

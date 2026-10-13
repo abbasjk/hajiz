@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
 import '../state/push.dart';
+import '../theme/app_theme.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
 import '../widgets/common.dart';
@@ -124,7 +126,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> with RefreshO
     final l = AppLocalizations.of(context);
     final items = _items;
     return Scaffold(
-      appBar: AppBar(title: Text(l.notificationsTitle)),
+      appBar: AppBar(
+        title: Text(l.notificationsTitle, style: AppText.headline.copyWith(color: Colors.white)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+      ),
       body: items == null
           ? LoadState(error: _error, onRetry: _load)
           : RefreshIndicator(
@@ -135,9 +142,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with RefreshO
                       Center(child: Text(l.noNotifications, style: const TextStyle(color: AppColors.textMuted))),
                     ])
                   : ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(16),
                       itemCount: items.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, i) => _tile(l, items[i]),
                     ),
             ),
@@ -145,16 +152,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> with RefreshO
   }
 
   Widget _tile(AppLocalizations l, AppNotification n) {
-    return ListTile(
-      tileColor: n.read ? null : AppColors.primarySoft.withValues(alpha: 0.5),
-      leading: CircleAvatar(
-        backgroundColor: n.read ? AppColors.border : AppColors.primarySoft,
-        child: Icon(_icon(n.type), color: AppColors.primary, size: 20),
+    return Material(
+      color: n.read ? AppColors.surface : AppColors.primarySoft,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.base),
+        side: BorderSide(color: n.read ? AppColors.border : AppColors.primarySoft),
       ),
-      title: Text(n.title, style: TextStyle(fontWeight: n.read ? FontWeight.w500 : FontWeight.w700)),
-      subtitle: Text(n.body, style: const TextStyle(height: 1.5)),
-      trailing: Text(_ago(l, n.createdAt), style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-      onTap: n.bookingId == null ? null : () => _open(n),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.base),
+        onTap: n.bookingId == null ? null : () => _open(n),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: n.read ? AppColors.primarySoft : AppColors.primary, shape: BoxShape.circle),
+                child: Icon(_icon(n.type), color: n.read ? AppColors.primary : Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(
+                        child: Text(n.title,
+                            style: TextStyle(fontSize: 16, fontWeight: n.read ? FontWeight.w500 : FontWeight.w700, color: AppColors.text)),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(_ago(l, n.createdAt), style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(n.body, style: AppText.body.copyWith(height: 1.5)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

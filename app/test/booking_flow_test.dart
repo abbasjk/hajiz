@@ -127,21 +127,19 @@ void main() {
     await tester.tap(find.text('احجز موعداً'));
     await tester.pumpAndSettle();
 
-    // الخطوة 1: خدمتان، تُجمع المدة والسعر
+    // شاشة الحجز: خدمتان تُجمع مدتهما وسعرهما، ثم الأوقات المتاحة بتوقيت بغداد
     await tester.tap(find.text('حلاقة شعر'));
-    await tester.tap(find.text('تهذيب لحية'));
-    await tester.pump();
-    expect(find.text('خدمتان · 45 دقيقة'), findsOneWidget);
-    expect(find.text('المجموع: 15,000 د.ع'), findsOneWidget);
-    await tester.tap(find.text('التالي'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('تهذيب لحية'));
+    await tester.pumpAndSettle();
+    expect(find.text('خدمتان · 45 دقيقة'), findsOneWidget);
+    expect(find.text('15,000 د.ع'), findsOneWidget);
 
-    // الخطوة 2: الأوقات المتاحة فقط، بتوقيت بغداد
     final slotRequest = server.requests.lastWhere((r) => r.url.path.endsWith('/slots'));
     expect(slotRequest.url.queryParameters['services'], '11,12');
     await tester.tap(find.byType(OutlinedButton).first);
     await tester.pump();
-    await tester.tap(find.text('التالي'));
+    await tester.tap(find.text('تأكيد الموعد'));
     await tester.pumpAndSettle();
 
     // الخطوة 3: الاسم والرقم عند أول حجز، والمحل يرد خلال ساعة (موعد الغد)

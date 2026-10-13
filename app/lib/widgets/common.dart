@@ -267,3 +267,77 @@ void showError(BuildContext context, Object error) {
 
 /// اسم الزبون عند صاحب المحل؛ من حذف حسابه يظهر "حساب محذوف"
 String customerName(AppLocalizations l, BookingCustomer c) => c.deleted ? l.deletedCustomer : c.name;
+
+/// مراحل الحجز الأربع كما في التصميم: أيقونة، ثم خط برتقالي يتقدم مع نقاط، ثم اسم المرحلة
+class BookingStages extends StatelessWidget {
+  const BookingStages({super.key, required this.current});
+  final int current; // 0..3
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    const icons = [Icons.event_note_outlined, Icons.timer_outlined, Icons.event_available_outlined, Icons.verified_outlined];
+    final labels = [l.stageBooked, l.stageWaiting, l.stageConfirmed, l.stageDone];
+    return Row(
+      children: [
+        for (var i = 0; i < 4; i++)
+          Expanded(
+            child: Column(
+              children: [
+                Icon(icons[i], color: AppColors.primary, size: 26),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 18,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Row(children: [
+                        Expanded(child: _line(i <= current)),
+                        Expanded(child: _line(i < current)),
+                      ]),
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            width: 3,
+                            color: i == current ? AppColors.primary : (i < current ? AppColors.accent : AppColors.primarySoft),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Container(
+                    height: 30,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: i <= current ? AppColors.primary : AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(labels[i],
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: i <= current ? Colors.white : AppColors.primaryMuted,
+                          )),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _line(bool done) => Container(height: 6, color: done ? AppColors.accent : AppColors.primarySoft);
+}

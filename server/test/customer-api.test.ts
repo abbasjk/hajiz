@@ -202,6 +202,8 @@ describe('customer bookings over the API', () => {
   it('lists my bookings with the server time for the countdown', async () => {
     const res = await call('GET', '/v1/me/bookings', { token });
     expect(res.json().bookings).toHaveLength(1);
+    // بطاقة المحل في صفحة الحجز: المنطقة وصورة الواجهة
+    expect(Object.keys(res.json().bookings[0].shop)).toEqual(expect.arrayContaining(['district', 'area', 'coverPhoto']));
     expect(Date.parse(res.json().serverTime)).not.toBeNaN();
   });
 

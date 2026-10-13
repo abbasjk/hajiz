@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../api/api_client.dart';
 import '../../api/models.dart';
 import '../../api/owner_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../state/app_scope.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
@@ -249,26 +251,50 @@ class _OwnerDashboardState extends State<OwnerDashboard> with RefreshOnPush {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final now = AppScope.of(context).client.serverNow;
+    final remaining = _today?.where((b) => b.status == BookingStatus.confirmed && b.endsAt.isAfter(now)).length;
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 64,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         actions: [
-          const NotificationsBell(audience: 'shop'),
+          const NotificationsBell(audience: 'shop', onDark: true),
           TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
             onPressed: () => AppScope.of(context).switchMode(AppMode.customer),
             icon: const Icon(Icons.swap_horiz),
             label: Text(l.customerModeShort),
           ),
         ],
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(formatDayLong(l, now), style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w400)),
-          Text(widget.shop.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(formatDayLong(l, now), style: const TextStyle(fontSize: 13, color: AppColors.onPrimaryMuted, fontWeight: FontWeight.w400)),
+          Text(widget.shop.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
-        child: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: [
+        child: ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 24), children: [
           const PushOffBanner(forShop: true),
+          // بطاقات الأرقام كما في لوحة صاحب العمل في التصميم
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.75,
+            children: [
+              _stat('${_pending?.length ?? '–'}', l.statPending, Icons.hourglass_top_rounded),
+              _stat('${_today?.length ?? '–'}', l.statToday, Icons.event_note_outlined),
+              _stat('${remaining ?? '–'}', l.statRemaining, Icons.schedule),
+              _stat('${widget.shop.services.length}', l.statServices, Icons.content_cut),
+            ],
+          ),
+          const SizedBox(height: 20),
           if (_pending == null)
             SizedBox(height: 200, child: LoadState(error: _error, onRetry: _load))
           else ...[
@@ -283,6 +309,35 @@ class _OwnerDashboardState extends State<OwnerDashboard> with RefreshOnPush {
       ),
     );
   }
+
+  Widget _stat(String value, String label, IconData icon) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.base),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.primaryBright)),
+                  Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.body),
+                ],
+              ),
+            ),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+              child: Icon(icon, color: AppColors.primary, size: 22),
+            ),
+          ],
+        ),
+      );
 
   Widget _header(String title, {int? badge, String? trailing}) => Padding(
         padding: const EdgeInsets.only(bottom: 10, top: 4),
