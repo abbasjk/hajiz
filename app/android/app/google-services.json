@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "400315763349",
+    "project_id": "hajiz-app-b9b79",
+    "storage_bucket": "hajiz-app-b9b79.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400315763349:android:8f52e5b5062054ab2ae99c",
+        "android_client_info": {
+          "package_name": "iq.hajiz.hajiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5ZCriD6eJ0CUhM5lW0N1Ron5vxe8ZJ4g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
