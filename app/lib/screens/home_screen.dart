@@ -261,15 +261,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final l = AppLocalizations.of(context);
     final config = _config;
     return Scaffold(
-      // زر عائم قريب من الإبهام يبدّل بين القائمة والخريطة
+      // على الخريطة فقط: زر عائم للعودة إلى القائمة. في القائمة قسم "البحث على الخريطة" يفتحها
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: config == null
+      floatingActionButton: config == null || !_mapView
           ? null
           : FloatingActionButton.extended(
               heroTag: 'map-toggle',
-              onPressed: () => _set(() => _mapView = !_mapView),
-              icon: Icon(_mapView ? Icons.view_list_outlined : Icons.map_outlined),
-              label: Text(_mapView ? l.showList : l.showMap),
+              onPressed: () => _set(() => _mapView = false),
+              icon: const Icon(Icons.view_list_outlined),
+              label: Text(l.showList),
             ),
       body: SafeArea(
         bottom: false,
@@ -289,8 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : RefreshIndicator(
                 onRefresh: _refresh,
                 child: ListView(
-                  // مسافة في الأسفل حتى لا يغطي زر الخريطة آخر محل
-                  padding: const EdgeInsets.only(bottom: 96),
+                  padding: const EdgeInsets.only(bottom: 32),
                   children: [
                     _header(l, config),
                     ..._content(l),
@@ -718,12 +717,17 @@ class DetailsButton extends StatelessWidget {
         child: InkWell(
           customBorder: const RoundedRectangleBorder(borderRadius: radius),
           onTap: onPressed,
-          child: Container(
+          // بعرض النص فقط، لا يتمدد على عرض الصف
+          child: SizedBox(
             height: height,
-            padding: EdgeInsets.symmetric(horizontal: padding),
-            alignment: Alignment.center,
-            child: Text(AppLocalizations.of(context).providerDetails,
-                style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, color: Colors.white)),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: padding),
+              child: Center(
+                widthFactor: 1,
+                child: Text(AppLocalizations.of(context).providerDetails,
+                    style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, color: Colors.white)),
+              ),
+            ),
           ),
         ),
       ),
