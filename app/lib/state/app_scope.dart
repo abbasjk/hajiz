@@ -143,9 +143,12 @@ class AppServices {
   }
 
   /// يسجل الرقم والاسم والجهاز عند أول حجز
-  Future<void> ensureRegistered(String name, String phone, {String? code}) async {
+  Future<void> ensureRegistered(String name, String phone, {String? code, String? gender}) async {
     if (session.isRegistered) return;
-    final r = await api.register(name, phone, session.deviceId, code: code);
+    final r = await api.register(name, phone, session.deviceId, code: code, gender: gender);
+    // السيدة ترى الصالونات النسائية أولاً
+    final g = r.user.gender ?? gender;
+    if (g != null) await session.saveAudience(g == 'female' ? 'women' : 'men');
     await session.saveRegistration(r.token, r.user);
     client.token = r.token;
     unawaited(syncPushToken());

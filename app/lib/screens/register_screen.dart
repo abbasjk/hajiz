@@ -5,6 +5,7 @@ import '../theme/colors.dart';
 import '../util/links.dart';
 import '../util/phone.dart';
 import '../widgets/common.dart';
+import '../widgets/gender_field.dart';
 import '../widgets/phone_code.dart';
 
 /// الاسم ورقم الهاتف؛ الرقم نفسه للحجز ولإدارة المحل
@@ -20,6 +21,7 @@ class _RegisterFormState extends State<RegisterForm> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _phone = TextEditingController();
+  String? _gender;
   bool _busy = false;
 
   @override
@@ -34,7 +36,7 @@ class _RegisterFormState extends State<RegisterForm> {
     setState(() => _busy = true);
     try {
       // رمز التحقق إن كان الخادم يطلبه، ثم التسجيل
-      final ok = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text)!);
+      final ok = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text)!, gender: _gender);
       if (ok) widget.onRegistered();
     } catch (e) {
       if (mounted) showError(context, e);
@@ -67,6 +69,8 @@ class _RegisterFormState extends State<RegisterForm> {
           decoration: InputDecoration(labelText: l.phoneLabel, hintText: l.phoneHint),
           validator: (v) => normalizeIraqiPhone(v ?? '') == null ? l.phoneInvalid : null,
         ),
+        const SizedBox(height: 14),
+        GenderField(onChanged: (v) => _gender = v),
         const SizedBox(height: 16),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size.fromHeight(54)),

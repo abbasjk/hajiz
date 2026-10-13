@@ -427,15 +427,18 @@ class Booking {
 }
 
 class RegisteredUser {
-  const RegisteredUser(this.id, this.name, this.phone);
+  const RegisteredUser(this.id, this.name, this.phone, [this.gender]);
   final int id;
   final String name;
   final String phone;
 
-  factory RegisteredUser.fromJson(Map<String, dynamic> j) =>
-      RegisteredUser(j['id'] as int, j['name'] as String, j['phone'] as String);
+  /// male أو female
+  final String? gender;
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'phone': phone};
+  factory RegisteredUser.fromJson(Map<String, dynamic> j) =>
+      RegisteredUser(j['id'] as int, j['name'] as String, j['phone'] as String, j['gender'] as String?);
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'phone': phone, 'gender': gender};
 }
 
 /// إشعار داخل التطبيق؛ النص يكتبه الخادم (النص نفسه الذي وصل للهاتف)

@@ -8,13 +8,14 @@ export interface RegisterInput {
   name: string;
   phone: string; // موحّد مسبقاً
   deviceIdentifier: string;
+  gender?: 'male' | 'female';
   /** أثبت الرقم برمز تحقق: هذا الهاتف موثوق مباشرة */
   phoneVerified?: boolean;
 }
 
 export interface RegisterResult {
   token: string;
-  user: { id: number; name: string; phone: string };
+  user: { id: number; name: string; phone: string; gender: string | null };
   trustedDevice: boolean;
 }
 
@@ -28,23 +29,30 @@ export interface RegisterResult {
  */
 export async function registerDevice(pool: Pool, input: RegisterInput): Promise<RegisterResult> {
   return withTransaction(pool, async (tx) => {
-    const existing = await tx.query<{ id: number; name: string; deleted_at: Date | null; banned_at: Date | null }>(
-      'SELECT id, name, deleted_at, banned_at FROM users WHERE phone = $1 FOR UPDATE',
+    const existing = await tx.query<{ id: number; name: string; gender: string | null; deleted_at: Date | null; banned_at: Date | null }>(
+      'SELECT id, name, gender, deleted_at, banned_at FROM users WHERE phone = $1 FOR UPDATE',
       [input.phone],
     );
     let user = existing.rows[0];
     if (user?.banned_at) throw new AppError(403, 'not_allowed');
     if (!user) {
       const { rows } = await tx.query(
-        'INSERT INTO users (phone, name) VALUES ($1, $2) RETURNING id, name, deleted_at, banned_at',
-        [input.phone, input.name],
+        'INSERT INTO users (phone, name, gender) VALUES ($1, $2, $3) RETURNING id, name, gender, deleted_at, banned_at',
+        [input.phone, input.name, input.gender ?? null],
       );
       user = rows[0];
     } else if (user.deleted_at) {
       // حساب محذوف يعود بالرقم نفسه؛ سجل الالتزام باقٍ لأنه مربوط بالرقم
       const { rows } = await tx.query(
-        'UPDATE users SET deleted_at = NULL, name = $2 WHERE id = $1 RETURNING id, name, deleted_at, banned_at',
-        [user.id, input.name],
+        'UPDATE users SET deleted_at = NULL, name = $2, gender = coalesce($3, gender) WHERE id = $1 RETURNING id, name, gender, deleted_at, banned_at',
+        [user.id, input.name, input.gender ?? null],
+      );
+      user = rows[0];
+    } else if (input.gender && !user.gender) {
+      // حساب قديم بلا جنس: يُكمل عند الدخول من جديد
+      const { rows } = await tx.query(
+        'UPDATE users SET gender = $2 WHERE id = $1 RETURNING id, name, gender, deleted_at, banned_at',
+        [user.id, input.gender],
       );
       user = rows[0];
     }
@@ -66,7 +74,7 @@ export async function registerDevice(pool: Pool, input: RegisterInput): Promise<
       );
     }
     const trustedDevice = await isTrustedDevice(tx, user!.id, rows[0]!.id);
-    return { token, user: { id: user!.id, name: user!.name, phone: input.phone }, trustedDevice };
+    return { token, user: { id: user!.id, name: user!.name, phone: input.phone, gender: user!.gender ?? null }, trustedDevice };
   });
 }
 

@@ -158,6 +158,9 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextFormField, 'الاسم'), 'حسن');
     await tester.enterText(find.widgetWithText(TextFormField, 'رقم الهاتف'), '0770 123 4567');
+    await tester.ensureVisible(find.text('ذكر'));
+    await tester.tap(find.text('ذكر'));
+    await tester.pump();
     await tester.tap(find.text('إرسال طلب الحجز'));
     await tester.tap(find.text('إرسال طلب الحجز'), warnIfMissed: false); // ضغطة ثانية سريعة
     await tester.pump();
@@ -165,6 +168,7 @@ void main() {
 
     final register = server.requests.firstWhere((r) => r.url.path == '/v1/auth/register');
     expect(jsonDecode(register.body)['phone'], '07701234567');
+    expect(jsonDecode(register.body)['gender'], 'male');
     expect(server.bookingPosts, 1);
     final post = server.requests.firstWhere((r) => r.url.path == '/v1/bookings');
     expect(post.headers['idempotency-key'], isNotEmpty);
@@ -214,6 +218,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, 'الاسم'), 'حسن');
     await tester.enterText(find.widgetWithText(TextFormField, 'رقم الهاتف'), '07701234567');
+    await tester.ensureVisible(find.text('ذكر'));
+    await tester.tap(find.text('ذكر'));
+    await tester.pump();
     await tester.tap(find.text('متابعة'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

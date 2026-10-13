@@ -749,5 +749,9 @@
   "serviceCategoryLabel": "نوع الخدمة",
   "serviceCategoryHint": "يظهر محلك في هذا القسم من رئيسية الزبون.",
   "audienceMen": "رجالي",
-  "audienceWomen": "نسائي"
+  "audienceWomen": "نسائي",
+  "genderLabel": "الجنس",
+  "genderMale": "ذكر",
+  "genderFemale": "أنثى",
+  "genderRequired": "اختر الجنس"
 }

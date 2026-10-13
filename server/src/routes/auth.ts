@@ -12,6 +12,7 @@ const body = z.object({
   phone: z.string().max(30),
   deviceIdentifier: z.string().min(8).max(100),
   code: z.string().regex(/^\d{6}$/).optional(),
+  gender: z.enum(['male', 'female']).optional(),
 });
 
 const codeBody = z.object({ phone: z.string().max(30) });
@@ -44,7 +45,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/me', { onRequest: requireAuth(app.pool) }, async (request) => {
     const auth = authOf(request);
     const { rows } = await app.pool.query(
-      `SELECT u.id, u.name, u.phone, d.trust_requested_at IS NOT NULL AS "trustRequested"
+      `SELECT u.id, u.name, u.phone, u.gender, d.trust_requested_at IS NOT NULL AS "trustRequested"
        FROM users u JOIN devices d ON d.id = $2 WHERE u.id = $1`,
       [auth.userId, auth.deviceId],
     );

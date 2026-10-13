@@ -14,26 +14,27 @@ import 'common.dart';
 /// التسجيل بالاسم والرقم: إذا كان الخادم يطلب رمز تحقق تُفتح شاشة الرمز،
 /// وإلا يُسجَّل مباشرة. يعيد true عند نجاح التسجيل.
 /// أخطاء طلب الرمز الأول (الشبكة، الحدود) تُرمى للمستدعي ليعرضها.
-Future<bool> registerWithCode(BuildContext context, String name, String phone) async {
+Future<bool> registerWithCode(BuildContext context, String name, String phone, {String? gender}) async {
   final services = AppScope.of(context);
   if (services.session.isRegistered) return true;
   final required = await services.api.requestCode(phone);
   if (!required) {
-    await services.ensureRegistered(name, phone);
+    await services.ensureRegistered(name, phone, gender: gender);
     return true;
   }
   if (!context.mounted) return false;
   final ok = await Navigator.of(context).push<bool>(
-    MaterialPageRoute(builder: (_) => PhoneCodeScreen(name: name, phone: phone)),
+    MaterialPageRoute(builder: (_) => PhoneCodeScreen(name: name, phone: phone, gender: gender)),
   );
   return ok == true;
 }
 
 /// إدخال رمز التحقق: ستة أرقام، يُرسل تلقائياً عند اكتمالها، وإعادة إرسال بعد دقيقة
 class PhoneCodeScreen extends StatefulWidget {
-  const PhoneCodeScreen({super.key, required this.name, required this.phone});
+  const PhoneCodeScreen({super.key, required this.name, required this.phone, this.gender});
   final String name;
   final String phone;
+  final String? gender;
 
   @override
   State<PhoneCodeScreen> createState() => _PhoneCodeScreenState();
@@ -80,7 +81,7 @@ class _PhoneCodeScreenState extends State<PhoneCodeScreen> {
     final services = AppScope.of(context);
     setState(() => (_busy = true, _error = null));
     try {
-      await services.ensureRegistered(widget.name, widget.phone, code: code);
+      await services.ensureRegistered(widget.name, widget.phone, code: code, gender: widget.gender);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;

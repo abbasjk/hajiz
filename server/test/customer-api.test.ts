@@ -93,6 +93,22 @@ describe('registration at first booking', () => {
     expect(second.trustedDevice).toBe(true);
   });
 
+  it('saves the gender, fills it for an older account, and rejects other values', async () => {
+    const reg = (phone: string, device: string, gender?: string) =>
+      call('POST', '/v1/auth/register', { body: { name: 'زهراء', phone, deviceIdentifier: device, gender }, key: null });
+    const first = await reg('07710000071', 'device-gender-1', 'female');
+    expect(first.json().user.gender).toBe('female');
+    expect((await call('GET', '/v1/me', { token: first.json().token })).json().user.gender).toBe('female');
+
+    const older = await reg('07710000072', 'device-gender-2');
+    expect(older.json().user.gender).toBeNull();
+    expect((await reg('07710000072', 'device-gender-2', 'male')).json().user.gender).toBe('male');
+    // لا يتغير بعد ضبطه
+    expect((await reg('07710000072', 'device-gender-2', 'female')).json().user.gender).toBe('male');
+
+    expect((await reg('07710000073', 'device-gender-3', 'other')).statusCode).toBe(400);
+  });
+
   it('rejects an invalid phone', async () => {
     const res = await call('POST', '/v1/auth/register', {
       body: { name: 'حسن', phone: '12345', deviceIdentifier: 'device-bad-phone' }, key: null,

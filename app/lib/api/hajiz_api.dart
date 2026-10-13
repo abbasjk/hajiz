@@ -47,12 +47,13 @@ class HajizApi {
     return json['required'] == true;
   }
 
-  Future<({String token, RegisteredUser user})> register(String name, String phone, String deviceId, {String? code}) async {
+  Future<({String token, RegisteredUser user})> register(String name, String phone, String deviceId, {String? code, String? gender}) async {
     final json = await client.post('/auth/register', body: {
       'name': name,
       'phone': phone,
       'deviceIdentifier': deviceId,
       'code': ?code,
+      'gender': ?gender,
     });
     return (token: json['token'] as String, user: RegisteredUser.fromJson(json['user'] as Map<String, dynamic>));
   }

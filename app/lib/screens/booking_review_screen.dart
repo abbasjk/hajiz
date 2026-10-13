@@ -9,6 +9,7 @@ import '../util/deadline.dart';
 import '../util/format.dart';
 import '../util/phone.dart';
 import '../widgets/common.dart';
+import '../widgets/gender_field.dart';
 import '../widgets/phone_code.dart';
 import 'booking_detail_screen.dart';
 import 'booking_draft.dart';
@@ -28,6 +29,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   final _note = TextEditingController();
   final _name = TextEditingController();
   final _phone = TextEditingController();
+  String? _gender;
 
   /// مفتاح واحد لهذه المحاولة: الضغط مرتين أو إعادة الإرسال لا يُنشئ حجزين
   final _idempotencyKey = newIdempotencyKey();
@@ -63,7 +65,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     setState(() => _sending = true);
     try {
       // أول حجز: رمز التحقق إن كان مطلوباً، ثم التسجيل
-      final registered = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text) ?? _phone.text);
+      final registered = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text) ?? _phone.text,
+          gender: _gender);
       if (!registered) {
         if (mounted) setState(() => _sending = false);
         return;
@@ -159,6 +162,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                               decoration: InputDecoration(labelText: l.phoneLabel, hintText: l.phoneHint),
                               validator: (v) => normalizeIraqiPhone(v ?? '') == null ? l.phoneInvalid : null,
                             ),
+                            const SizedBox(height: 12),
+                            GenderField(onChanged: (v) => _gender = v),
                           ],
                         ),
                       ),
