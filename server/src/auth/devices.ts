@@ -8,6 +8,8 @@ export interface RegisterInput {
   name: string;
   phone: string; // موحّد مسبقاً
   deviceIdentifier: string;
+  /** أثبت الرقم برمز تحقق: هذا الهاتف موثوق مباشرة */
+  phoneVerified?: boolean;
 }
 
 export interface RegisterResult {
@@ -17,7 +19,8 @@ export interface RegisterResult {
 }
 
 /**
- * التسجيل عند أول حجز: الرقم فريد ولا يوجد رمز تحقق.
+ * التسجيل عند أول حجز أو أول دخول. الرقم فريد.
+ * - برمز تحقق (حين تكون خدمة الرموز مُعدّة): الهاتف موثوق مباشرة أياً كان.
  * - رقم جديد: يُحفظ الرقم والاسم والجهاز معاً، وهذا الجهاز موثوق.
  * - رقم موجود من جهاز آخر: يُسمح، لكن الجهاز الجديد غير موثوق حتى يؤكده صاحب محل بالاتصال،
  *   ولا يُستبدل الاسم المحفوظ.
@@ -54,6 +57,14 @@ export async function registerDevice(pool: Pool, input: RegisterInput): Promise<
        RETURNING id`,
       [user!.id, input.deviceIdentifier, hashToken(token)],
     );
+    if (input.phoneVerified) {
+      await tx.query(
+        `UPDATE devices SET phone_verified_at = now(), verified_by_call_at = coalesce(verified_by_call_at, now()),
+                            trust_requested_at = NULL, trust_request_note = NULL
+         WHERE id = $1`,
+        [rows[0]!.id],
+      );
+    }
     const trustedDevice = await isTrustedDevice(tx, user!.id, rows[0]!.id);
     return { token, user: { id: user!.id, name: user!.name, phone: input.phone }, trustedDevice };
   });

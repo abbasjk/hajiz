@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
-import '../state/app_scope.dart';
 import '../theme/colors.dart';
 import '../util/links.dart';
 import '../util/phone.dart';
 import '../widgets/common.dart';
+import '../widgets/phone_code.dart';
 
 /// الاسم ورقم الهاتف؛ الرقم نفسه للحجز ولإدارة المحل
 class RegisterForm extends StatefulWidget {
@@ -33,8 +33,9 @@ class _RegisterFormState extends State<RegisterForm> {
     if (_busy || !(_form.currentState?.validate() ?? false)) return;
     setState(() => _busy = true);
     try {
-      await AppScope.of(context).ensureRegistered(_name.text.trim(), normalizeIraqiPhone(_phone.text)!);
-      widget.onRegistered();
+      // رمز التحقق إن كان الخادم يطلبه، ثم التسجيل
+      final ok = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text)!);
+      if (ok) widget.onRegistered();
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {

@@ -5,6 +5,7 @@ import { seedDemoShop } from './db/demo.js';
 import { createPool } from './db/pool.js';
 import { loadEnv } from './env.js';
 import { createFcmSender } from './notify/sender.js';
+import { createOtpiqSender } from './auth/codes.js';
 import { bootstrapAdmin } from './admin/bootstrap.js';
 
 const env = loadEnv();
@@ -15,7 +16,8 @@ const demoCreated = env.SEED_DEMO ? await seedDemoShop(pool) : false;
 const adminCreated = await bootstrapAdmin(pool, env.ADMIN_INITIAL_USERNAME, env.ADMIN_INITIAL_PASSWORD);
 // بدون مفتاح Firebase تُحفظ الإشعارات وتظهر داخل التطبيق فقط
 const sender = env.FIREBASE_SERVICE_ACCOUNT ? await createFcmSender(env.FIREBASE_SERVICE_ACCOUNT) : undefined;
-const app = await buildApp({ pool, logLevel: env.LOG_LEVEL, sender });
+const codeSender = env.OTPIQ_API_KEY ? createOtpiqSender(env.OTPIQ_API_KEY, env.OTPIQ_PROVIDER) : undefined;
+const app = await buildApp({ pool, logLevel: env.LOG_LEVEL, sender, codeSender });
 const stopJobs = startScheduler(pool, app.log, app.notifier);
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
@@ -33,4 +35,5 @@ if (adminCreated === 'created') app.log.info('First admin account created; remov
 if (adminCreated === 'password_too_short') app.log.warn('ADMIN_INITIAL_PASSWORD must be at least 10 characters; admin account not created');
 if (adminCreated === 'invalid_username') app.log.warn('ADMIN_INITIAL_USERNAME must be 3 to 60 characters; admin account not created');
 app.log.info(sender ? 'Push notifications: Firebase' : 'Push notifications: not configured (in-app only)');
+app.log.info(codeSender ? `Phone codes: on (${env.OTPIQ_PROVIDER})` : 'Phone codes: off (registration without a code)');
 await app.listen({ port: env.PORT, host: env.HOST });

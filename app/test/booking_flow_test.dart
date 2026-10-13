@@ -18,6 +18,7 @@ class FakeServer {
   String bookingStatus = 'pending_shop';
   int bookingPosts = 0;
   int? failWith;
+  bool requireCode = false;
 
   final slot = DateTime.now().toUtc().add(const Duration(days: 1));
   DateTime get deadline => DateTime.now().toUtc().add(const Duration(minutes: 42));
@@ -80,6 +81,8 @@ class FakeServer {
       };
     } else if (path == '/v1/shops/1/slots') {
       body = {'slots': [slot.toIso8601String()]};
+    } else if (path == '/v1/auth/code') {
+      body = {'required': requireCode};
     } else if (path == '/v1/auth/register') {
       body = {'token': 'tok', 'user': {'id': 9, 'name': 'حسن', 'phone': '07701234567'}, 'trustedDevice': true};
     } else if (path == '/v1/bookings' && r.method == 'POST') {
@@ -178,6 +181,37 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('ألغيته'), findsWidgets);
     expect(server.requests.where((r) => r.url.path == '/v1/bookings/5/cancel'), hasLength(1));
+  });
+
+  testWidgets('signs in with a code when the server asks for one', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+    final (server, services) = await startApp(tester);
+    server.requireCode = true;
+
+    await tester.tap(find.widgetWithText(NavigationDestination, 'حسابي'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('سجّل برقمك'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'الاسم'), 'حسن');
+    await tester.enterText(find.widgetWithText(TextFormField, 'رقم الهاتف'), '07701234567');
+    await tester.tap(find.text('متابعة'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // شاشة الرمز: ستة أرقام تُرسل تلقائياً
+    expect(find.text('رمز التحقق'), findsOneWidget);
+    expect(server.requests.where((r) => r.url.path == '/v1/auth/register'), isEmpty);
+    await tester.enterText(find.byType(TextField).last, '123456');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final register = server.requests.firstWhere((r) => r.url.path == '/v1/auth/register');
+    expect(jsonDecode(register.body)['code'], '123456');
+    expect(services.session.isRegistered, isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('رمز التحقق'), findsNothing);
   });
 
   testWidgets('shows the update screen when the server requires a newer version', (tester) async {

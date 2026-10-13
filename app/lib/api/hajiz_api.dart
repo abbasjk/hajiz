@@ -39,8 +39,19 @@ class HajizApi {
     return [for (final s in json['slots'] as List) DateTime.parse(s as String).toUtc()];
   }
 
-  Future<({String token, RegisteredUser user})> register(String name, String phone, String deviceId) async {
-    final json = await client.post('/auth/register', body: {'name': name, 'phone': phone, 'deviceIdentifier': deviceId});
+  /// يطلب رمز تحقق للرقم؛ false إذا لم يكن الخادم يطلب رمزاً
+  Future<bool> requestCode(String phone) async {
+    final json = await client.post('/auth/code', body: {'phone': phone});
+    return json['required'] == true;
+  }
+
+  Future<({String token, RegisteredUser user})> register(String name, String phone, String deviceId, {String? code}) async {
+    final json = await client.post('/auth/register', body: {
+      'name': name,
+      'phone': phone,
+      'deviceIdentifier': deviceId,
+      if (code != null) 'code': code,
+    });
     return (token: json['token'] as String, user: RegisteredUser.fromJson(json['user'] as Map<String, dynamic>));
   }
 

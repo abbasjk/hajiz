@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { LoginLimiter } from '../admin/auth.js';
 import { AppError } from '../lib/errors.js';
+import { clientIp } from '../lib/ip.js';
 import { normalizeIraqiPhone } from '../lib/phone.js';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
@@ -33,16 +34,6 @@ const requestBody = z.object({
   website: z.string().max(200).optional(),
 });
 
-/**
- * عنوان الزائر: خلف وكيل المنصة يضيف الوكيل عنوان الزائر في آخر الترويسة،
- * فنأخذ الأخير لا الأول (الأول يستطيع الزائر تزويره).
- */
-function clientIp(request: FastifyRequest): string {
-  const header = request.headers['x-forwarded-for'];
-  const value = Array.isArray(header) ? header.join(',') : header;
-  const last = value?.split(',').map((x) => x.trim()).filter(Boolean).pop();
-  return last || request.ip;
-}
 
 /**
  * الصفحات العامة: سياسة الخصوصية، وطلب حذف الحساب.

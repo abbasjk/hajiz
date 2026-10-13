@@ -46,6 +46,7 @@ class ServerConfig {
     required this.areas,
     required this.shopDeadlineModes,
     required this.maxPending,
+    this.phoneVerification = false,
   });
 
   final List<BusinessType> businessTypes;
@@ -53,6 +54,9 @@ class ServerConfig {
   final List<Area> areas;
   final Map<String, DeadlineTable> shopDeadlineModes;
   final int maxPending;
+
+  /// التسجيل يحتاج رمز تحقق يصل إلى الرقم
+  final bool phoneVerification;
 
   factory ServerConfig.fromJson(Map<String, dynamic> j) {
     final settings = j['settings'] as Map<String, dynamic>;
@@ -63,6 +67,7 @@ class ServerConfig {
       areas: [for (final a in j['areas'] as List) Area.fromJson(a)],
       shopDeadlineModes: modes.map((k, v) => MapEntry(k, DeadlineTable.fromJson(v))),
       maxPending: (settings['max_pending_requests_per_customer'] as num).toInt(),
+      phoneVerification: j['phoneVerification'] == true,
     );
   }
 }

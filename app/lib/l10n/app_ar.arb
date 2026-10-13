@@ -731,5 +731,19 @@
   "onboardBody3": "افتح محلك في حجز، ونظّم مواعيد زبائنك من هاتفك.",
   "onboardSkip": "تخطَّ",
   "onboardStart": "ابدأ الآن",
-  "signInWelcome": "أهلاً بك"
+  "signInWelcome": "أهلاً بك",
+  "codeTitle": "رمز التحقق",
+  "codeSentTo": "أرسلنا رمزاً من ستة أرقام إلى {phone} عبر الواتساب، أو برسالة قصيرة إن لم يكن على الرقم واتساب.",
+  "@codeSentTo": {"placeholders": {"phone": {"type": "String"}}},
+  "codeConfirm": "تأكيد",
+  "codeResend": "أعد إرسال الرمز",
+  "codeResendIn": "إعادة الإرسال بعد {seconds} ثانية",
+  "@codeResendIn": {"placeholders": {"seconds": {"type": "int"}}},
+  "codeResent": "أرسلنا رمزاً جديداً.",
+  "codeWrongNumber": "تعديل الرقم",
+  "errCodeInvalid": "الرمز غير صحيح، تأكد منه وحاول مرة أخرى.",
+  "errCodeExpired": "انتهت صلاحية الرمز. اطلب رمزاً جديداً.",
+  "errCodeTooSoon": "انتظر دقيقة قبل طلب رمز جديد.",
+  "errTooManyCodes": "طلبت رموزاً كثيرة. حاول بعد ساعة.",
+  "errCodeSendFailed": "تعذر إرسال الرمز الآن. حاول بعد قليل."
 }

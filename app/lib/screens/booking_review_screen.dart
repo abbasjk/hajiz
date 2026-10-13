@@ -9,6 +9,7 @@ import '../util/deadline.dart';
 import '../util/format.dart';
 import '../util/phone.dart';
 import '../widgets/common.dart';
+import '../widgets/phone_code.dart';
 import 'booking_detail_screen.dart';
 import 'booking_draft.dart';
 import 'booking_services_screen.dart';
@@ -61,7 +62,13 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     final l = AppLocalizations.of(context);
     setState(() => _sending = true);
     try {
-      await services.ensureRegistered(_name.text.trim(), normalizeIraqiPhone(_phone.text) ?? _phone.text);
+      // أول حجز: رمز التحقق إن كان مطلوباً، ثم التسجيل
+      final registered = await registerWithCode(context, _name.text.trim(), normalizeIraqiPhone(_phone.text) ?? _phone.text);
+      if (!registered) {
+        if (mounted) setState(() => _sending = false);
+        return;
+      }
+      if (!mounted) return;
       final booking = await services.api.createBooking(
         shopId: widget.draft.shop.id,
         serviceIds: widget.draft.serviceIds,

@@ -8,6 +8,9 @@ const schema = z.object({
   SEED_DEMO: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   // مفتاح حساب الخدمة من Firebase (JSON أو base64)؛ يُوضع في Railway فقط
   FIREBASE_SERVICE_ACCOUNT: z.string().min(1).optional(),
+  // مفتاح خدمة رموز التحقق (رمز إلى الواتساب ثم الرسالة القصيرة)؛ بدونه لا يُطلب رمز عند التسجيل
+  OTPIQ_API_KEY: z.string().min(1).optional(),
+  OTPIQ_PROVIDER: z.enum(['auto', 'whatsapp-sms', 'sms', 'whatsapp', 'telegram-sms', 'whatsapp-telegram-sms']).default('whatsapp-sms'),
   // أول حساب للوحة الإدارة: يُنشأ عند التشغيل إذا لم يوجد أي حساب، ثم يُحذف المتغير من المنصة
   // يُتحقق منهما في bootstrapAdmin: قيمة خاطئة هنا لا توقف الخادم
   ADMIN_INITIAL_USERNAME: z.string().optional(),

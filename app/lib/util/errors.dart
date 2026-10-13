@@ -29,6 +29,12 @@ String errorMessage(AppLocalizations l, Object error) {
     'review_window_closed' => l.errReviewClosed,
     'review_not_allowed' => l.errReviewNotAllowed,
     'untrusted_device' => l.errUntrustedDevice,
+    'code_invalid' => l.errCodeInvalid,
+    'code_expired' => l.errCodeExpired,
+    'code_required' => l.errCodeExpired,
+    'code_too_soon' => l.errCodeTooSoon,
+    'too_many_codes' => l.errTooManyCodes,
+    'code_send_failed' => l.errCodeSendFailed,
     _ => l.errGeneric,
   };
 }

@@ -143,9 +143,9 @@ class AppServices {
   }
 
   /// يسجل الرقم والاسم والجهاز عند أول حجز
-  Future<void> ensureRegistered(String name, String phone) async {
+  Future<void> ensureRegistered(String name, String phone, {String? code}) async {
     if (session.isRegistered) return;
-    final r = await api.register(name, phone, session.deviceId);
+    final r = await api.register(name, phone, session.deviceId, code: code);
     await session.saveRegistration(r.token, r.user);
     client.token = r.token;
     unawaited(syncPushToken());

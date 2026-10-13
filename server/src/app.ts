@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Pool } from './db/pool.js';
+import type { CodeSender } from './auth/codes.js';
 import { AppError } from './lib/errors.js';
 import { configRoutes } from './routes/config.js';
 import { healthRoutes } from './routes/health.js';
@@ -21,18 +22,21 @@ export interface AppOptions {
   logLevel?: string;
   /** مرسل الإشعارات؛ الافتراضي يسجّلها فقط (قبل إعداد Firebase وفي الاختبارات) */
   sender?: PushSender;
+  /** مرسل رموز التحقق؛ بدونه يعمل التسجيل دون رمز */
+  codeSender?: CodeSender;
 }
 
 declare module 'fastify' {
   interface FastifyInstance {
     pool: Pool;
     notifier: Notifier;
+    codeSender: CodeSender | null;
     /** يبلّغ الطرف الآخر بما حدث للحجز؛ لا يُفشل العملية إذا تعذر الإرسال */
     bookingEvent(bookingId: number, event: BookingEvent): Promise<unknown>;
   }
 }
 
-export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions): Promise<FastifyInstance> {
+export async function buildApp({ pool, logLevel = 'info', sender, codeSender }: AppOptions): Promise<FastifyInstance> {
   // السجلات لا تحفظ عناوين الزوار ولا ما بعد علامة الاستفهام في الرابط (فيه الموقع ونص البحث)
   const app = Fastify({
     logger: {
@@ -43,6 +47,7 @@ export async function buildApp({ pool, logLevel = 'info', sender }: AppOptions):
     },
   });
   app.decorate('pool', pool);
+  app.decorate('codeSender', codeSender ?? null);
   const notifier = new Notifier(pool, sender ?? new LogSender(app.log), app.log);
   app.decorate('notifier', notifier);
   app.decorate('bookingEvent', async (bookingId: number, event: BookingEvent) => {

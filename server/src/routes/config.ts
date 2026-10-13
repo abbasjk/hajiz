@@ -27,6 +27,8 @@ export async function configRoutes(app: FastifyInstance) {
       districts: districts.rows,
       areas: areas.rows,
       appVersions: versions.rows,
+      // التطبيق يطلب رمز تحقق قبل التسجيل حين تكون خدمة الرموز مُعدّة
+      phoneVerification: app.codeSender !== null,
     };
   });
 }
