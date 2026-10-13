@@ -153,6 +153,24 @@ describe('browsing shops', () => {
     expect(s.committed).toBe(false);
   });
 
+  it('tells whether the shop is open right now, and an emergency closure closes it', async () => {
+    // الثاني يعمل يوماً واحداً فقط: نجعل فترته حول هذه اللحظة بتوقيت بغداد
+    const baghdad = new Date(Date.now() + 3 * 3_600_000);
+    const hhmm = (d: Date) => d.toISOString().slice(11, 16);
+    await pool.query('DELETE FROM weekly_periods WHERE schedule_id = $1', [second.scheduleId]);
+    await pool.query(
+      `INSERT INTO weekly_periods (schedule_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4)`,
+      // الفترة تنتمي ليوم بدايتها، حتى لو عبرت منتصف الليل
+      [second.scheduleId, new Date(baghdad.getTime() - 3_600_000).getUTCDay(), hhmm(new Date(baghdad.getTime() - 3_600_000)), hhmm(new Date(baghdad.getTime() + 3_600_000))],
+    );
+    expect((await call('GET', `/v1/shops/${second.shopId}`)).json().shop.openNow).toBe(true);
+    await pool.query(
+      `INSERT INTO closures (schedule_id, starts_at, ends_at) VALUES ($1, now() - interval '5 minutes', now() + interval '30 minutes')`,
+      [second.scheduleId],
+    );
+    expect((await call('GET', `/v1/shops/${second.shopId}`)).json().shop.openNow).toBe(false);
+  });
+
   it('hides shops that are not approved', async () => {
     await pool.query(`UPDATE shops SET status = 'suspended' WHERE id = $1`, [second.shopId]);
     expect((await call('GET', `/v1/shops/${second.shopId}`)).statusCode).toBe(404);

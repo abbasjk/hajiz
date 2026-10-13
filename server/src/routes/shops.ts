@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { loadShop, slotsForDate } from '../booking/availability.js';
+import { loadShop, slotsForDate, workingPeriods } from '../booking/availability.js';
 import { loadSettings } from '../booking/settings.js';
 import { addDays, toLocalDate } from '../booking/time.js';
 import { AppError } from '../lib/errors.js';
@@ -34,6 +34,26 @@ const COMMITTED_SQL = `(
 async function badgeSetting(app: FastifyInstance): Promise<string> {
   const { rows } = await app.pool.query(`SELECT value FROM settings WHERE key = 'shop_commitment_badge'`);
   return JSON.stringify(rows[0]?.value ?? { min_bookings: 20, max_shop_cancel_rate: 0.05 });
+}
+
+/**
+ * شارة "مفتوح الآن" في صفحة المحل: ضمن فترة عمل اليوم (أو فترة أمس الممتدة بعد منتصف الليل)،
+ * بحسب الجدول المؤقت إن وُجد، وليس ضمن إغلاق طارئ.
+ */
+async function isOpenNow(app: FastifyInstance, scheduleId: number | null): Promise<boolean> {
+  if (!scheduleId) return false;
+  const now = new Date();
+  const today = toLocalDate(now);
+  const periods = [
+    ...(await workingPeriods(app.pool, scheduleId, addDays(today, -1))),
+    ...(await workingPeriods(app.pool, scheduleId, today)),
+  ];
+  if (!periods.some((p) => p.start <= now && now < p.end)) return false;
+  const { rowCount } = await app.pool.query(
+    'SELECT 1 FROM closures WHERE schedule_id = $1 AND starts_at <= $2 AND ends_at > $2 LIMIT 1',
+    [scheduleId, now],
+  );
+  return !rowCount;
 }
 
 export async function shopRoutes(app: FastifyInstance) {
@@ -175,6 +195,7 @@ export async function shopRoutes(app: FastifyInstance) {
     return {
       shop: {
         ...details,
+        openNow: await isOpenNow(app, scheduleId),
         photos: photos.rows.map((r) => r.url),
         services: services.rows,
         weeklyHours: hours.rows,

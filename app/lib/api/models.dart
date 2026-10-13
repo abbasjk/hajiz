@@ -204,6 +204,7 @@ class ShopDetails {
     required this.temporarySchedules,
     this.rating,
     this.ratingCount = 0,
+    this.openNow = false,
     this.reviews = const [],
   });
 
@@ -228,6 +229,9 @@ class ShopDetails {
   final List<TemporarySchedule> temporarySchedules;
   final double? rating;
   final int ratingCount;
+
+  /// ضمن فترة عمل الآن وليس في إغلاق طارئ (يحسبها الخادم)
+  final bool openNow;
   final List<Review> reviews;
 
   factory ShopDetails.fromJson(Map<String, dynamic> j) => ShopDetails(
@@ -252,6 +256,7 @@ class ShopDetails {
         temporarySchedules: [for (final t in j['temporarySchedules'] as List? ?? []) TemporarySchedule.fromJson(t)],
         rating: _double(j['rating']),
         ratingCount: j['ratingCount'] as int? ?? 0,
+        openNow: j['openNow'] == true,
         reviews: [for (final r in j['reviews'] as List? ?? []) Review.fromJson(r)],
       );
 }

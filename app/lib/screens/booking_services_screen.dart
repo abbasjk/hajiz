@@ -10,15 +10,18 @@ import 'booking_time_screen.dart';
 
 /// الخطوة 1: اختيار خدمة أو أكثر، وتُجمع مدتها
 class BookingServicesScreen extends StatefulWidget {
-  const BookingServicesScreen({super.key, required this.shop});
+  const BookingServicesScreen({super.key, required this.shop, this.initial = const []});
   final ShopDetails shop;
+
+  /// الخدمات التي اختارها الزبون من صفحة المحل
+  final List<Service> initial;
 
   @override
   State<BookingServicesScreen> createState() => _BookingServicesScreenState();
 }
 
 class _BookingServicesScreenState extends State<BookingServicesScreen> {
-  late final BookingDraft _draft = BookingDraft(widget.shop);
+  late final BookingDraft _draft = BookingDraft(widget.shop)..services.addAll(widget.initial);
 
   void _toggle(Service s) => setState(() {
         if (_draft.services.contains(s)) {

@@ -685,5 +685,18 @@
   "@allOfDistrict": {"placeholders": {"district": {"type": "String"}}},
   "showShops": "عرض المحلات",
   "sortTitle": "ترتيب المحلات",
-  "locationNeeded": "اسمح للتطبيق بمعرفة موقعك لترتيب المحلات من الأقرب."
+  "locationNeeded": "اسمح للتطبيق بمعرفة موقعك لترتيب المحلات من الأقرب.",
+  "tabServices": "الخدمات",
+  "tabAbout": "عن المحل",
+  "tabReviews": "التقييمات",
+  "servicesOf": "خدمات {shop}",
+  "@servicesOf": {"placeholders": {"shop": {"type": "String"}}},
+  "openNow": "مفتوح",
+  "closedNow": "مغلق",
+  "noReviewsYet": "لا تقييمات بعد.",
+  "mapsShort": "الخريطة",
+  "pickService": "أضف الخدمة",
+  "removeService": "أزل الخدمة",
+  "bookSelected": "احجز ({n})",
+  "@bookSelected": {"placeholders": {"n": {"type": "int"}}}
 }
