@@ -1,5 +1,5 @@
 name: hajiz
-description: "تطبيق حجز المواعيد للمحلات في البصرة."
+description: "مقص: حجز مواعيد الحلاقة في البصرة."
 publish_to: 'none'
 version: 0.5.0+5
 
