@@ -76,6 +76,7 @@ class ShopSummary {
     this.ratingCount = 0,
     this.latitude,
     this.longitude,
+    this.featured = false,
   });
 
   final int id;
@@ -101,6 +102,9 @@ class ShopSummary {
   final double? latitude;
   final double? longitude;
 
+  /// تختاره الإدارة ليظهر في "محل مميز" في الرئيسية
+  final bool featured;
+
   factory ShopSummary.fromJson(Map<String, dynamic> j) => ShopSummary(
         id: j['id'] as int,
         name: j['name'] as String,
@@ -118,6 +122,7 @@ class ShopSummary {
         ratingCount: j['ratingCount'] as int? ?? 0,
         latitude: _double(j['latitude']),
         longitude: _double(j['longitude']),
+        featured: j['featured'] == true,
       );
 }
 

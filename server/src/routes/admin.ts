@@ -173,7 +173,7 @@ export async function adminRoutes(app: FastifyInstance) {
             `SELECT s.id, s.name, s.status, s.description, s.phone, s.street, s.landmark, s.latitude, s.longitude,
                     s.review_note AS "reviewNote", s.submitted_at AS "submittedAt", s.reviewed_at AS "reviewedAt",
                     s.instant_booking AS "instantBooking", s.deadline_mode AS "deadlineMode", s.created_at AS "createdAt",
-                    s.closed_at AS "closedAt", s.review_checks AS "reviewChecks",
+                    s.closed_at AS "closedAt", s.review_checks AS "reviewChecks", s.featured_at AS "featuredAt",
                     u.id AS "ownerId", u.phone AS "ownerPhone", u.name AS "ownerName",
                     bt.name AS "businessType", d.name AS district, a.name AS area,
                     rv.username AS "reviewedBy",
@@ -472,6 +472,20 @@ export async function adminRoutes(app: FastifyInstance) {
             await logAction(app.pool, adminId(request), action, 'device', id);
             if (action === 'trust') await app.notifier.notify({ userId: device.user_id, type: 'device_trusted', params: {} });
             return { ok: true };
+          });
+        }
+
+        // تمييز محل معتمد في رئيسية الزبون، أو إلغاء تمييزه
+        for (const [action, value] of [['feature', 'now()'], ['unfeature', 'NULL']] as const) {
+          secure.post(`/shops/:id/${action}`, async (request) => {
+            const { id } = parse(idParams, request.params);
+            const { rowCount } = await app.pool.query(
+              `UPDATE shops SET featured_at = ${value} WHERE id = $1 AND status = 'approved' AND closed_at IS NULL`,
+              [id],
+            );
+            if (!rowCount) throw new AppError(409, 'invalid_transition');
+            await logAction(app.pool, adminId(request), action, 'shop', id);
+            return shopDetails(app.pool, id);
           });
         }
 

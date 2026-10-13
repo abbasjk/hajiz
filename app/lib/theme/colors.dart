@@ -37,6 +37,16 @@ class AppColors {
   static const success = Color(0xFF16A34A);
 
   static const star = Color(0xFFFACC15); // Yellow/400
+
+  // ألوان خاصة بالرئيسية في ملف التصميم
+  static const searchFill = Color(0xFFEBF0F5); // Blue Gray/100
+  static const cardFill = Color(0xFFF5F4F8);
+  static const tag = Color(0xFF234F68);
+  static const ink = Color(0xFF252B5C);
+  static const inkMuted = Color(0xFF53587A);
+  static const sectionLabel = Color(0xFF2A2A37);
+  static const onPrimaryMuted = Color(0xFF8D8DA6);
+  static const locationPin = Color(0xFFFFBD00);
   static const myLocation = Color(0xFF2563EB);
 
   /// ظل البطاقات — Box S: إزاحة 2، تمويه 6

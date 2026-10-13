@@ -186,6 +186,17 @@ describe('shop review', () => {
     expect(similar.find((x: { id: number }) => x.id === a.shopId)).toMatchObject({ nearby: true, samePhone: false });
   });
 
+  it('features an approved shop on the customer home', async () => {
+    const shop = await submittedShop('07700000113');
+    expect((await admin('POST', `/shops/${shop.shopId}/feature`, {})).statusCode).toBe(409); // ليس معتمداً بعد
+    await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS);
+    expect((await admin('POST', `/shops/${shop.shopId}/feature`, {})).json().featuredAt).not.toBeNull();
+    const listed = (await v1('GET', '/shops')).json().shops.find((x: { id: number }) => x.id === shop.shopId);
+    expect(listed.featured).toBe(true);
+    await admin('POST', `/shops/${shop.shopId}/unfeature`, {});
+    expect((await v1('GET', '/shops')).json().shops.find((x: { id: number }) => x.id === shop.shopId).featured).toBe(false);
+  });
+
   it('approves: the shop becomes visible to customers and the owner is notified', async () => {
     const shop = await submittedShop('07700000104');
     const res = await admin('POST', `/shops/${shop.shopId}/approve`, APPROVE_CHECKS);

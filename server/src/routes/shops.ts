@@ -83,6 +83,7 @@ export async function shopRoutes(app: FastifyInstance) {
       `SELECT s.id, s.name, s.business_type_id AS "businessTypeId", bt.name AS "businessType",
               s.district_id AS "districtId", d.name AS district, s.area_id AS "areaId", a.name AS area,
               s.landmark, s.latitude, s.longitude, s.instant_booking AS "instantBooking",
+              s.featured_at IS NOT NULL AS featured,
               ${distance} AS distance_km,
               (SELECT coalesce(url, '/photos/' || id) FROM shop_photos p WHERE p.shop_id = s.id ORDER BY sort_order, id LIMIT 1) AS "coverPhoto",
               ${COMMITTED_SQL} AS committed,

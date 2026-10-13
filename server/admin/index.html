@@ -398,7 +398,9 @@ async function shopDetailView() {
       approveBtn,
       h('button', { class: 'btn danger', onclick: () => act('reject', { title: 'رفض الطلب', field: 'ما الذي يجب تعديله؟ (يصل لصاحب المحل)', required: true, okText: 'رفض', danger: true, done: 'رُفض الطلب' }) }, 'رفض مع ملاحظة'),
     ],
-    approved: [h('button', { class: 'btn danger', onclick: () => act('suspend', { title: 'إيقاف المحل', text: s.upcomingBookings ? `لدى المحل ${s.upcomingBookings} حجز قادم. الإيقاف يخفي المحل عن الزبائن، والحجوزات القائمة تبقى كما هي.` : 'سيختفي المحل عن الزبائن.', field: 'السبب (يصل لصاحب المحل)', required: true, okText: 'إيقاف', danger: true, done: 'أُوقف المحل' }) }, 'إيقاف المحل')],
+    approved: [
+      h('button', { class: 'btn', onclick: () => act(s.featuredAt ? 'unfeature' : 'feature') }, s.featuredAt ? 'إلغاء التمييز في الرئيسية' : 'تمييز في الرئيسية'),
+      h('button', { class: 'btn danger', onclick: () => act('suspend', { title: 'إيقاف المحل', text: s.upcomingBookings ? `لدى المحل ${s.upcomingBookings} حجز قادم. الإيقاف يخفي المحل عن الزبائن، والحجوزات القائمة تبقى كما هي.` : 'سيختفي المحل عن الزبائن.', field: 'السبب (يصل لصاحب المحل)', required: true, okText: 'إيقاف', danger: true, done: 'أُوقف المحل' }) }, 'إيقاف المحل')],
     suspended: [h('button', { class: 'btn primary', onclick: () => act('reinstate', { title: 'إعادة تفعيل المحل؟', okText: 'إعادة التفعيل', done: 'عاد المحل للعمل' }) }, 'إعادة التفعيل')],
   }[s.status] || [];
   if (s.closedAt) actions.length = 0;
@@ -412,7 +414,7 @@ async function shopDetailView() {
   return [
     h('button', { class: 'back', onclick: () => go('shops') }, '→ رجوع للقائمة'),
     h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:16px' },
-      h('div', {}, h('h1', { style: 'margin:0' }, s.name), shopPill(s.status)),
+      h('div', {}, h('h1', { style: 'margin:0' }, s.name), shopPill(s.status), s.featuredAt ? h('span', { class: 'pill ok', style: 'margin-inline-start:6px' }, 'مميز في الرئيسية') : null),
       h('div', { class: 'row' }, actions)),
     s.closedAt ? h('div', { class: 'card', style: 'margin-bottom:14px;background:#fbe4dc' }, h('strong', {}, 'مغلق نهائياً: '), `حذف صاحبه حسابه في ${fmtDate(s.closedAt)}، ولا يمكن إعادة تفعيله.`) : null,
     similarCard,
@@ -801,7 +803,7 @@ async function settingsView() {
 
 const ACTION_LABELS = {
   approve: 'موافقة', reject: 'رفض', suspend: 'إيقاف', reinstate: 'إعادة تفعيل', ban: 'حظر', unban: 'رفع حظر',
-  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', delete_account: 'حذف حساب', dismiss: 'تجاهل',
+  trust: 'توثيق جهاز', untrust: 'إلغاء توثيق جهاز', create: 'إضافة', update: 'تعديل', hide: 'إخفاء', unhide: 'إظهار', feature: 'تمييز في الرئيسية', unfeature: 'إلغاء التمييز', delete_account: 'حذف حساب', dismiss: 'تجاهل',
 };
 const TARGET_LABELS = {
   shop: 'محل', area_request: 'طلب منطقة', user: 'مستخدم', device: 'جهاز', business_type: 'نوع نشاط', business_types: 'نوع نشاط',
