@@ -97,7 +97,9 @@ describe('account deletion page', () => {
 describe('privacy page', () => {
   const page = async () => (await app.inject({ method: 'GET', url: '/privacy' })).body;
 
-  it('points to the deletion page until a contact email is set', async () => {
+  it('starts with the owner\'s contact email, and points to the deletion page without one', async () => {
+    expect(await page()).toContain('href="mailto:admin@tawdheef-iq.com"');
+    await pool.query(`UPDATE settings SET value = '""' WHERE key = 'contact_email'`);
     const html = await page();
     expect(html).toContain('سياسة الخصوصية');
     expect(html).not.toContain('{{CONTACT}}');
