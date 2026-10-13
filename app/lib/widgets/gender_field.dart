@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme/colors.dart';
+import 'service_icon.dart';
 
 /// اختيار الجنس عند التسجيل: ذكر أو أنثى، إجباري.
 /// يحدد أي صالونات تظهر أولاً في الرئيسية.
@@ -15,11 +16,11 @@ class GenderField extends FormField<String> {
               Text(l.genderLabel, style: const TextStyle(fontSize: 14, color: AppColors.textMuted)),
               const SizedBox(height: 8),
               Row(children: [
-                for (final (value, label, icon) in [('male', l.genderMale, Icons.face), ('female', l.genderFemale, Icons.face_3)]) ...[
+                for (final (value, label, who) in [('male', l.genderMale, 'men'), ('female', l.genderFemale, 'women')]) ...[
                   if (value == 'female') const SizedBox(width: 10),
                   Expanded(
                     child: ChoiceChip(
-                      avatar: Icon(icon, size: 18, color: state.value == value ? Colors.white : AppColors.primary),
+                      avatar: GenderIcon(who, size: 20, color: state.value == value ? Colors.white : AppColors.primary),
                       label: Text(label),
                       selected: state.value == value,
                       showCheckmark: false,

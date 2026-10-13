@@ -494,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(24)),
           child: Row(children: [
-            for (final (value, label, icon) in [('men', l.audienceMen, Icons.face), ('women', l.audienceWomen, Icons.face_3)])
+            for (final (value, label) in [('men', l.audienceMen), ('women', l.audienceWomen)])
               Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -507,7 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(icon, size: 18, color: _audience == value ? Colors.white : AppColors.primary),
+                      GenderIcon(value, size: 22, color: _audience == value ? Colors.white : AppColors.primary),
                       const SizedBox(width: 6),
                       Text(label,
                           style: TextStyle(
@@ -530,11 +530,13 @@ class _HomeScreenState extends State<HomeScreen> {
         if (c.photo != null) c.id: client.absoluteUrl(c.photo!),
     };
     final items = <(int?, String, Widget)>[
-      if (config.serviceCategories.isNotEmpty)
+      // الأقواس ضرورية: بدونها يلتصق «وإلا» بشرط الجمهور فتتكرر مربعات أنواع المحلات
+      if (config.serviceCategories.isNotEmpty) ...[
         for (final c in config.serviceCategories)
-          if (!_hasAudiences || c.isFor(_audience)) (c.id, c.name, ServiceIcon(c.icon, size: 44))
-      else
+          if (!_hasAudiences || c.isFor(_audience)) (c.id, c.name, ServiceIcon(c.icon, size: 40)),
+      ] else ...[
         for (final t in config.businessTypes) (t.id, t.name, BusinessIcon(t.icon, size: 28, color: AppColors.primary)),
+      ],
       (null, l.allTypes, const BusinessIcon('all', size: 28, color: AppColors.primary)),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

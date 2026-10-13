@@ -36,6 +36,7 @@ flutter:
   generate: true
   assets:
     - assets/service_icons/
+    - assets/gender_icons/
   fonts:
     # خط عربي هندسي قريب من خط التصميم الأصلي، ويغطي الحروف الكردية والفارسية (ڕ ڵ ۆ ێ ە گ چ پ ژ)
     - family: Vazirmatn

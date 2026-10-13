@@ -26,7 +26,7 @@ function admin(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, body?: 
 }
 
 const categoryId = async (icon: string) =>
-  (await pool.query('SELECT id FROM service_categories WHERE icon = $1', [icon])).rows[0].id as number;
+  (await pool.query('SELECT id FROM service_categories WHERE icon = $1 ORDER BY id', [icon])).rows[0].id as number;
 
 beforeAll(async () => {
   pool = await freshDatabase();
@@ -48,10 +48,16 @@ afterAll(async () => {
 describe('service categories', () => {
   it('lists the ten categories with their icons in the app config', async () => {
     const config = (await call('GET', '/v1/config')).json();
-    expect(config.serviceCategories).toHaveLength(15);
+    expect(config.serviceCategories).toHaveLength(20);
     expect(config.serviceCategories[0]).toMatchObject({ name: 'حلاقة الشعر', icon: 'haircut', audience: 'men' });
     expect(config.serviceCategories.find((c: { icon: string }) => c.icon === 'makeup')).toMatchObject({ audience: 'women' });
-    expect(config.serviceCategories.find((c: { icon: string }) => c.icon === 'dye')).toMatchObject({ audience: 'all' });
+    // كل جنس له خدماته فقط: الصبغ نسختان، والأطفال للرجال فقط
+    const dyes = config.serviceCategories.filter((c: { icon: string }) => c.icon === 'dye');
+    expect(dyes.map((c: { audience: string }) => c.audience).sort()).toEqual(['men', 'women']);
+    expect(config.serviceCategories.filter((c: { icon: string }) => c.icon === 'kids')).toMatchObject([{ audience: 'men' }]);
+    expect(config.serviceCategories.some((c: { audience: string }) => c.audience === 'all')).toBe(false);
+    const women = config.serviceCategories.filter((c: { audience: string }) => c.audience === 'women');
+    expect(women[0]).toMatchObject({ icon: 'womencut' });
     // صالونات الرجال والسيدات
     expect(config.businessTypes.map((t: { audience: string }) => t.audience).sort()).toEqual(['men', 'women']);
   });
