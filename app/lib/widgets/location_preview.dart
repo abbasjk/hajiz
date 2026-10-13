@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/colors.dart';
 import '../util/links.dart';
+import 'base_map.dart';
 
 /// خريطة صغيرة ثابتة عليها دبوس المحل؛ الضغط عليها يفتح الاتجاهات في تطبيق الخرائط.
 /// في البصرة كثير من العناوين بلا أسماء شوارع، فالدبوس أوضح من العنوان المكتوب.
@@ -34,7 +35,7 @@ class LocationPreview extends StatelessWidget {
                   interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
                 ),
                 children: [
-                  TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'iq.hajiz.hajiz'),
+                  const BaseMapLayer(),
                   MarkerLayer(markers: [
                     Marker(
                       point: point,
@@ -54,7 +55,7 @@ class LocationPreview extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 color: AppColors.surface.withValues(alpha: 0.85),
-                child: const Text('© OpenStreetMap', textDirection: TextDirection.ltr, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                child: const Text(BaseMapLayer.attribution, textDirection: TextDirection.ltr, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
               ),
             ),
             Positioned.fill(

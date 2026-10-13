@@ -17,6 +17,7 @@ import 'booking_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'shop_screen.dart';
 import 'shops_map.dart';
+import '../widgets/base_map.dart';
 
 /// الرئيسية كما في ملف التصميم: الترحيب، والبحث مع زر التصفية، وموعدك القادم،
 /// ثم الأقرب إليك، ومختارة لك، ومحل مميز، والبحث على الخريطة.
@@ -735,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: FlutterMap(
                   options: MapOptions(initialCenter: center, initialZoom: 12, interactionOptions: const InteractionOptions(flags: InteractiveFlag.none)),
                   children: [
-                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'iq.hajiz.hajiz'),
+                    const BaseMapLayer(),
                     MarkerLayer(markers: [
                       for (final s in located)
                         Marker(
@@ -775,7 +776,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   color: AppColors.surface.withValues(alpha: 0.85),
-                  child: const Text('© OpenStreetMap', textDirection: TextDirection.ltr, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                  child: const Text(BaseMapLayer.attribution, textDirection: TextDirection.ltr, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
                 ),
               ),
             ]),

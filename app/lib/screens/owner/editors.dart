@@ -13,6 +13,7 @@ import '../../state/app_scope.dart';
 import '../../theme/colors.dart';
 import '../../util/format.dart';
 import '../../widgets/common.dart';
+import '../../widgets/base_map.dart';
 
 /// محرر خطوة من بيانات المحل: يحفظ ما فيه عند الطلب ويعيد true إذا نجح.
 abstract class StepEditorState<T extends StatefulWidget> extends State<T> {
@@ -286,8 +287,8 @@ class AddressEditorState extends StepEditorState<AddressEditor> {
                       },
                     ),
                     children: [
-                      TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'iq.hajiz.hajiz'),
-                      const SimpleAttributionWidget(source: Text('OpenStreetMap')),
+                      const BaseMapLayer(),
+                      const SimpleAttributionWidget(source: Text('OpenFreeMap · OpenMapTiles · OpenStreetMap')),
                     ],
                   ),
                   const IgnorePointer(

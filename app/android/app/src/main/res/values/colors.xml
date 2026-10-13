@@ -2,4 +2,6 @@
 <resources>
     <!-- لون أيقونة الإشعار: بنفسجي التطبيق -->
     <color name="notification_color">#363062</color>
+    <!-- خلفية الأيقونة المتكيفة -->
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>

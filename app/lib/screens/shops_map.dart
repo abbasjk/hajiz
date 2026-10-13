@@ -6,6 +6,7 @@ import '../api/models.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/colors.dart';
 import 'home_screen.dart';
+import '../widgets/base_map.dart';
 
 /// مركز البصرة؛ تبدأ منه الخريطة إن لم يكن هناك موقع ولا محلات
 const _basra = LatLng(30.508, 47.783);
@@ -71,7 +72,7 @@ class _ShopsMapState extends State<ShopsMap> {
             onTap: (_, _) => setState(() => _selectedId = null),
           ),
           children: [
-            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'iq.hajiz.hajiz'),
+            const BaseMapLayer(),
             if (me != null)
               MarkerLayer(markers: [
                 Marker(
@@ -101,7 +102,7 @@ class _ShopsMapState extends State<ShopsMap> {
                   ),
                 ),
             ]),
-            const SimpleAttributionWidget(source: Text('OpenStreetMap')),
+            const SimpleAttributionWidget(source: Text('OpenFreeMap · OpenMapTiles · OpenStreetMap')),
           ],
         ),
         if (me != null)
