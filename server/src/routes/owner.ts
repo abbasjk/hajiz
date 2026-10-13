@@ -64,6 +64,7 @@ const serviceBody = z.object({
   priceType: z.enum(['fixed', 'starts_from', 'after_inspection']),
   price: z.number().int().nullable(),
   active: z.boolean().optional(),
+  categoryId: z.number().int().positive().nullable().optional(),
 });
 
 const settingsBody = z.object({

@@ -41,11 +41,12 @@ export async function seedDemoShop(pool: Pool): Promise<boolean> {
       );
     }
     await tx.query(
-      `INSERT INTO services (shop_id, name, duration_minutes, price_type, price) VALUES
-         ($1, 'حلاقة شعر', 30, 'fixed', 10000),
-         ($1, 'تهذيب لحية', 15, 'fixed', 5000),
-         ($1, 'حلاقة أطفال', 20, 'fixed', 7000),
-         ($1, 'تنظيف بشرة', 45, 'starts_from', 15000)`,
+      `INSERT INTO services (shop_id, name, duration_minutes, price_type, price, category_id)
+       SELECT $1, v.name, v.minutes, v.price_type, v.price, (SELECT id FROM service_categories WHERE icon = v.icon)
+       FROM (VALUES ('حلاقة شعر', 30, 'fixed', 10000, 'haircut'),
+                    ('تهذيب لحية', 15, 'fixed', 5000, 'beard'),
+                    ('حلاقة أطفال', 20, 'fixed', 7000, 'kids'),
+                    ('تنظيف بشرة', 45, 'starts_from', 15000, 'skin')) AS v (name, minutes, price_type, price, icon)`,
       [shop.id],
     );
     return true;

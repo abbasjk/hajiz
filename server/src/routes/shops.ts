@@ -8,6 +8,7 @@ import { latestReviews, RATING_SQL } from '../booking/reviews.js';
 
 const listQuery = z.object({
   businessTypeId: z.coerce.number().int().positive().optional(),
+  serviceCategoryId: z.coerce.number().int().positive().optional(),
   districtId: z.coerce.number().int().positive().optional(),
   areaId: z.coerce.number().int().positive().optional(),
   q: z.string().trim().max(60).optional(),
@@ -76,6 +77,17 @@ export async function shopRoutes(app: FastifyInstance) {
     if (f.areaId) add('s.area_id = ?', f.areaId);
     // البحث باسم المحل أو باسم إحدى خدماته، بعد توحيد الحروف من الطرفين
     let matched = 'NULL::json';
+    // نوع الخدمة: المحلات التي عندها خدمة فعالة من هذا النوع، وتظهر الخدمة في البطاقة
+    if (f.serviceCategoryId) {
+      params.push(f.serviceCategoryId);
+      const categoryMatch = `sv.shop_id = s.id AND sv.active AND sv.category_id = $${params.length}`;
+      where.push(`EXISTS (SELECT 1 FROM services sv WHERE ${categoryMatch})`);
+      if (!f.q) {
+        matched = `(SELECT json_build_object('id', sv.id, 'name', sv.name, 'durationMinutes', sv.duration_minutes,
+                                             'priceType', sv.price_type, 'price', sv.price)
+                    FROM services sv WHERE ${categoryMatch} ORDER BY sv.price NULLS LAST, sv.id LIMIT 1)`;
+      }
+    }
     if (f.q) {
       params.push(f.q.replace(/[%_\\]/g, (c) => `\\${c}`));
       const q = `'%' || ar_norm($${params.length}) || '%'`;

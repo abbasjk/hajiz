@@ -46,7 +46,8 @@ export async function getOwnerShop(db: Queryable, ownerId: number) {
   const today = toLocalDate(new Date());
   const [services, hours, temps, photos, closures] = await Promise.all([
     db.query(
-      `SELECT id, name, duration_minutes AS "durationMinutes", price_type AS "priceType", price, active
+      `SELECT id, name, duration_minutes AS "durationMinutes", price_type AS "priceType", price, active,
+              category_id AS "categoryId"
        FROM services WHERE shop_id = $1 ORDER BY id`,
       [shop.id],
     ),
@@ -202,6 +203,15 @@ export interface ServiceInput {
   priceType: 'fixed' | 'starts_from' | 'after_inspection';
   price: number | null;
   active?: boolean;
+  categoryId?: number | null;
+}
+
+/** النوع اختياري؛ إن أُرسل يجب أن يكون نوعاً ظاهراً */
+async function checkCategory(pool: Pool, categoryId: number | null | undefined) {
+  if (categoryId == null) return null;
+  const { rowCount } = await pool.query('SELECT 1 FROM service_categories WHERE id = $1 AND active', [categoryId]);
+  if (!rowCount) throw new AppError(400, 'invalid_service');
+  return categoryId;
 }
 
 function checkService(s: ServiceInput) {
@@ -214,11 +224,13 @@ function checkService(s: ServiceInput) {
 
 export async function addService(pool: Pool, ownerId: number, input: ServiceInput) {
   checkService(input);
+  const categoryId = await checkCategory(pool, input.categoryId);
   const shop = await requireShop(pool, ownerId);
   requireEditable(shop);
   const { rows } = await pool.query(
-    `INSERT INTO services (shop_id, name, duration_minutes, price_type, price) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [shop.id, input.name.trim(), input.durationMinutes, input.priceType, input.priceType === 'after_inspection' ? null : input.price],
+    `INSERT INTO services (shop_id, name, duration_minutes, price_type, price, category_id)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [shop.id, input.name.trim(), input.durationMinutes, input.priceType, input.priceType === 'after_inspection' ? null : input.price, categoryId],
   );
   return rows[0].id as number;
 }
@@ -226,13 +238,17 @@ export async function addService(pool: Pool, ownerId: number, input: ServiceInpu
 /** الحجوزات القديمة لا تتأثر: السعر والمدة محفوظان داخل كل حجز. */
 export async function updateService(pool: Pool, ownerId: number, serviceId: number, input: ServiceInput) {
   checkService(input);
+  const categoryId = await checkCategory(pool, input.categoryId);
   const shop = await requireShop(pool, ownerId);
   requireEditable(shop);
+  // النوع لا يُمسح إن لم يُرسل (نسخ التطبيق القديمة لا ترسله)
   const { rowCount } = await pool.query(
-    `UPDATE services SET name = $3, duration_minutes = $4, price_type = $5, price = $6, active = $7
+    `UPDATE services SET name = $3, duration_minutes = $4, price_type = $5, price = $6, active = $7,
+            category_id = CASE WHEN $8 THEN $9::int ELSE category_id END
      WHERE id = $1 AND shop_id = $2`,
     [serviceId, shop.id, input.name.trim(), input.durationMinutes, input.priceType,
-      input.priceType === 'after_inspection' ? null : input.price, input.active ?? true],
+      input.priceType === 'after_inspection' ? null : input.price, input.active ?? true,
+      input.categoryId !== undefined, categoryId],
   );
   if (!rowCount) throw new AppError(404, 'service_not_found');
 }

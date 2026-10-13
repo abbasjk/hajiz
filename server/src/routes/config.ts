@@ -7,7 +7,7 @@ export async function configRoutes(app: FastifyInstance) {
    * serverTime يسمح للتطبيق بحساب العداد بتوقيت الخادم لا ساعة الهاتف.
    */
   app.get('/config', async () => {
-    const [settings, businessTypes, districts, areas, versions] = await Promise.all([
+    const [settings, businessTypes, districts, areas, versions, categories] = await Promise.all([
       app.pool.query<{ key: string; value: unknown }>('SELECT key, value FROM settings ORDER BY key'),
       app.pool.query('SELECT id, name, icon FROM business_types WHERE active ORDER BY sort_order, id'),
       app.pool.query('SELECT id, name FROM districts WHERE active ORDER BY sort_order, id'),
@@ -19,11 +19,13 @@ export async function configRoutes(app: FastifyInstance) {
         `SELECT platform, min_version AS "minVersion", latest_version AS "latestVersion"
          FROM app_versions ORDER BY platform`,
       ),
+      app.pool.query('SELECT id, name, icon FROM service_categories WHERE active ORDER BY sort_order, id'),
     ]);
     return {
       serverTime: new Date().toISOString(),
       settings: Object.fromEntries(settings.rows.map((r) => [r.key, r.value])),
       businessTypes: businessTypes.rows,
+      serviceCategories: categories.rows,
       districts: districts.rows,
       areas: areas.rows,
       appVersions: versions.rows,
