@@ -48,8 +48,12 @@ afterAll(async () => {
 describe('service categories', () => {
   it('lists the ten categories with their icons in the app config', async () => {
     const config = (await call('GET', '/v1/config')).json();
-    expect(config.serviceCategories).toHaveLength(10);
-    expect(config.serviceCategories[0]).toMatchObject({ name: 'حلاقة الشعر', icon: 'haircut' });
+    expect(config.serviceCategories).toHaveLength(15);
+    expect(config.serviceCategories[0]).toMatchObject({ name: 'حلاقة الشعر', icon: 'haircut', audience: 'men' });
+    expect(config.serviceCategories.find((c: { icon: string }) => c.icon === 'makeup')).toMatchObject({ audience: 'women' });
+    expect(config.serviceCategories.find((c: { icon: string }) => c.icon === 'dye')).toMatchObject({ audience: 'all' });
+    // صالونات الرجال والسيدات
+    expect(config.businessTypes.map((t: { audience: string }) => t.audience).sort()).toEqual(['men', 'women']);
   });
 
   it('lets the owner pick a category for a service, and keeps it when an old app edits without one', async () => {
@@ -103,9 +107,9 @@ describe('service categories', () => {
     expect((await admin('POST', '/service-categories', { name: 'مساج', icon: 'skin' })).json().error.code).toBe('name_exists');
     expect((await admin('POST', '/service-categories', { name: 'أخرى', icon: 'unknown' })).statusCode).toBe(400);
 
-    expect((await admin('PATCH', `/service-categories/${id}`, { name: 'مساج الرأس', icon: 'treatment' })).statusCode).toBe(200);
+    expect((await admin('PATCH', `/service-categories/${id}`, { name: 'مساج الرأس', icon: 'treatment', audience: 'women' })).statusCode).toBe(200);
     let config = (await call('GET', '/v1/config')).json();
-    expect(config.serviceCategories.find((c: { id: number }) => c.id === id)).toMatchObject({ name: 'مساج الرأس', icon: 'treatment' });
+    expect(config.serviceCategories.find((c: { id: number }) => c.id === id)).toMatchObject({ name: 'مساج الرأس', icon: 'treatment', audience: 'women' });
 
     await admin('PATCH', `/service-categories/${id}`, { active: false });
     config = (await call('GET', '/v1/config')).json();

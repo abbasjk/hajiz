@@ -29,7 +29,8 @@ const approveChecks = z.object({
 const CHECKS_NOTE = 'تحقق: اتصال برقم المحل، مطابقة الموقع، الصور حقيقية';
 const nameText = z.string().trim().min(2).max(60);
 /** أيقونات أنواع العمل التي يعرفها التطبيق */
-const categoryIcon = z.enum(['haircut', 'beard', 'dye', 'kids', 'skin', 'groom', 'treatment', 'threading', 'styling', 'razor']);
+const categoryIcon = z.enum(['haircut', 'beard', 'dye', 'kids', 'skin', 'groom', 'treatment', 'threading', 'styling', 'razor', 'womencut', 'makeup', 'nails', 'bride', 'lashes']);
+const audience = z.enum(['men', 'women', 'all']);
 const iconName = z.enum(['store', 'scissors', 'sparkles', 'stethoscope', 'tooth', 'car', 'wrench', 'spa', 'face', 'pets', 'fitness', 'camera']);
 
 // صفحة اللوحة: ملف واحد بجانب مجلد المصدر (يعمل من src أثناء التطوير ومن dist بعد البناء)
@@ -542,7 +543,7 @@ export async function adminRoutes(app: FastifyInstance) {
                FROM areas a ORDER BY a.sort_order, a.name`,
             ),
             app.pool.query(
-              `SELECT c.id, c.name, c.icon, c.sort_order AS "sortOrder", c.active,
+              `SELECT c.id, c.name, c.icon, c.audience, c.sort_order AS "sortOrder", c.active,
                       CASE WHEN c.photo IS NOT NULL
                         THEN '/category-photos/' || c.id || '?v=' || extract(epoch FROM c.photo_updated_at)::bigint END AS photo,
                       (SELECT count(*)::int FROM services WHERE category_id = c.id AND active) AS services
@@ -571,12 +572,12 @@ export async function adminRoutes(app: FastifyInstance) {
         });
 
         secure.post('/service-categories', async (request) => {
-          const { name, icon } = parse(z.object({ name: nameText, icon: categoryIcon }), request.body);
+          const { name, icon, audience: who } = parse(z.object({ name: nameText, icon: categoryIcon, audience: audience.optional() }), request.body);
           const { rows } = await app.pool
             .query(
-              `INSERT INTO service_categories (name, icon, sort_order)
-               VALUES ($1, $2, (SELECT coalesce(max(sort_order), 0) + 1 FROM service_categories)) RETURNING id`,
-              [name, icon],
+              `INSERT INTO service_categories (name, icon, audience, sort_order)
+               VALUES ($1, $2, $3, (SELECT coalesce(max(sort_order), 0) + 1 FROM service_categories)) RETURNING id`,
+              [name, icon, who ?? 'all'],
             )
             .catch(uniqueName);
           await logAction(app.pool, adminId(request), 'create', 'service_category', rows[0].id, name);
@@ -612,15 +613,18 @@ export async function adminRoutes(app: FastifyInstance) {
         secure.patch('/service-categories/:id', async (request) => {
           const { id } = parse(idParams, request.params);
           const body = parse(
-            z.object({ name: nameText.optional(), active: z.boolean().optional(), sortOrder: z.number().int().min(0).optional(), icon: categoryIcon.optional() }),
+            z.object({
+              name: nameText.optional(), active: z.boolean().optional(), sortOrder: z.number().int().min(0).optional(),
+              icon: categoryIcon.optional(), audience: audience.optional(),
+            }),
             request.body,
           );
           const { rowCount } = await app.pool
             .query(
               `UPDATE service_categories SET name = coalesce($2, name), active = coalesce($3, active),
-                      sort_order = coalesce($4, sort_order), icon = coalesce($5, icon)
+                      sort_order = coalesce($4, sort_order), icon = coalesce($5, icon), audience = coalesce($6, audience)
                WHERE id = $1`,
-              [id, body.name ?? null, body.active ?? null, body.sortOrder ?? null, body.icon ?? null],
+              [id, body.name ?? null, body.active ?? null, body.sortOrder ?? null, body.icon ?? null, body.audience ?? null],
             )
             .catch(uniqueName);
           if (!rowCount) throw new AppError(404, 'not_found');

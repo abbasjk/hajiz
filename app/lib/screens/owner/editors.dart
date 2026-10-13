@@ -462,7 +462,9 @@ class ServicesEditorState extends StepEditorState<ServicesEditor> {
     // أنواع الخدمات من إعدادات الخادم المحفوظة؛ دون اتصال يُفتح الحوار بلا اختيار نوع
     var categories = const <ServiceCategory>[];
     try {
-      categories = (await AppScope.of(context).config()).serviceCategories;
+      final config = await AppScope.of(context).config();
+      final audience = config.businessTypes.where((t) => t.id == widget.shop.businessTypeId).firstOrNull?.audience;
+      categories = [for (final c in config.serviceCategories) if (audience == null || c.isFor(audience)) c];
     } catch (_) {}
     if (!mounted) return;
     final result = await showDialog<Map<String, Object?>>(

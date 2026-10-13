@@ -37,6 +37,10 @@ class Session {
   bool get onboarded => _prefs.getBool('onboarded') ?? false;
   Future<void> markOnboarded() => _prefs.setBool('onboarded', true);
 
+  /// الرئيسية: صالونات الرجال أو السيدات
+  String get audience => _prefs.getString('audience') ?? 'men';
+  Future<void> saveAudience(String value) => _prefs.setString('audience', value);
+
   String get appMode => _prefs.getString('appMode') ?? 'customer';
   Future<void> saveAppMode(String mode) => _prefs.setString('appMode', mode);
 

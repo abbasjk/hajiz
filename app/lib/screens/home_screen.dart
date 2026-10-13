@@ -37,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Booking? _upcoming;
 
   int? _typeId;
+
+  /// صالونات الرجال أو السيدات؛ يُحفظ اختيار الزبون
+  String _audience = 'men';
   int? _districtId;
   int? _areaId;
   String _query = '';
@@ -74,7 +77,10 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final config = await services.config();
       if (!mounted) return;
-      setState(() => _config = config);
+      setState(() {
+        _config = config;
+        _audience = services.session.audience;
+      });
     } catch (e) {
       if (mounted) setState(() => _error = e);
       return;
@@ -101,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final shops = await AppScope.of(context).api.shops(
             // مع أنواع الخدمات تُصفّى المحلات بالخدمة؛ ومع خادم قديم بنوع المحل
-            businessTypeId: _byCategory ? null : _typeId,
+            businessTypeId: _byCategory ? _audienceTypeId : _typeId,
             serviceCategoryId: _byCategory ? _typeId : null,
             districtId: _districtId,
             areaId: _areaId,
@@ -466,6 +472,57 @@ class _HomeScreenState extends State<HomeScreen> {
   /// "ماذا تحتاج؟": شبكة أنواع العمل بأيقوناتها، ثلاثة في الصف، و"الكل" في آخرها
   bool get _byCategory => _config?.serviceCategories.isNotEmpty ?? false;
 
+  /// صالونات رجالية ونسائية معاً في الإعدادات: يظهر مفتاح الاختيار
+  bool get _hasAudiences => (_config?.businessTypes.map((t) => t.audience).toSet().length ?? 0) > 1;
+
+  int? get _audienceTypeId =>
+      _hasAudiences ? _config!.businessTypes.where((t) => t.audience == _audience).firstOrNull?.id : null;
+
+  void _chooseAudience(String value) {
+    if (value == _audience) return;
+    AppScope.of(context).session.saveAudience(value);
+    _set(() {
+      _audience = value;
+      _typeId = null;
+      _showAll = false;
+    });
+  }
+
+  Widget _audienceSwitch(AppLocalizations l) => Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(24)),
+          child: Row(children: [
+            for (final (value, label, icon) in [('men', l.audienceMen, Icons.face), ('women', l.audienceWomen, Icons.face_3)])
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _chooseAudience(value),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _audience == value ? AppColors.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(icon, size: 18, color: _audience == value ? Colors.white : AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text(label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: _audience == value ? Colors.white : AppColors.primary,
+                          )),
+                    ]),
+                  ),
+                ),
+              ),
+          ]),
+        ),
+      );
+
   Widget _typesGrid(AppLocalizations l, ServerConfig config) {
     final client = AppScope.of(context).client;
     final photos = {
@@ -474,13 +531,15 @@ class _HomeScreenState extends State<HomeScreen> {
     };
     final items = <(int?, String, Widget)>[
       if (config.serviceCategories.isNotEmpty)
-        for (final c in config.serviceCategories) (c.id, c.name, ServiceIcon(c.icon, size: 36))
+        for (final c in config.serviceCategories)
+          if (!_hasAudiences || c.isFor(_audience)) (c.id, c.name, ServiceIcon(c.icon, size: 36))
       else
         for (final t in config.businessTypes) (t.id, t.name, BusinessIcon(t.icon, size: 28, color: AppColors.primary)),
       (null, l.allTypes, const BusinessIcon('all', size: 28, color: AppColors.primary)),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _sectionTitle(l.whatDoYouNeed),
+      if (_hasAudiences && config.serviceCategories.isNotEmpty) _audienceSwitch(l),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         child: GridView.count(

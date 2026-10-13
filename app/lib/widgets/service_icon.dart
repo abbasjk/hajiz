@@ -7,7 +7,10 @@ class ServiceIcon extends StatelessWidget {
   final String icon;
   final double size;
 
-  static const known = {'haircut', 'beard', 'dye', 'kids', 'skin', 'groom', 'treatment', 'threading', 'styling', 'razor'};
+  static const known = {
+    'haircut', 'beard', 'dye', 'kids', 'skin', 'groom', 'treatment', 'threading', 'styling', 'razor',
+    'womencut', 'makeup', 'nails', 'bride', 'lashes',
+  };
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(

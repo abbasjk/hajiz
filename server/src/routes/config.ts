@@ -9,7 +9,7 @@ export async function configRoutes(app: FastifyInstance) {
   app.get('/config', async () => {
     const [settings, businessTypes, districts, areas, versions, categories] = await Promise.all([
       app.pool.query<{ key: string; value: unknown }>('SELECT key, value FROM settings ORDER BY key'),
-      app.pool.query('SELECT id, name, icon FROM business_types WHERE active ORDER BY sort_order, id'),
+      app.pool.query('SELECT id, name, icon, audience FROM business_types WHERE active ORDER BY sort_order, id'),
       app.pool.query('SELECT id, name FROM districts WHERE active ORDER BY sort_order, id'),
       app.pool.query(
         `SELECT id, district_id AS "districtId", name FROM areas
@@ -20,7 +20,7 @@ export async function configRoutes(app: FastifyInstance) {
          FROM app_versions ORDER BY platform`,
       ),
       app.pool.query(
-        `SELECT id, name, icon, CASE WHEN photo IS NOT NULL
+        `SELECT id, name, icon, audience, CASE WHEN photo IS NOT NULL
                 THEN '/category-photos/' || id || '?v=' || extract(epoch FROM photo_updated_at)::bigint END AS photo
          FROM service_categories WHERE active ORDER BY sort_order, id`,
       ),

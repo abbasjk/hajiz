@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>لوحة إدارة مكص</title>
+<title>لوحة إدارة صالون</title>
 <style>
   :root {
     --bg: #f6f5f2; --card: #fff; --border: #e3e1db; --border-strong: #d4d1c9;
@@ -278,7 +278,7 @@ function render() {
   const main = h('main', {}, h('div', { class: 'empty' }, 'جارٍ التحميل…'));
   root.replaceChildren(
     h('div', { class: 'layout' },
-      h('aside', {}, h('div', { class: 'brand' }, 'لوحة إدارة مكص'), nav, h('div', { class: 'spacer' }),
+      h('aside', {}, h('div', { class: 'brand' }, 'لوحة إدارة صالون'), nav, h('div', { class: 'spacer' }),
         h('button', { onclick: async () => { await api('/logout', { method: 'POST' }).catch(() => {}); setToken(null); render(); } }, 'تسجيل الخروج')),
       main),
   );
@@ -304,7 +304,7 @@ function loginView() {
       await refreshStats();
       render();
     } catch (_) { btn.disabled = false; }
-  } }, h('h1', {}, 'لوحة إدارة مكص'), h('label', {}, 'اسم المستخدم', user), h('label', {}, 'كلمة المرور', pass), btn);
+  } }, h('h1', {}, 'لوحة إدارة صالون'), h('label', {}, 'اسم المستخدم', user), h('label', {}, 'كلمة المرور', pass), btn);
   return h('div', { class: 'login' }, form);
 }
 
@@ -703,7 +703,14 @@ async function catalogView() {
     return sel;
   };
   // أيقونات أنواع الخدمات كما تظهر في مربعات الرئيسية
-  const CATEGORY_ICONS = { haircut: 'ماكينة الحلاقة', beard: 'لحية', dye: 'صبغ', kids: 'طفل', skin: 'بشرة', groom: 'ربطة عريس', treatment: 'زيت الشعر', threading: 'خيط وحاجب', styling: 'مجفف', razor: 'موس' };
+  const CATEGORY_ICONS = { haircut: 'ماكينة الحلاقة', beard: 'لحية', dye: 'صبغ', kids: 'طفل', skin: 'بشرة', groom: 'ربطة عريس', treatment: 'زيت الشعر', threading: 'خيط وحاجب', styling: 'مجفف', razor: 'موس', womencut: 'شعر نسائي', makeup: 'مكياج', nails: 'أظافر', bride: 'عروس', lashes: 'رموش' };
+  const AUDIENCES = { men: 'للرجال', women: 'للسيدات', all: 'للجميع' };
+  const audiencePicker = (item) => {
+    const sel = h('select', { 'aria-label': 'لمن', onchange: async () => {
+      await run(() => api(`/service-categories/${item.id}`, { method: 'PATCH', body: { audience: sel.value } }), 'حُفظ');
+    } }, Object.entries(AUDIENCES).map(([k, v]) => h('option', { value: k, selected: k === item.audience }, v)));
+    return sel;
+  };
   const categoryPicker = (item) => {
     const sel = h('select', { 'aria-label': 'الأيقونة', onchange: async () => {
       await run(() => api(`/service-categories/${item.id}`, { method: 'PATCH', body: { icon: sel.value } }), 'حُفظت الأيقونة');
@@ -736,7 +743,7 @@ async function catalogView() {
   };
   const itemRow = (path, item, extra) => h('div', { class: 'row', style: 'justify-content:space-between;padding:6px 0;border-top:1px solid #eeece7;' + (item.active ? '' : 'opacity:.55') },
     h('span', {}, item.name, extra ? h('span', { class: 'muted small' }, ' · ' + extra) : null, item.active ? '' : ' (مخفي)'),
-    h('div', { class: 'row' }, ...(path === 'service-categories' ? categoryPhoto(item) : []), path === 'business-types' ? iconPicker(item) : path === 'service-categories' ? categoryPicker(item) : null, rename(path, item), toggle(path, item)));
+    h('div', { class: 'row' }, ...(path === 'service-categories' ? categoryPhoto(item) : []), path === 'business-types' ? iconPicker(item) : path === 'service-categories' ? categoryPicker(item) : null, path === 'service-categories' ? audiencePicker(item) : null, rename(path, item), toggle(path, item)));
 
   const typeName = h('input', { type: 'text', placeholder: 'نوع نشاط جديد', maxlength: 60 });
   const districtSel = h('select', {}, c.districts.map((d) => h('option', { value: d.id }, d.name)));
@@ -754,6 +761,7 @@ async function catalogView() {
 
   const categoryName = h('input', { type: 'text', placeholder: 'نوع خدمة جديد', maxlength: 60 });
   const categoryIcon = h('select', { 'aria-label': 'أيقونة النوع الجديد' }, Object.entries(CATEGORY_ICONS).map(([k, v]) => h('option', { value: k }, 'أيقونة: ' + v)));
+  const categoryAudience = h('select', { 'aria-label': 'لمن النوع الجديد' }, Object.entries(AUDIENCES).map(([k, v]) => h('option', { value: k, selected: k === 'all' }, v)));
 
   return [
     h('h1', {}, 'القوائم'),
@@ -762,9 +770,9 @@ async function catalogView() {
       (c.serviceCategories || []).map((t) => itemRow('service-categories', t, `${t.services} خدمة`)),
       h('form', { class: 'row', style: 'margin-top:10px', onsubmit: async (e) => {
         e.preventDefault();
-        await run(() => api('/service-categories', { method: 'POST', body: { name: categoryName.value.trim(), icon: categoryIcon.value } }), 'أُضيف');
+        await run(() => api('/service-categories', { method: 'POST', body: { name: categoryName.value.trim(), icon: categoryIcon.value, audience: categoryAudience.value } }), 'أُضيف');
         render();
-      } }, categoryName, categoryIcon, h('button', { class: 'btn primary' }, 'إضافة'))),
+      } }, categoryName, categoryIcon, categoryAudience, h('button', { class: 'btn primary' }, 'إضافة'))),
     h('div', { class: 'grid2' },
       h('div', { class: 'card' }, h('h2', {}, 'أنواع النشاط'),
         c.businessTypes.map((t) => itemRow('business-types', t, `${t.shops} محل`)),

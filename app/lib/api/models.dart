@@ -14,23 +14,32 @@ class NamedItem {
 
 /// نوع العمل وأيقونته في الرئيسية (تختارها الإدارة)
 class BusinessType extends NamedItem {
-  const BusinessType(super.id, super.name, [this.icon = 'store']);
+  const BusinessType(super.id, super.name, [this.icon = 'store', this.audience = 'men']);
   final String icon;
 
-  factory BusinessType.fromJson(Map<String, dynamic> j) =>
-      BusinessType(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'store');
+  /// men أو women: صالون رجالي أو نسائي
+  final String audience;
+
+  factory BusinessType.fromJson(Map<String, dynamic> j) => BusinessType(
+      j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'store', j['audience'] as String? ?? 'men');
 }
 
 /// نوع خدمة في رئيسية الزبون (حلاقة الشعر، تهذيب اللحية...)؛ الأيقونة اسم ملف من أيقونات التطبيق
 class ServiceCategory extends NamedItem {
-  const ServiceCategory(super.id, super.name, this.icon, [this.photo]);
+  const ServiceCategory(super.id, super.name, this.icon, [this.photo, this.audience = 'all']);
   final String icon;
+
+  /// men أو women أو all
+  final String audience;
+
+  bool isFor(String who) => audience == 'all' || audience == who;
 
   /// صورة حقيقية من الإدارة تظهر بدل الأيقونة (مسار على الخادم)
   final String? photo;
 
   factory ServiceCategory.fromJson(Map<String, dynamic> j) =>
-      ServiceCategory(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'haircut', j['photo'] as String?);
+      ServiceCategory(j['id'] as int, j['name'] as String, j['icon'] as String? ?? 'haircut', j['photo'] as String?,
+          j['audience'] as String? ?? 'all');
 }
 
 class Area extends NamedItem {
