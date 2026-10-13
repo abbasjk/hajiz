@@ -328,19 +328,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> with RefreshO
             Row(
               children: [
                 for (final (icon, label, onTap) in actions)
-                  InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(AppRadius.base),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(icon, color: AppColors.primary, size: 24),
-                        const SizedBox(height: 4),
-                        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.primary)),
-                      ]),
+                  Expanded(
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(AppRadius.base),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(icon, color: AppColors.primary, size: 24),
+                          const SizedBox(height: 4),
+                          Text(label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 13, color: AppColors.primary)),
+                        ]),
+                      ),
                     ),
                   ),
-                const Spacer(),
+                if (actions.isEmpty) const Spacer(),
                 if (cancellable)
                   FilledButton(
                     style: FilledButton.styleFrom(

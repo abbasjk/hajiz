@@ -126,7 +126,11 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
     final progress = inProgress
         ? now.difference(b.startsAt).inSeconds / b.endsAt.difference(b.startsAt).inSeconds.clamp(1, 1 << 30)
         : null;
-    return ListView(padding: const EdgeInsets.all(16), children: [
+    // كل الأقسام تُبنى مرة واحدة (ليست قائمة كسولة): الصفحة قصيرة
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       // بطاقة الموعد البنفسجية كما في "الخدمة بدأت" في التصميم
       Container(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
@@ -270,7 +274,8 @@ class _OwnerBookingScreenState extends State<OwnerBookingScreen> with RefreshOnP
             child: Text('• ${formatAppointment(l, t)}', style: const TextStyle(fontSize: 15)),
           ),
       ],
-    ]);
+    ]),
+    );
   }
 
   Widget _sectionTitle(IconData icon, String text) => Padding(
