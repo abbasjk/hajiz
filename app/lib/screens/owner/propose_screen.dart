@@ -172,8 +172,6 @@ class _ProposeScreenState extends State<ProposeScreen> {
                         FilterChip(
                           label: Text(formatTime(l, s)),
                           selected: _chosen.contains(s),
-                          showCheckmark: false,
-                          selectedColor: AppColors.primarySoft,
                           side: BorderSide(color: _chosen.contains(s) ? AppColors.primary : AppColors.border),
                           onSelected: (on) => setState(() {
                             if (on && _chosen.length < 3) {

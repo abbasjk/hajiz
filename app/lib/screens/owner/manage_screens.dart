@@ -540,8 +540,6 @@ class _SettingsScreenState extends State<SettingsScreen> with _ReturnsShop {
               ChoiceChip(
                 label: Text(e.value),
                 selected: e.key == value,
-                showCheckmark: false,
-                selectedColor: AppColors.primarySoft,
                 side: BorderSide(color: e.key == value ? AppColors.primary : AppColors.border),
                 onSelected: (_) => onChanged(e.key),
               ),

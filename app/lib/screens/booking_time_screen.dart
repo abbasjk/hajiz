@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/app_scope.dart';
+import '../theme/app_theme.dart';
 import '../theme/colors.dart';
 import '../util/format.dart';
 import '../widgets/common.dart';
@@ -234,8 +235,10 @@ class _BookingTimeScreenState extends State<BookingTimeScreen> {
     final selected = widget.draft.startsAt == slot;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
-        backgroundColor: selected ? AppColors.primarySoft : AppColors.surface,
-        side: BorderSide(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
+        // أزرار الأوقات كما في التصميم: المختار بنفسجي بنص أبيض، والباقي أبيض بحد رمادي، زاوية 10
+        backgroundColor: selected ? AppColors.primary : AppColors.surface,
+        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
         padding: EdgeInsets.zero,
       ),
       onPressed: () => setState(() => widget.draft.startsAt = slot),
@@ -243,8 +246,8 @@ class _BookingTimeScreenState extends State<BookingTimeScreen> {
         formatTime(l, slot),
         style: TextStyle(
           fontSize: 14,
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-          color: selected ? AppColors.primaryDark : AppColors.text,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          color: selected ? Colors.white : AppColors.text,
         ),
       ),
     );

@@ -173,7 +173,7 @@ class _Pin extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: selected ? AppColors.primaryDark : AppColors.primary,
+              color: selected ? AppColors.accent : AppColors.primary,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2.5),
               boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 6, offset: Offset(0, 2))],

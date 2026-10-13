@@ -31,14 +31,14 @@ flutter:
   # ملف ترجمة مستقل: كل النصوص في lib/l10n/app_ar.arb
   generate: true
   fonts:
-    # يدعم الحروف الكردية الإضافية (ڕ ڵ ۆ ێ ڤ)
-    - family: IBMPlexSansArabic
+    # خط عربي هندسي قريب من خط التصميم الأصلي، ويغطي الحروف الكردية والفارسية (ڕ ڵ ۆ ێ ە گ چ پ ژ)
+    - family: Vazirmatn
       fonts:
-        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+        - asset: assets/fonts/Vazirmatn-400.ttf
           weight: 400
-        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+        - asset: assets/fonts/Vazirmatn-500.ttf
           weight: 500
-        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+        - asset: assets/fonts/Vazirmatn-600.ttf
           weight: 600
-        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+        - asset: assets/fonts/Vazirmatn-700.ttf
           weight: 700

@@ -125,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ? null
           : FloatingActionButton.extended(
               heroTag: 'map-toggle',
-              backgroundColor: AppColors.text,
-              foregroundColor: Colors.white,
               onPressed: () => _set(() => _mapView = !_mapView),
               icon: Icon(_mapView ? Icons.view_list_outlined : Icons.map_outlined),
               label: Text(_mapView ? l.showList : l.showMap),
@@ -241,8 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ChoiceChip(
         label: Text(label),
         selected: selected,
-        showCheckmark: false,
-        selectedColor: AppColors.primarySoft,
         side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
         onSelected: (_) => _set(() => _typeId = id),
       ),
